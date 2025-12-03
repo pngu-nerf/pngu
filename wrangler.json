@@ -10,5 +10,16 @@
   "observability": {
     "enabled": true
   },
-  "upload_source_maps": true
+  "upload_source_maps": true,
+  
+  "routes": [
+    {
+      "pattern": "pngu.info/*",
+      "zone_name": "pngu.info"
+    }
+  ],
+  
+  "vars": {
+    "SITE_URL": "https://pngu.info"
+  }
 }
