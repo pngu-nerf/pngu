@@ -1,0 +1,241 @@
+---
+// src/pages/contact.astro
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Contact - pngu</title>
+		<script>
+			// Copy email to clipboard function
+			function copyEmailToClipboard() {
+				const email = 'contact@pngu.info';
+				navigator.clipboard.writeText(email).then(() => {
+					// Show success message
+					const button = document.getElementById('copy-email-btn');
+					const originalText = button.innerHTML;
+					button.innerHTML = '✓ Copied!';
+					button.style.backgroundColor = '#10b981';
+					
+					// Reset button after 2 seconds
+					setTimeout(() => {
+						button.innerHTML = originalText;
+						button.style.backgroundColor = '';
+					}, 2000);
+				}).catch(err => {
+					console.error('Failed to copy: ', err);
+					alert('Failed to copy email to clipboard. Please copy manually: ' + email);
+				});
+			}
+			
+			// Initialize when page loads
+			document.addEventListener('DOMContentLoaded', function() {
+				const copyButton = document.getElementById('copy-email-btn');
+				if (copyButton) {
+					copyButton.addEventListener('click', copyEmailToClipboard);
+				}
+			});
+		</script>
+		<style>
+			body { 
+				font-family: sans-serif; 
+				padding: 2rem;
+				text-align: center;
+				max-width: 600px;
+				margin: 0 auto;
+				background-color: #0f0f0f;
+				color: #ffffff;
+			}
+			
+			.content-box {
+				background-color: #272727;
+				border-radius: 12px;
+				padding: 2rem;
+				margin: 2rem 0;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			}
+			
+			a { 
+				color: #ffffff; 
+				text-decoration: none; 
+				font-weight: 500;
+			}
+			
+			a:hover { 
+				text-decoration: underline;
+				color: #e0e0e0;
+			}
+			
+			h1 {
+				margin-top: 0;
+				color: #ffffff;
+				font-size: 2.5rem;
+				margin-bottom: 1.5rem;
+			}
+			
+			p {
+				color: #e0e0e0;
+				line-height: 1.6;
+				font-size: 1.1rem;
+				margin-bottom: 1.5rem;
+			}
+			
+			.back-link {
+				display: inline-block;
+				margin-top: 2rem;
+				padding: 0.5rem 1rem;
+				background-color: #333333;
+				border-radius: 6px;
+				transition: background-color 0.2s ease;
+			}
+			
+			.back-link:hover {
+				background-color: #404040;
+				text-decoration: none;
+			}
+			
+			.back-link a:hover {
+				color: #ffffff;
+			}
+			
+			/* Email section */
+			.email-section {
+				margin: 2.5rem 0;
+				padding: 1.5rem;
+				background-color: rgba(255, 255, 255, 0.05);
+				border-radius: 8px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+			}
+			
+			.email-label {
+				color: #a0a0a0;
+				font-size: 0.9rem;
+				margin-bottom: 0.75rem;
+				display: block;
+			}
+			
+			.email-display {
+				font-family: 'Courier New', monospace;
+				font-size: 1.2rem;
+				color: #ffffff;
+				margin-bottom: 1.5rem;
+				padding: 0.75rem;
+				background-color: rgba(255, 255, 255, 0.03);
+				border-radius: 6px;
+				word-break: break-all;
+			}
+			
+			/* Copy button - styled like download buttons */
+			.copy-button {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
+				padding: 0.75rem 1.5rem;
+				background-color: #404040;
+				color: #ffffff;
+				border: none;
+				border-radius: 6px;
+				font-size: 1rem;
+				font-weight: 500;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				font-family: inherit;
+				margin: 0.5rem;
+			}
+			
+			.copy-button:hover {
+				background-color: #4a4a4a;
+				transform: translateY(-2px);
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+			}
+			
+			.copy-button:active {
+				transform: translateY(0);
+			}
+			
+			.copy-button.success {
+				background-color: #10b981;
+			}
+			
+			.copy-icon {
+				font-size: 1.1rem;
+			}
+			
+			.success-icon {
+				font-size: 1.1rem;
+			}
+			
+			/* Social links */
+			.social-links {
+				display: flex;
+				justify-content: center;
+				gap: 1rem;
+				margin-top: 2rem;
+				flex-wrap: wrap;
+			}
+			
+			.social-link {
+				display: inline-block;
+				padding: 0.5rem 1rem;
+				background-color: rgba(255, 255, 255, 0.05);
+				border-radius: 6px;
+				color: #e0e0e0;
+				text-decoration: none;
+				transition: all 0.2s ease;
+			}
+			
+			.social-link:hover {
+				background-color: rgba(255, 255, 255, 0.1);
+				transform: translateY(-1px);
+			}
+			
+			/* Highlight color */
+			.highlight {
+				color: #646cff;
+				font-weight: bold;
+			}
+			
+			.subtitle {
+				color: #a0a0a0;
+				font-size: 1.2rem;
+				margin-bottom: 2rem;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="content-box">
+			<h1>Contact</h1>
+			<p class="subtitle">Get in touch with PNGU</p>
+			
+			<p>Have a project in mind? Want to collaborate? Or just have a question?</p>
+			<p>Feel free to reach out via email. I typically respond within 24-48 hours.</p>
+			
+			<div class="email-section">
+				<span class="email-label">Email Address</span>
+				<div class="email-display">contact@pngu.info</div>
+				
+				<button id="copy-email-btn" class="copy-button">
+					<span class="copy-icon">📋</span>
+					Copy Email Address
+				</button>
+				
+				<a href="mailto:contact@pngu.info" class="copy-button">
+					<span class="copy-icon">✉️</span>
+					Open Email Client
+				</a>
+			</div>
+			
+			<p>Socials:</p>
+			
+			<div class="social-links">
+				<!-- Add your actual social media links here -->
+				<a href="https://www.youtube.com/@PnguNerf" class="social-link" target="_blank" rel="noopener">Youtube</a>
+				<a href="https://github.com/pngu-nerf" class="social-link" target="_blank" rel="noopener">Github</a>
+			</div>
+			
+			<p class="back-link"><a href="/">← Back to Home</a></p>
+		</div>
+	</body>
+</html>
