@@ -8,14 +8,13 @@
 		<meta name="viewport" content="width=device-width" />
 		<title>Contact - pngu</title>
 		<script>
-			// Copy email to clipboard function
-			function copyEmailToClipboard() {
-				const email = 'contact@pngu.info';
-				navigator.clipboard.writeText(email).then(() => {
+			// Generic copy to clipboard function
+			function copyToClipboard(text, buttonId, successMessage) {
+				navigator.clipboard.writeText(text).then(() => {
 					// Show success message
-					const button = document.getElementById('copy-email-btn');
+					const button = document.getElementById(buttonId);
 					const originalText = button.innerHTML;
-					button.innerHTML = '✓ Copied!';
+					button.innerHTML = successMessage;
 					button.style.backgroundColor = '#10b981';
 					
 					// Reset button after 2 seconds
@@ -25,15 +24,32 @@
 					}, 2000);
 				}).catch(err => {
 					console.error('Failed to copy: ', err);
-					alert('Failed to copy email to clipboard. Please copy manually: ' + email);
+					alert('Failed to copy to clipboard. Please copy manually: ' + text);
 				});
+			}
+			
+			// Copy email to clipboard
+			function copyEmailToClipboard() {
+				copyToClipboard('contact@pngu.info', 'copy-email-btn', '✓ Copied!');
+			}
+			
+			// Copy Discord to clipboard
+			function copyDiscordToClipboard() {
+				copyToClipboard('penguinnoly', 'copy-discord-btn', '✓ Copied!');
 			}
 			
 			// Initialize when page loads
 			document.addEventListener('DOMContentLoaded', function() {
-				const copyButton = document.getElementById('copy-email-btn');
-				if (copyButton) {
-					copyButton.addEventListener('click', copyEmailToClipboard);
+				// Email button
+				const emailButton = document.getElementById('copy-email-btn');
+				if (emailButton) {
+					emailButton.addEventListener('click', copyEmailToClipboard);
+				}
+				
+				// Discord button
+				const discordButton = document.getElementById('copy-discord-btn');
+				if (discordButton) {
+					discordButton.addEventListener('click', copyDiscordToClipboard);
 				}
 			});
 		</script>
@@ -99,8 +115,8 @@
 				color: #ffffff;
 			}
 			
-			/* Email section */
-			.email-section {
+			/* Contact section */
+			.contact-section {
 				margin: 2.5rem 0;
 				padding: 1.5rem;
 				background-color: rgba(255, 255, 255, 0.05);
@@ -108,14 +124,18 @@
 				border: 1px solid rgba(255, 255, 255, 0.1);
 			}
 			
-			.email-label {
+			.contact-section:first-of-type {
+				margin-top: 0;
+			}
+			
+			.contact-label {
 				color: #a0a0a0;
 				font-size: 0.9rem;
 				margin-bottom: 0.75rem;
 				display: block;
 			}
 			
-			.email-display {
+			.contact-display {
 				font-family: 'Courier New', monospace;
 				font-size: 1.2rem;
 				color: #ffffff;
@@ -163,32 +183,18 @@
 				font-size: 1.1rem;
 			}
 			
-			.success-icon {
-				font-size: 1.1rem;
+			/* Discord specific */
+			.discord-handle {
+				color: #7289da; /* Discord brand color */
 			}
 			
-			/* Social links */
-			.social-links {
-				display: flex;
-				justify-content: center;
-				gap: 1rem;
-				margin-top: 2rem;
-				flex-wrap: wrap;
+			.discord-icon {
+				color: #7289da;
 			}
 			
-			.social-link {
-				display: inline-block;
-				padding: 0.5rem 1rem;
-				background-color: rgba(255, 255, 255, 0.05);
-				border-radius: 6px;
-				color: #e0e0e0;
-				text-decoration: none;
-				transition: all 0.2s ease;
-			}
-			
-			.social-link:hover {
-				background-color: rgba(255, 255, 255, 0.1);
-				transform: translateY(-1px);
+			/* Email specific */
+			.email-icon {
+				color: #ea4335; /* Gmail red color */
 			}
 			
 			/* Highlight color */
@@ -207,29 +213,37 @@
 	<body>
 		<div class="content-box">
 			<h1>Contact</h1>
+			<p class="subtitle">Get in touch with PNGU</p>
 			
-			<div class="email-section">
-				<span class="email-label">Email Address</span>
-				<div class="email-display">contact@pngu.info</div>
+			<!-- Email Section -->
+			<div class="contact-section">
+				<span class="contact-label">Email Address</span>
+				<div class="contact-display">contact@pngu.info</div>
 				
 				<button id="copy-email-btn" class="copy-button">
-					<span class="copy-icon">📋</span>
+					<span class="copy-icon email-icon">📧</span>
 					Copy Email Address
 				</button>
 				
 				<a href="mailto:contact@pngu.info" class="copy-button">
-					<span class="copy-icon">✉️</span>
+					<span class="copy-icon email-icon">✉️</span>
 					Open Email Client
 				</a>
 			</div>
-			<div class="email-section">
-				<span class="email-label">Discord Handle</span>
-				<div class="email-display">penguinnoly</div>
+			
+			<!-- Discord Section -->
+			<div class="contact-section">
+				<span class="contact-label">Discord Handle</span>
+				<div class="contact-display discord-handle">penguinnoly</div>
 				
-				<button id="copy-email-btn" class="copy-button">
-					<span class="copy-icon">📋</span>
+				<button id="copy-discord-btn" class="copy-button">
+					<span class="copy-icon discord-icon">🟣</span>
 					Copy Discord Handle
 				</button>
+				
+				<a href="https://discord.com/users/penguinnoly" target="_blank" rel="noopener" class="copy-button">
+					<span class="copy-icon discord-icon">🎮</span>
+					Open Discord Profile
 				</a>
 			</div>
 			
