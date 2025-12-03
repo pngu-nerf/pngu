@@ -70,7 +70,7 @@
 				opacity: 0.8;
 			}
 			
-			/* Links list */
+			/* Links list - centered */
 			.links-list {
 				list-style: none;
 				border-radius: 8px;
@@ -80,6 +80,7 @@
 			.link-item {
 				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 				transition: background-color 0.2s ease;
+				text-align: center; /* Center text in list items */
 			}
 			
 			.link-item:last-child {
@@ -98,21 +99,33 @@
 				font-size: 1.1rem;
 				font-weight: 500;
 				transition: all 0.2s ease;
+				text-align: center; /* Center link text */
 			}
 			
 			.link-item a:hover {
 				color: #e0e0e0;
 				background-color: transparent;
-				padding-left: 2.25rem;
+				/* Removed left padding shift to keep centered on hover */
 			}
 			
-			/* Link descriptions */
+			/* Link descriptions - centered */
 			.link-description {
 				display: block;
 				color: #a0a0a0;
 				font-size: 0.9rem;
-				margin-top: 0.25rem;
+				margin-top: 0.5rem; /* Increased margin for better separation */
 				font-weight: normal;
+				text-align: center; /* Center description text */
+				width: 100%; /* Ensure full width for centering */
+				padding: 0 1rem; /* Add some horizontal padding */
+			}
+			
+			/* Ensure link title is also centered */
+			.link-title {
+				display: block;
+				text-align: center;
+				font-size: 1.2rem;
+				margin-bottom: 0.25rem;
 			}
 			
 			/* Footer */
@@ -152,25 +165,25 @@
 				<ul class="links-list">
 					<li class="link-item">
 						<a href="/blaster-data">
-							Blaster Data
+							<span class="link-title">Blaster Data</span>
 							<span class="link-description">All my spreadsheets, just for you</span>
 						</a>
 					</li>
 					<li class="link-item">
-						<a href="/brand-assets">
-							Brand Assets
+						<a href="/brand">
+							<span class="link-title">Brand Assets</span>
 							<span class="link-description">Download logos, fonts, and branding materials</span>
 						</a>
 					</li>
 					<li class="link-item">
 						<a href="/about">
-							About
-							<span class="link-description"></span>
+							<span class="link-title">About</span>
+							<span class="link-description">Learn more about PNGU</span>
 						</a>
 					</li>
 					<li class="link-item">
 						<a href="/contact">
-							Contact
+							<span class="link-title">Contact</span>
 							<span class="link-description">Email & Discord</span>
 						</a>
 					</li>
