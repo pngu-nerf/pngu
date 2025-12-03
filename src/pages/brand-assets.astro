@@ -1,3 +1,7 @@
+---
+// src/pages/brand.astro
+---
+
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
@@ -44,4 +48,48 @@
 				padding: 0.5rem;
 				background-color: rgba(255, 255, 255, 0.05);
 				border-radius: 6px;
-				transition: background
+				transition: background-color 0.2s ease;
+			}
+			
+			.asset-list li:hover {
+				background-color: rgba(255, 255, 255, 0.1);
+			}
+			
+			h1 {
+				margin-top: 0;
+				color: #ffffff;
+			}
+			
+			p {
+				color: #e0e0e0;
+			}
+			
+			.back-link {
+				display: inline-block;
+				margin-top: 1rem;
+				padding: 0.5rem 1rem;
+				background-color: #272727;
+				border-radius: 6px;
+			}
+			
+			.back-link:hover {
+				background-color: #333333;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="content-box">
+			<h1>Brand Assets</h1>
+			<p>Download my brand assets:</p>
+			
+			<ul class="asset-list">
+				<li><a href="/brand-assets/Youtube Profile.png" download>Profile Image (PNG)</a></li>
+				<li><a href="/brand-assets/Youtube Banner.jpg" download>Brand Youtube Banner (JPG)</a></li>
+				<li><a href="/brand-assets/Jump Winter.otf" download>Brand Font OTF (OTF)</a></li>
+				<li><a href="/brand-assets/Jump Winter.ttf" download>Brand Font TTF (TTF)</a></li>
+			</ul>
+			
+			<p class="back-link"><a href="/">← Back to Home</a></p>
+		</div>
+	</body>
+</html>
