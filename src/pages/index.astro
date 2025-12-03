@@ -21,29 +21,40 @@
 				line-height: 1.6;
 				color: #ffffff;
 				background-color: #0f0f0f;
+				/* Add min-height to ensure content fills screen */
+				min-height: 100vh;
 			}
 			
-			/* Banner - shifted up with less bottom margin */
+			/* Banner - fixed at top, full width */
 			.banner {
 				width: 100%;
-				height: 360px; /* Slightly reduced height */
+				height: 360px; /* Your corrected height */
 				overflow: hidden;
 				position: relative;
-				margin-bottom: 1rem; /* Reduced from default */
 			}
 			
 			.banner-image {
 				width: 100%;
 				height: 100%;
 				object-fit: cover;
-				object-position: center 33.33%;
+				object-position: center;
+			}
+			
+			/* Main content wrapper */
+			.main-wrapper {
+				/* Remove margin from banner, content starts right after */
+				margin-top: 0;
+				/* Push content down only if needed */
+				padding: 0;
 			}
 			
 			/* Links container with content box styling */
 			.links-container {
 				max-width: 600px;
-				margin: 1rem auto; /* Reduced top margin */
+				margin: 0 auto; /* No top margin */
 				padding: 0 20px;
+				/* Negative margin to pull content up if needed */
+				margin-top: -40px; /* Optional: slight overlap */
 			}
 			
 			.content-box {
@@ -51,9 +62,11 @@
 				border-radius: 12px;
 				padding: 2rem;
 				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+				/* Remove top margin since banner is at top */
+				margin-top: 0;
 			}
 			
-			/* Site title/header */
+			/* Site title/header - optional if you want to keep it */
 			.site-header {
 				text-align: center;
 				margin-bottom: 2rem;
@@ -197,16 +210,6 @@
 				font-weight: 500;
 			}
 			
-			/* Footer */
-			.site-footer {
-				text-align: center;
-				margin-top: 2rem;
-				padding-top: 1.5rem;
-				border-top: 1px solid rgba(255, 255, 255, 0.1);
-				color: #a0a0a0;
-				font-size: 0.9rem;
-			}
-			
 			/* Highlight color for accents */
 			.highlight {
 				color: #646cff;
@@ -214,7 +217,7 @@
 		</style>
 	</head>
 	<body>
-		<!-- 1. Banner Image Only -->
+		<!-- 1. Banner Image Only - Now sits at very top -->
 		<div class="banner">
 			<img 
 				src="/site-assets/Site Banner.jpg" 
@@ -223,9 +226,10 @@
 			/>
 		</div>
 
-		<!-- 2. Content Area -->
+		<!-- 2. Content Area starts right after banner -->
 		<main class="links-container">
 			<div class="content-box">
+				<!-- Removed site header since banner shows title -->
 				
 				<ul class="links-list">
 					<li class="link-item">
