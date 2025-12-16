@@ -1,0 +1,155 @@
+---
+// src/components/BackgroundEffects.astro
+---
+<canvas id="tech-canvas"></canvas>
+
+<style>
+    #tech-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1; /* Behind everything */
+        pointer-events: none; /* Let clicks pass through */
+        
+        /* The "Silent Start" Logic */
+        opacity: 0;
+        animation: subtleFadeIn 3s ease-in-out 3s forwards;
+    }
+
+    @keyframes subtleFadeIn {
+        from { opacity: 0; }
+        to { opacity: 0.15; } /* Max opacity is low (15%) to be minimal */
+    }
+</style>
+
+<script>
+    const canvas = document.getElementById('tech-canvas') as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let strands = [];
+
+    // Configuration
+    const STRAND_COUNT = 15;
+    const STRAND_COLOR = '255, 255, 255'; // White
+
+    class Strand {
+        x: number;
+        y: number;
+        length: number;
+        thickness: number;
+        speed: number;
+        offset: number;
+        amplitude: number;
+        frequency: number;
+
+        constructor() {
+            this.init();
+        }
+
+        init() {
+            this.x = Math.random() * width;
+            this.y = -Math.random() * height; // Start slightly above
+            this.length = height * (0.5 + Math.random() * 0.5); // 50% to 100% screen height
+            this.thickness = Math.random() * 2 + 0.5; // Thin lines
+            this.speed = Math.random() * 0.5 + 0.2; // Vertical speed
+            
+            // Swaying properties
+            this.offset = Math.random() * 100; // Random starting point in sine wave
+            this.amplitude = Math.random() * 50 + 20; // How wide they sway
+            this.frequency = Math.random() * 0.002 + 0.001; // How fast they sway
+        }
+
+        update() {
+            // Move down
+            this.y += this.speed;
+            
+            // Sway time (offset)
+            this.offset += 0.01;
+
+            // Reset if moved past bottom
+            if (this.y > height) {
+                this.init();
+                this.y = -200; // Reset above screen
+            }
+        }
+
+        draw() {
+            if (!ctx) return;
+            
+            ctx.beginPath();
+            
+            // Create a gradient for the "Glowing" tail effect
+            // Starts transparent, gets bright, fades out
+            const grad = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.length);
+            grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
+            grad.addColorStop(0.2, `rgba(${STRAND_COLOR}, 0.5)`); // Brightest point
+            grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);
+
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = this.thickness;
+            ctx.lineCap = 'round';
+            
+            // Draw a curved line (sine wave)
+            // We draw multiple segments to make the curve smooth
+            let startY = this.y;
+            let currentY = startY;
+            
+            ctx.moveTo(
+                this.x + Math.sin(this.offset) * this.amplitude, 
+                startY
+            );
+
+            // Draw the strand in segments
+            for (let i = 0; i <= 20; i++) {
+                currentY = startY + (this.length / 20) * i;
+                
+                // Calculate sway at this specific height
+                const sway = Math.sin(this.offset + (i * 0.2)) * this.amplitude;
+                
+                ctx.lineTo(this.x + sway, currentY);
+            }
+
+            // Simple Glow Effect
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+
+            ctx.stroke();
+            
+            // Reset shadow for next frame to save performance
+            ctx.shadowBlur = 0; 
+        }
+    }
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Re-init strands on resize to fill width
+        strands = [];
+        for (let i = 0; i < STRAND_COUNT; i++) {
+            strands.push(new Strand());
+        }
+    }
+
+    function animate() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, width, height);
+
+        strands.forEach(strand => {
+            strand.update();
+            strand.draw();
+        });
+
+        requestAnimationFrame(animate);
+    }
+
+    // Initialize
+    window.addEventListener('resize', resize);
+    resize();
+    animate();
+</script>
