@@ -43,36 +43,43 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				width: 100%;
 				height: auto;
 				border-radius: 12px;
-				box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+				box-shadow: 0 8px 32px rgba(0,0,0,0.5); /* Deep shadow for depth */
 				display: block;
 			}
 
-			/* --- Content Box Styling --- */
+			/* --- Content Box (Glass Style) --- */
 			.content-box {
-				background-color: #272727;
-				border-radius: 12px;
+                /* Glass Background: Semi-transparent dark */
+				background-color: rgba(40, 40, 40, 0.4); 
+                
+                /* The Blur */
+                backdrop-filter: blur(20px) saturate(120%);
+                -webkit-backdrop-filter: blur(20px) saturate(120%);
+                
+                /* Glass Borders: Thin, semi-transparent white */
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                
+				border-radius: 16px; /* slightly rounder for liquid feel */
 				padding: 2rem;
-				
-				/* Narrowing to 75% and centering the box itself */
 				width: 75%;
 				margin: 2rem auto; 
-				
-				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-				
-				/* Center text inside */
 				text-align: center;
+
+                /* Deep shadow to lift the glass off the background */
+				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 			}
 
 			h2 {
 				margin-top: 0;
 				color: #ffffff;
 				font-size: 1.5rem;
-				border-bottom: 1px solid #444;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 				padding-bottom: 10px;
 				margin-bottom: 20px;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 			}
 
-			/* --- Link Bubbles --- */
+			/* --- Link Bubbles (Glass Buttons) --- */
 			.nav-list {
 				list-style: none;
 				padding: 0;
@@ -85,30 +92,40 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 
 			a.nav-link {
 				display: flex;
-				/* Center content horizontally */
 				justify-content: center; 
 				align-items: center;
-				background-color: #1a1a1a;
+                
+                /* Button Glass: Lighter than container */
+				background-color: rgba(255, 255, 255, 0.05);
+                
+                /* Border to define shape */
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                
+                /* Inner highlight for 3D feel */
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                
 				padding: 16px 20px;
-				border-radius: 8px;
+				border-radius: 12px;
 				text-decoration: none;
-				transition: all 0.2s ease;
-				border: 1px solid transparent;
+				transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 			}
 
 			a.nav-link:hover {
-				background-color: #333;
-				transform: translateY(-2px);
-				box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-				border-color: #444;
+                /* Brighter on hover */
+				background-color: rgba(255, 255, 255, 0.15);
+                border-color: rgba(255, 255, 255, 0.3);
+                
+				transform: translateY(-3px) scale(1.02);
+                
+                /* Outer glow */
+				box-shadow: 0 8px 20px rgba(0,0,0,0.4), 
+                            inset 0 1px 0 rgba(255, 255, 255, 0.2);
 			}
 
-			/* Link Content (Title + Desc) */
 			.link-content {
 				display: flex;
 				flex-direction: column;
 				gap: 4px;
-				/* Ensure text lines up in center */
 				align-items: center; 
 			}
 
@@ -116,16 +133,19 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				color: #ffffff;
 				font-weight: bold;
 				font-size: 1.1rem;
+                letter-spacing: 0.5px;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 			}
 
 			.link-desc {
-				color: #a0a0a0;
+				color: rgba(255, 255, 255, 0.7); /* Slightly transparent white text */
 				font-size: 0.9rem;
 			}
 
             .social-title {
                 color: #ffffff;
                 font-weight: 500;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             }
 
             /* Responsive */
@@ -133,7 +153,7 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				body { padding: 1rem; }
                 .content-box { 
 					padding: 1.5rem; 
-					width: 100%; /* Reset width on mobile */
+					width: 100%; 
 				}
 				.link-desc { display: none; }
 			}
