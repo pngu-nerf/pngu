@@ -19,7 +19,7 @@
         z-index: -1;
         pointer-events: none;
         overflow: hidden; 
-        background-color: #000; /* Ensures black backdrop for dimming */
+        background-color: #000; 
     }
 
     #tech-canvas {
@@ -28,7 +28,6 @@
         height: 100%;
         left: -10%; 
         
-        /* 1. Added back the 20px blur on the strands themselves */
         filter: blur(20px);
 
         /* Initial Opacity */
@@ -43,25 +42,20 @@
         inset: 0;
         z-index: 1;
         
-        /* High saturation + deep blur for the "liquid" look */
         backdrop-filter: saturate(180%) blur(50px);
         -webkit-backdrop-filter: saturate(180%) blur(50px);
 
-        /* Subtle white tint */
         background-color: rgba(255, 255, 255, 0.03);
 
-        /* Noise texture */
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
         
         mix-blend-mode: overlay;
     }
 
-    /* The Surface Sheen / Reflection */
     #glow-overlay {
         position: absolute;
         inset: 0;
         z-index: 2; 
-        /* Top-down light reflection gradient */
         background: linear-gradient(
             to bottom, 
             rgba(255, 255, 255, 0.12) 0%, 
@@ -73,7 +67,6 @@
 
     @keyframes brightenUp {
         from { opacity: 0.2; }
-        /* 2. Dimmed max opacity to 0.5 (was 0.9) to achieve ~40% reduction */
         to { opacity: 0.7; } 
     }
 </style>
@@ -95,16 +88,20 @@
     window.addEventListener('mousemove', (e) => {
         const normX = (e.clientX / window.innerWidth) * 2 - 1;
         const normY = (e.clientY / window.innerHeight) * 2 - 1;
-        targetX = normX * 100; 
-        targetY = normY * 30;  
+        
+        // REDUCED TO 40% STRENGTH (Was 100 / 30)
+        targetX = normX * 40; 
+        targetY = normY * 12;  
     });
 
     window.addEventListener('deviceorientation', (e) => {
         if (!e.gamma || !e.beta) return;
         const tiltX = Math.max(-45, Math.min(45, e.gamma));
         const tiltY = Math.max(-45, Math.min(45, e.beta));
-        targetX = (tiltX / 45) * 100;
-        targetY = (tiltY / 45) * 30;
+        
+        // REDUCED TO 40% STRENGTH
+        targetX = (tiltX / 45) * 40;
+        targetY = (tiltY / 45) * 12;
     });
     
     let mouseX = -1000;
