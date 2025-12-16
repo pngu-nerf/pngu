@@ -100,6 +100,7 @@ try {
             projects[folderName].files.push({
               name: fileName,
               path: item.path,
+              // We use raw.githubusercontent.com for the STL source
               url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}` 
             });
           }
@@ -151,8 +152,6 @@ try {
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<title>3D Files | PNGU</title>
-        
-        <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
 		<style>
 			body {
@@ -215,10 +214,9 @@ try {
                 border-top: 1px solid #444;
             }
 
-            /* --- File List Styling (Matches Data Page) --- */
+            /* --- File List Styling --- */
             .file-list { list-style: none; padding: 0; margin: 0; }
 
-            /* Each file is a details element */
             details.file-item {
                 background-color: #1a1a1a;
                 margin-bottom: 10px;
@@ -230,7 +228,6 @@ try {
 
             details.file-item[open] { border-color: #444; }
 
-            /* Summary is the Clickable Row */
             details.file-item summary {
                 padding: 12px 16px;
                 cursor: pointer;
@@ -244,25 +241,38 @@ try {
             details.file-item summary:hover { background-color: #333; }
             details.file-item summary::-webkit-details-marker { display: none; }
 
+            /* The Arrow */
+            details.file-item summary::after {
+                content: '▼'; /* Standard geometric arrow */
+                font-size: 0.8rem;
+                color: #888;
+                margin-left: 10px;
+                transition: transform 0.2s ease;
+            }
+
+            /* Rotate arrow when open */
+            details.file-item[open] summary::after {
+                transform: rotate(180deg);
+            }
+
             .file-name {
                 font-weight: 500;
-                display: flex;
-                align-items: center;
-                gap: 10px;
+                /* No icons before the name */
             }
-            
-            /* Icon: Cube for 3D file */
-            .file-name::before { content: '🧊'; font-size: 1.2rem; }
-            details.file-item[open] .file-name::before { content: '📂'; }
 
             .actions {
                 display: flex;
                 gap: 15px;
                 font-size: 0.9rem;
                 align-items: center;
+                margin-left: auto; /* Push actions to the right, next to the arrow */
+                margin-right: 15px; /* Space between actions and the arrow */
             }
 
             .preview-label { color: #aaa; font-size: 0.8rem; margin-right: 5px; }
+            @media (max-width: 600px) {
+                .preview-label { display: none; } 
+            }
 
             a.download-btn {
                 color: #646cff;
@@ -278,17 +288,28 @@ try {
 
             /* --- 3D Viewer Container --- */
             .viewer-container {
-                background-color: #222;
+                background-color: #111; 
                 height: 400px;
                 width: 100%;
                 border-top: 1px solid #444;
                 position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
             }
-
-            model-viewer {
-                width: 100%;
-                height: 100%;
-                --poster-color: transparent;
+            
+            .viewer-container canvas {
+                width: 100% !important;
+                height: 100% !important;
+                outline: none;
+            }
+            
+            .loading-text {
+                position: absolute;
+                color: #888;
+                font-size: 0.9rem;
+                pointer-events: none;
             }
 
 			.back-link {
@@ -339,21 +360,12 @@ try {
                                 <summary>
                                     <span class="file-name">{file.name}</span>
                                     <div class="actions">
-                                        <span class="preview-label">▼ 3D Preview</span>
+                                        <span class="preview-label">3D Preview</span>
                                         <a href={file.url} class="download-btn" download>Download</a>
                                     </div>
                                 </summary>
-                                <div class="viewer-container">
-                                    <model-viewer
-                                        src={file.url}
-                                        alt={`A 3D model of ${file.name}`}
-                                        auto-rotate
-                                        camera-controls
-                                        loading="lazy"
-                                        shadow-intensity="1"
-                                        style="background-color: #1a1a1a;"
-                                    >
-                                    </model-viewer>
+                                <div class="viewer-container" data-stl-url={file.url}>
+                                    <span class="loading-text">Click to load 3D view...</span>
                                 </div>
                             </details>
                         ))}
@@ -365,5 +377,125 @@ try {
          <div style="margin-top: 3rem; opacity: 0.5; font-size: 0.8rem;">
              <p>Files hosted on GitHub. Updates every ~10 minutes.</p>
          </div>
+
+         <script type="module">
+            import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+            import { STLLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/STLLoader.js';
+            import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+            const viewedElements = new WeakSet();
+
+            function initViewer(container, url) {
+                if (viewedElements.has(container)) return;
+                viewedElements.add(container);
+
+                const loadingText = container.querySelector('.loading-text');
+                if (loadingText) loadingText.textContent = "Loading Model...";
+
+                // 1. Scene
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x111111);
+                
+                // 2. Camera
+                const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+                camera.position.set(0, 0, 100);
+
+                // 3. Renderer
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                container.appendChild(renderer.domElement);
+
+                // 4. Controls
+                const controls = new OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+
+                // 5. Lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 2);
+                scene.add(ambientLight);
+                
+                const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+                dirLight.position.set(1, 1, 1);
+                scene.add(dirLight);
+                
+                const dirLight2 = new THREE.DirectionalLight(0xffffff, 1);
+                dirLight2.position.set(-1, -1, 1);
+                scene.add(dirLight2);
+
+                // 6. Load STL
+                const loader = new STLLoader();
+                loader.load(
+                    url,
+                    function (geometry) {
+                        if (loadingText) loadingText.style.display = 'none';
+
+                        geometry.computeBoundingBox();
+                        const center = new THREE.Vector3();
+                        geometry.boundingBox.getCenter(center);
+                        geometry.center(); 
+
+                        const material = new THREE.MeshPhongMaterial({ 
+                            color: 0x646cff, 
+                            specular: 0x111111, 
+                            shininess: 200 
+                        });
+                        const mesh = new THREE.Mesh(geometry, material);
+                        
+                        // Rotate to stand upright
+                        mesh.rotation.x = -Math.PI / 2; 
+                        
+                        scene.add(mesh);
+
+                        // Fit Camera
+                        const box = geometry.boundingBox;
+                        const size = box.getSize(new THREE.Vector3()).length();
+                        const maxSize = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
+                        
+                        camera.position.z = maxSize * 2;
+                        camera.position.y = maxSize;
+                        camera.lookAt(0,0,0);
+                        
+                        controls.target.set(0, 0, 0);
+                        controls.update();
+
+                        function animate() {
+                            requestAnimationFrame(animate);
+                            controls.update();
+                            renderer.render(scene, camera);
+                        }
+                        animate();
+                    },
+                    (xhr) => {
+                        if (loadingText) loadingText.textContent = `Loading: ${Math.round((xhr.loaded / xhr.total) * 100)}%`;
+                    },
+                    (error) => {
+                        console.error(error);
+                        if (loadingText) {
+                            loadingText.textContent = "Error loading 3D model.";
+                            loadingText.style.color = "#ff4444";
+                        }
+                    }
+                );
+                
+                window.addEventListener('resize', () => {
+                   if (container.clientWidth > 0 && container.clientHeight > 0) {
+                       camera.aspect = container.clientWidth / container.clientHeight;
+                       camera.updateProjectionMatrix();
+                       renderer.setSize(container.clientWidth, container.clientHeight);
+                   }
+                });
+            }
+
+            document.addEventListener('toggle', function(event) {
+                if (event.target.tagName === 'DETAILS' && event.target.classList.contains('file-item')) {
+                    if (event.target.open) {
+                        const container = event.target.querySelector('.viewer-container');
+                        const url = container.getAttribute('data-stl-url');
+                        if (container && url) {
+                            setTimeout(() => initViewer(container, url), 50);
+                        }
+                    }
+                }
+            }, true);
+         </script>
 	</body>
 </html>
