@@ -14,12 +14,12 @@
         pointer-events: none;
         
         opacity: 0;
-        animation: subtleFadeIn 3s ease-in-out 3s forwards;
+        /* 1. FASTER FADE: Duration 1s, Delay reduced to 1s */
+        animation: subtleFadeIn 1s ease-in-out 1s forwards;
     }
 
     @keyframes subtleFadeIn {
         from { opacity: 0; }
-        /* 1. BRIGHTER: Increased max opacity from 0.15 to 0.3 */
         to { opacity: 0.3; } 
     }
 </style>
@@ -30,20 +30,32 @@
 
     let width, height;
     let strands = [];
+    
+    let mouseX = -1000;
+    let mouseSpeedX = 0;
 
-    // Configuration
+    window.addEventListener('mousemove', (e) => {
+        mouseSpeedX = e.movementX;
+        mouseX = e.clientX;
+    });
+
     const STRAND_COUNT = 15;
     const STRAND_COLOR = '255, 255, 255'; 
 
     class Strand {
         x: number;
-        y: number;
         length: number;
         thickness: number;
-        speed: number;
         offset: number;
         amplitude: number;
         frequency: number;
+        
+        // Physics
+        strumVal: number; 
+        strumVel: number; 
+        
+        // 2. GLOW STATE
+        highlight: number; // 0 to 1, indicates "excitement"
 
         constructor() {
             this.init();
@@ -51,31 +63,44 @@
 
         init() {
             this.x = Math.random() * width;
-            this.y = -Math.random() * height; 
-            this.length = height * (0.5 + Math.random() * 0.5); 
+            this.length = height; 
             
-            // 2. BIGGER: Doubled thickness (was * 2 + 0.5)
             this.thickness = Math.random() * 4 + 1; 
-
-            // 3. SLOWER: Halved vertical speed (was * 0.5 + 0.2)
-            this.speed = Math.random() * 0.25 + 0.1; 
             
             this.offset = Math.random() * 100; 
             this.amplitude = Math.random() * 50 + 20; 
             this.frequency = Math.random() * 0.002 + 0.001; 
+            
+            this.strumVal = 0;
+            this.strumVel = 0;
+            this.highlight = 0;
         }
 
         update() {
-            // Move down
-            this.y += this.speed;
-            
-            // 3. SLOWER: Halved sway speed (was 0.01)
             this.offset += 0.005;
 
-            // Reset if moved past bottom
-            if (this.y > height) {
-                this.init();
-                this.y = -200; 
+            // Physics (Spring)
+            const tension = 0.05; 
+            const damping = 0.95; 
+            
+            const force = -tension * this.strumVal;
+            this.strumVel += force;
+            this.strumVel *= damping; 
+            this.strumVal += this.strumVel;
+
+            // Decay the highlight (fade out the extra glow)
+            this.highlight *= 0.9; 
+
+            // Mouse Interaction
+            const dist = Math.abs(mouseX - this.x);
+            
+            if (dist < 50) {
+                // Add velocity based on mouse speed
+                this.strumVel += mouseSpeedX * 0.05;
+                
+                // 3. TRIGGER GLOW: Spike highlight to 1.0 on contact
+                // We add a little absolute value from speed to make hard hits brighter
+                this.highlight = Math.min(this.highlight + 0.2 + Math.abs(mouseSpeedX * 0.01), 1.0);
             }
         }
 
@@ -84,33 +109,40 @@
             
             ctx.beginPath();
             
-            const grad = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.length);
+            const grad = ctx.createLinearGradient(this.x, 0, this.x, height);
             grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
-            // 1. BRIGHTER: Increased alpha to 1.0 (was 0.5)
-            grad.addColorStop(0.2, `rgba(${STRAND_COLOR}, 1.0)`); 
+            grad.addColorStop(0.5, `rgba(${STRAND_COLOR}, 1.0)`); 
             grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);
 
             ctx.strokeStyle = grad;
-            ctx.lineWidth = this.thickness;
+            
+            // 4. DYNAMIC THICKNESS: Gets slightly thicker when highlighted
+            ctx.lineWidth = this.thickness + (this.highlight * 3);
             ctx.lineCap = 'round';
             
-            let startY = this.y;
-            let currentY = startY;
-            
+            const segments = 25;
+            const segmentHeight = this.length / segments;
+
             ctx.moveTo(
                 this.x + Math.sin(this.offset) * this.amplitude, 
-                startY
+                0
             );
 
-            for (let i = 0; i <= 20; i++) {
-                currentY = startY + (this.length / 20) * i;
-                const sway = Math.sin(this.offset + (i * 0.2)) * this.amplitude;
-                ctx.lineTo(this.x + sway, currentY);
+            for (let i = 0; i <= segments; i++) {
+                let currentY = segmentHeight * i;
+                
+                const ambientSway = Math.sin(this.offset + (i * 0.2)) * this.amplitude;
+                const strumEffect = this.strumVal * Math.sin((i / segments) * Math.PI);
+                
+                ctx.lineTo(this.x + ambientSway + strumEffect, currentY);
             }
 
-            // 1. BRIGHTER: Stronger glow (alpha 1.0 instead of 0.5)
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = "rgba(255, 255, 255, 1.0)";
+            // 5. DYNAMIC GLOW: Blur increases significantly based on highlight
+            // Base blur 15, adds up to 30 more (total 45) when strummed
+            ctx.shadowBlur = 15 + (this.highlight * 30);
+            
+            // Make the shadow stronger white when highlighted
+            ctx.shadowColor = `rgba(255, 255, 255, ${0.5 + this.highlight * 0.5})`;
 
             ctx.stroke();
             
@@ -138,6 +170,8 @@
             strand.update();
             strand.draw();
         });
+        
+        mouseSpeedX = 0;
 
         requestAnimationFrame(animate);
     }
