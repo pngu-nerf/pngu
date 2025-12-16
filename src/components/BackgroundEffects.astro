@@ -89,8 +89,8 @@
             // 3. STABILIZED PHYSICS (Less Wobbly)
             // Higher tension (0.1) makes it snap back faster
             // Lower damping (0.9) makes it settle/stop moving faster
-            const tension = 0.1; 
-            const damping = 0.9; 
+            const tension = 0.5; 
+            const damping = 0.2; 
             
             const force = -tension * this.strumVal;
             this.strumVel += force;
