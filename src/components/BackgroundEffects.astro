@@ -18,58 +18,62 @@
         height: 100%;
         z-index: -1;
         pointer-events: none;
-        overflow: hidden; /* Prevents scrollbars from parallax offsets */
+        overflow: hidden; 
     }
 
     #tech-canvas {
         position: absolute;
-        width: 120%; /* Wider than screen to allow parallax movement without edges showing */
+        width: 120%; 
         height: 100%;
-        left: -10%; /* Center the wider canvas */
-        
-        /* Removed CSS blur here, moved to glass overlay */
-        opacity: 0.4;
+        left: -10%; 
+        /* Slightly higher base opacity so colors pop through saturation filter */
+        opacity: 0.5;
         animation: brightenUp 2s ease-out forwards;
         will-change: opacity, transform;
     }
 
-    /* 1. THE FROSTED GLASS EFFECT */
+    /* --- APPLE "LIQUID GLASS" STYLE --- */
     #glass-overlay {
         position: absolute;
         inset: 0;
         z-index: 1;
         
-        /* The Blur */
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        /* THE KEY: High saturation + deep blur for the "liquid" look */
+        backdrop-filter: saturate(180%) blur(50px);
+        -webkit-backdrop-filter: saturate(180%) blur(50px);
 
-        /* The Frost Texture (SVG Noise) */
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+        /* Subtle white tint to give the glass substance */
+        background-color: rgba(255, 255, 255, 0.03);
+
+        /* Ultra-subtle noise texture (opacity reduced to 0.03 in SVG) */
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
         
-        /* Blend mode to make it subtle */
         mix-blend-mode: overlay;
     }
 
+    /* The Surface Sheen / Reflection */
     #glow-overlay {
         position: absolute;
         inset: 0;
-        z-index: 2; /* Sits on top of glass */
+        z-index: 2; 
+        /* Top-down light reflection gradient */
         background: linear-gradient(
             to bottom, 
-            rgba(255, 255, 255, 0.08) 0%, 
-            transparent 25%, 
-            transparent 75%, 
-            rgba(255, 255, 255, 0.08) 100%
+            rgba(255, 255, 255, 0.12) 0%,  /* Brighter top edge reflection */
+            rgba(255, 255, 255, 0.05) 10%, /* Fades quickly */
+            transparent 40%
         );
+        pointer-events: none;
     }
 
     @keyframes brightenUp {
-        from { opacity: 0.4; }
-        to { opacity: 0.8; } 
+        from { opacity: 0.5; }
+        to { opacity: 0.9; } /* Increased final brightness slightly */
     }
 </style>
 
 <script>
+    // ... (JavaScript remains exactly the same as the previous version) ...
     const canvas = document.getElementById('tech-canvas') as HTMLCanvasElement;
     const ctx = canvas.getContext('2d');
 
@@ -78,39 +82,26 @@
     const EXTENSION = 300; 
 
     // --- PARALLAX STATE ---
-    // Targets (where we want to be)
     let targetX = 0;
     let targetY = 0;
-    
-    // Current (where we are right now - for smoothing)
     let currentX = 0;
     let currentY = 0;
 
-    // Mouse Listener
     window.addEventListener('mousemove', (e) => {
-        // Normalize coordinates from -1 to 1
         const normX = (e.clientX / window.innerWidth) * 2 - 1;
         const normY = (e.clientY / window.innerHeight) * 2 - 1;
-        
-        targetX = normX * 100; // Max horizontal shift of 100px
-        targetY = normY * 30;  // Max vertical shift of 30px
+        targetX = normX * 100; 
+        targetY = normY * 30;  
     });
 
-    // Mobile Tilt Listener
     window.addEventListener('deviceorientation', (e) => {
         if (!e.gamma || !e.beta) return;
-        
-        // Gamma: Left/Right tilt (-90 to 90)
-        // Beta: Front/Back tilt (-180 to 180)
-        // Clamp values to avoid flipping at extreme angles
         const tiltX = Math.max(-45, Math.min(45, e.gamma));
         const tiltY = Math.max(-45, Math.min(45, e.beta));
-        
         targetX = (tiltX / 45) * 100;
         targetY = (tiltY / 45) * 30;
     });
     
-    // Mouse Interaction Physics (Separate from Parallax)
     let mouseX = -1000;
     let mouseSpeedX = 0;
     window.addEventListener('mousemove', (e) => {
@@ -131,11 +122,8 @@
         strumVal: number; 
         strumVel: number; 
         highlight: number;
-        
         alphaMult: number; 
         drawnDepth: number;
-        
-        // New: Parallax Factor (Front layers move more than back)
         parallaxFactor: number;
 
         constructor(index, totalStrands, layerCfg) {
@@ -143,7 +131,6 @@
         }
 
         init(index, totalStrands, layerCfg) {
-            // Adjust canvas width calculation because canvas is 120% wide
             const effectiveWidth = width * 1.2; 
             const slotWidth = effectiveWidth / totalStrands;
             const slotStart = index * slotWidth;
@@ -154,9 +141,6 @@
             this.depth = Math.random();
             this.drawnDepth = this.depth + layerCfg.zOffset;
             this.alphaMult = layerCfg.alphaMult;
-            
-            // Assign Parallax Factor based on Z-Offset
-            // Front (0) = 1.0, Middle (-1) = 0.5, Back (-2) = 0.2
             this.parallaxFactor = layerCfg.parallaxFactor;
 
             const baseThickness = (0.5 + (this.depth * 4)) * 10;
@@ -173,7 +157,6 @@
         update() {
             this.offset += 0.005;
 
-            // Physics
             const tension = 0.5; 
             const damping = 0.2; 
             const force = -tension * this.strumVal;
@@ -183,10 +166,8 @@
 
             this.highlight *= 0.9; 
 
-            // Calculate actual screen X including Parallax for interaction check
-            // We need to reverse the parallax math to check if mouse hit the drawn line
             const drawX = this.x + (currentX * this.parallaxFactor);
-            const dist = Math.abs(mouseX - (drawX - (width * 0.1))); // Adjust for canvas left -10% offset
+            const dist = Math.abs(mouseX - (drawX - (width * 0.1))); 
             
             if (dist < (150 * this.alphaMult)) { 
                 const depthImpact = 0.1 + (this.depth * 0.9);
@@ -198,18 +179,14 @@
         draw() {
             if (!ctx) return;
             
-            // APPLY PARALLAX
-            // Shift X based on smoothed global X and this layer's speed factor
-            // Shift Y slightly for subtle vertical tilt
             const finalX = this.x + (currentX * this.parallaxFactor);
-            const finalYBase = (currentY * this.parallaxFactor * 0.5); // Less vertical movement
+            const finalYBase = (currentY * this.parallaxFactor * 0.5); 
 
             ctx.beginPath();
             
             const baseMaxAlpha = 0.2 + (this.depth * 0.8);
             const finalMaxAlpha = baseMaxAlpha * this.alphaMult;
 
-            // Gradient tracks the Y shift
             const grad = ctx.createLinearGradient(finalX, -EXTENSION + finalYBase, finalX, height + EXTENSION + finalYBase);
             grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
             grad.addColorStop(0.1, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); 
@@ -249,20 +226,15 @@
     function resize() {
         width = window.innerWidth;
         height = window.innerHeight;
-        // Canvas is 120% width to hide edges during parallax
         canvas.width = width * 1.2;
         canvas.height = height;
         
         strands = [];
         const BASE_COUNT = Math.floor(Math.random() * 2) + 5;
 
-        // Layer Config with Parallax Factors
         const layers = [
-            // Back: Moves barely (0.2)
             { countMult: 2.25, thickMult: 0.25, alphaMult: 0.2, zOffset: -2, parallaxFactor: 0.2 },
-            // Middle: Moves normally (0.5)
             { countMult: 1.5,  thickMult: 0.5,  alphaMult: 0.4, zOffset: -1, parallaxFactor: 0.5 },
-            // Front: Moves a lot (1.2) - feels closest to "Camera"
             { countMult: 1.0,  thickMult: 1.0,  alphaMult: 0.8, zOffset: 0,  parallaxFactor: 1.2 }
         ];
 
@@ -277,12 +249,9 @@
     function animate() {
         if (!ctx) return;
         
-        // LERP (Linear Interpolation) for Smooth Parallax
-        // This makes the movement feel "heavy" and smooth, not instant/jittery
         currentX += (targetX - currentX) * 0.05;
         currentY += (targetY - currentY) * 0.05;
 
-        // Clear larger canvas area
         ctx.clearRect(0, 0, width * 1.2, height);
 
         strands.sort((a, b) => a.drawnDepth - b.drawnDepth);
