@@ -199,20 +199,29 @@ const assets = [
                 border-radius: 8px;
 			}
             
+			/* --- Updated Back Link Style --- */
             .back-link {
-				display: inline-block;
-				margin-top: 1rem;
-				padding: 0;
-				background-color: #272727;
-				border-radius: 6px;
-			}
-			.back-link:hover { background-color: #333333; }
-			.back-link a {
-				display: block;
-				padding: 0.5rem 1rem;
-				color: #fff;
-				text-decoration: none;
-			}
+                margin-top: 1rem;
+            }
+            
+            .back-link a {
+                display: inline-block;
+                padding: 10px 20px;
+                background-color: #272727; /* Dark Grey Background */
+                border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle Border */
+                border-radius: 8px;
+                color: #ffffff;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            }
+
+            .back-link a:hover {
+                background-color: #333333; /* Slightly Lighter on Hover */
+                border-color: rgba(255, 255, 255, 0.3); /* Brighter Border */
+                transform: translateY(-2px); /* Lift Effect */
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Shadow Drop */
+            }
 
             /* Responsive */
 			@media (max-width: 600px) {
