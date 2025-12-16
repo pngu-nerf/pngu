@@ -3,6 +3,9 @@
 ---
 <div id="bg-container">
     <canvas id="tech-canvas"></canvas>
+    
+    <div id="glass-overlay"></div>
+    
     <div id="glow-overlay"></div>
 </div>
 
@@ -15,29 +18,42 @@
         height: 100%;
         z-index: -1;
         pointer-events: none;
+        overflow: hidden; /* Prevents scrollbars from parallax offsets */
     }
 
     #tech-canvas {
         position: absolute;
-        width: 100%;
+        width: 120%; /* Wider than screen to allow parallax movement without edges showing */
         height: 100%;
+        left: -10%; /* Center the wider canvas */
         
-        /* Blur Effect */
-        filter: blur(30px);
-
-        /* Initial State */
+        /* Removed CSS blur here, moved to glass overlay */
         opacity: 0.4;
-        
-        /* Animation */
         animation: brightenUp 2s ease-out forwards;
-        will-change: opacity;
+        will-change: opacity, transform;
     }
 
-    /* New Glow Overlay */
+    /* 1. THE FROSTED GLASS EFFECT */
+    #glass-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        
+        /* The Blur */
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+
+        /* The Frost Texture (SVG Noise) */
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+        
+        /* Blend mode to make it subtle */
+        mix-blend-mode: overlay;
+    }
+
     #glow-overlay {
         position: absolute;
         inset: 0;
-        /* Linear gradient: White glow at top (0%), transparent middle, white glow at bottom (100%) */
+        z-index: 2; /* Sits on top of glass */
         background: linear-gradient(
             to bottom, 
             rgba(255, 255, 255, 0.08) 0%, 
@@ -45,8 +61,6 @@
             transparent 75%, 
             rgba(255, 255, 255, 0.08) 100%
         );
-        /* Slight blur to make the glow super soft */
-        backdrop-filter: blur(5px);
     }
 
     @keyframes brightenUp {
@@ -61,13 +75,44 @@
 
     let width, height;
     let strands = [];
-    
-    // EXTENSION: How far past the screen (top/bottom) strands extend
     const EXTENSION = 300; 
 
+    // --- PARALLAX STATE ---
+    // Targets (where we want to be)
+    let targetX = 0;
+    let targetY = 0;
+    
+    // Current (where we are right now - for smoothing)
+    let currentX = 0;
+    let currentY = 0;
+
+    // Mouse Listener
+    window.addEventListener('mousemove', (e) => {
+        // Normalize coordinates from -1 to 1
+        const normX = (e.clientX / window.innerWidth) * 2 - 1;
+        const normY = (e.clientY / window.innerHeight) * 2 - 1;
+        
+        targetX = normX * 100; // Max horizontal shift of 100px
+        targetY = normY * 30;  // Max vertical shift of 30px
+    });
+
+    // Mobile Tilt Listener
+    window.addEventListener('deviceorientation', (e) => {
+        if (!e.gamma || !e.beta) return;
+        
+        // Gamma: Left/Right tilt (-90 to 90)
+        // Beta: Front/Back tilt (-180 to 180)
+        // Clamp values to avoid flipping at extreme angles
+        const tiltX = Math.max(-45, Math.min(45, e.gamma));
+        const tiltY = Math.max(-45, Math.min(45, e.beta));
+        
+        targetX = (tiltX / 45) * 100;
+        targetY = (tiltY / 45) * 30;
+    });
+    
+    // Mouse Interaction Physics (Separate from Parallax)
     let mouseX = -1000;
     let mouseSpeedX = 0;
-
     window.addEventListener('mousemove', (e) => {
         mouseSpeedX = e.movementX;
         mouseX = e.clientX;
@@ -89,29 +134,36 @@
         
         alphaMult: number; 
         drawnDepth: number;
+        
+        // New: Parallax Factor (Front layers move more than back)
+        parallaxFactor: number;
 
         constructor(index, totalStrands, layerCfg) {
             this.init(index, totalStrands, layerCfg);
         }
 
         init(index, totalStrands, layerCfg) {
-            const slotWidth = width / totalStrands;
+            // Adjust canvas width calculation because canvas is 120% wide
+            const effectiveWidth = width * 1.2; 
+            const slotWidth = effectiveWidth / totalStrands;
             const slotStart = index * slotWidth;
+            
             this.x = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
-
-            // GEOMETRY UPDATE: Length is screen height + top extension + bottom extension
             this.length = height + (EXTENSION * 2); 
             
             this.depth = Math.random();
             this.drawnDepth = this.depth + layerCfg.zOffset;
             this.alphaMult = layerCfg.alphaMult;
+            
+            // Assign Parallax Factor based on Z-Offset
+            // Front (0) = 1.0, Middle (-1) = 0.5, Back (-2) = 0.2
+            this.parallaxFactor = layerCfg.parallaxFactor;
 
             const baseThickness = (0.5 + (this.depth * 4)) * 10;
             this.thickness = baseThickness * layerCfg.thickMult;
             
             this.offset = Math.random() * 100; 
             this.amplitude = Math.random() * 50 + 20; 
-            this.frequency = Math.random() * 0.002 + 0.001; 
             
             this.strumVal = 0;
             this.strumVel = 0;
@@ -121,9 +173,9 @@
         update() {
             this.offset += 0.005;
 
+            // Physics
             const tension = 0.5; 
             const damping = 0.2; 
-            
             const force = -tension * this.strumVal;
             this.strumVel += force;
             this.strumVel *= damping; 
@@ -131,7 +183,10 @@
 
             this.highlight *= 0.9; 
 
-            const dist = Math.abs(mouseX - this.x);
+            // Calculate actual screen X including Parallax for interaction check
+            // We need to reverse the parallax math to check if mouse hit the drawn line
+            const drawX = this.x + (currentX * this.parallaxFactor);
+            const dist = Math.abs(mouseX - (drawX - (width * 0.1))); // Adjust for canvas left -10% offset
             
             if (dist < (150 * this.alphaMult)) { 
                 const depthImpact = 0.1 + (this.depth * 0.9);
@@ -143,45 +198,44 @@
         draw() {
             if (!ctx) return;
             
+            // APPLY PARALLAX
+            // Shift X based on smoothed global X and this layer's speed factor
+            // Shift Y slightly for subtle vertical tilt
+            const finalX = this.x + (currentX * this.parallaxFactor);
+            const finalYBase = (currentY * this.parallaxFactor * 0.5); // Less vertical movement
+
             ctx.beginPath();
             
             const baseMaxAlpha = 0.2 + (this.depth * 0.8);
             const finalMaxAlpha = baseMaxAlpha * this.alphaMult;
 
-            // GRADIENT UPDATE: Covers the full extended height
-            // -EXTENSION (Top of strand) to height + EXTENSION (Bottom of strand)
-            const grad = ctx.createLinearGradient(this.x, -EXTENSION, this.x, height + EXTENSION);
-            
-            // Solid color mostly, fading only at the extreme off-screen tips
-            grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);       // Off-screen top
-            grad.addColorStop(0.1, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); // Visible top
-            grad.addColorStop(0.9, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); // Visible bottom
-            grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);       // Off-screen bottom
+            // Gradient tracks the Y shift
+            const grad = ctx.createLinearGradient(finalX, -EXTENSION + finalYBase, finalX, height + EXTENSION + finalYBase);
+            grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
+            grad.addColorStop(0.1, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); 
+            grad.addColorStop(0.9, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); 
+            grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);
 
             ctx.strokeStyle = grad;
-            
             ctx.lineWidth = this.thickness + (this.highlight * 2);
             ctx.lineCap = 'round';
             
             const segments = 25;
             const segmentHeight = this.length / segments;
-
-            // DRAW LOOP UPDATE: Start drawing from -EXTENSION (off-screen top)
-            const startY = -EXTENSION;
+            const startY = -EXTENSION + finalYBase;
 
             ctx.moveTo(
-                this.x + Math.sin(this.offset) * this.amplitude, 
+                finalX + Math.sin(this.offset) * this.amplitude, 
                 startY
             );
 
             for (let i = 0; i <= segments; i++) {
-                // Calculate Y relative to the extended start point
-                let currentY = startY + (segmentHeight * i);
+                let currentSegY = startY + (segmentHeight * i);
                 
                 const ambientSway = Math.sin(this.offset + (i * 0.2)) * this.amplitude;
                 const strumEffect = this.strumVal * Math.sin((i / segments) * Math.PI);
                 
-                ctx.lineTo(this.x + ambientSway + strumEffect, currentY);
+                ctx.lineTo(finalX + ambientSway + strumEffect, currentSegY);
             }
 
             ctx.shadowBlur = (5 + (this.highlight * 20)) * this.depth;
@@ -195,17 +249,21 @@
     function resize() {
         width = window.innerWidth;
         height = window.innerHeight;
-        canvas.width = width;
+        // Canvas is 120% width to hide edges during parallax
+        canvas.width = width * 1.2;
         canvas.height = height;
         
         strands = [];
         const BASE_COUNT = Math.floor(Math.random() * 2) + 5;
 
-        // Layer Config
+        // Layer Config with Parallax Factors
         const layers = [
-            { countMult: 2.25, thickMult: 0.25, alphaMult: 0.2, zOffset: -2 },
-            { countMult: 1.5,  thickMult: 0.5,  alphaMult: 0.4, zOffset: -1 },
-            { countMult: 1.0,  thickMult: 1.0,  alphaMult: 0.8, zOffset: 0  }
+            // Back: Moves barely (0.2)
+            { countMult: 2.25, thickMult: 0.25, alphaMult: 0.2, zOffset: -2, parallaxFactor: 0.2 },
+            // Middle: Moves normally (0.5)
+            { countMult: 1.5,  thickMult: 0.5,  alphaMult: 0.4, zOffset: -1, parallaxFactor: 0.5 },
+            // Front: Moves a lot (1.2) - feels closest to "Camera"
+            { countMult: 1.0,  thickMult: 1.0,  alphaMult: 0.8, zOffset: 0,  parallaxFactor: 1.2 }
         ];
 
         layers.forEach(layerCfg => {
@@ -218,7 +276,14 @@
 
     function animate() {
         if (!ctx) return;
-        ctx.clearRect(0, 0, width, height);
+        
+        // LERP (Linear Interpolation) for Smooth Parallax
+        // This makes the movement feel "heavy" and smooth, not instant/jittery
+        currentX += (targetX - currentX) * 0.05;
+        currentY += (targetY - currentY) * 0.05;
+
+        // Clear larger canvas area
+        ctx.clearRect(0, 0, width * 1.2, height);
 
         strands.sort((a, b) => a.drawnDepth - b.drawnDepth);
 
