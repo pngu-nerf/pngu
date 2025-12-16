@@ -1,4 +1,3 @@
-import BackgroundEffects from '../components/BackgroundEffects.astro';
 ---
 // src/pages/data.astro
 export const prerender = false;
@@ -55,6 +54,8 @@ async function getRepoFiles() {
 }
 
 // --- Main Logic ---
+import BackgroundEffects from '../components/BackgroundEffects.astro';
+
 try {
   const data = await getRepoFiles();
 
