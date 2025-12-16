@@ -52,9 +52,15 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				background-color: #272727;
 				border-radius: 12px;
 				padding: 2rem;
-				margin: 2rem 0;
+				
+				/* Narrowing to 75% and centering the box itself */
+				width: 75%;
+				margin: 2rem auto; 
+				
 				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-				text-align: left;
+				
+				/* Center text inside */
+				text-align: center;
 			}
 
 			h2 {
@@ -66,7 +72,7 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				margin-bottom: 20px;
 			}
 
-			/* --- Link Bubbles (Matches File/Contact Buttons) --- */
+			/* --- Link Bubbles --- */
 			.nav-list {
 				list-style: none;
 				padding: 0;
@@ -79,7 +85,8 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 
 			a.nav-link {
 				display: flex;
-				justify-content: space-between;
+				/* Center content horizontally */
+				justify-content: center; 
 				align-items: center;
 				background-color: #1a1a1a;
 				padding: 16px 20px;
@@ -96,11 +103,13 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				border-color: #444;
 			}
 
-			/* Left side of the link (Title + Desc) */
+			/* Link Content (Title + Desc) */
 			.link-content {
 				display: flex;
 				flex-direction: column;
 				gap: 4px;
+				/* Ensure text lines up in center */
+				align-items: center; 
 			}
 
 			.link-title {
@@ -114,18 +123,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				font-size: 0.9rem;
 			}
 
-			/* Right side arrow */
-			.arrow-icon {
-				color: #646cff;
-				font-weight: bold;
-				font-size: 1.2rem;
-			}
-            
-            a.nav-link:hover .arrow-icon {
-                color: #8289ff;
-            }
-
-            /* Social specific tweaks */
             .social-title {
                 color: #ffffff;
                 font-weight: 500;
@@ -134,8 +131,11 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
             /* Responsive */
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
-                .content-box { padding: 1.5rem; }
-				.link-desc { display: none; } /* Hide description on very small screens to save space */
+                .content-box { 
+					padding: 1.5rem; 
+					width: 100%; /* Reset width on mobile */
+				}
+				.link-desc { display: none; }
 			}
 		</style>
 	</head>
@@ -152,7 +152,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 		</div>
 
 		<div class="content-box">
-			<h2>Site Navigation</h2>
 			<ul class="nav-list">
 				<li class="nav-item">
 					<a href="/files" class="nav-link">
@@ -160,7 +159,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 							<span class="link-title">3D Files</span>
 							<span class="link-desc">STL files for 3D printing</span>
 						</div>
-						<span class="arrow-icon">&rarr;</span>
 					</a>
 				</li>
 				<li class="nav-item">
@@ -169,7 +167,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 							<span class="link-title">Blaster Data</span>
 							<span class="link-desc">Performance spreadsheets & docs</span>
 						</div>
-						<span class="arrow-icon">&rarr;</span>
 					</a>
 				</li>
 				<li class="nav-item">
@@ -178,7 +175,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 							<span class="link-title">Brand Assets</span>
 							<span class="link-desc">Logos, fonts, and branding</span>
 						</div>
-						<span class="arrow-icon">&rarr;</span>
 					</a>
 				</li>
 				<li class="nav-item">
@@ -187,7 +183,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 							<span class="link-title">Contact</span>
 							<span class="link-desc">Email & Discord info</span>
 						</div>
-						<span class="arrow-icon">&rarr;</span>
 					</a>
 				</li>
 			</ul>
@@ -199,19 +194,16 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				<li class="nav-item">
 					<a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="nav-link">
 						<span class="social-title">YouTube</span>
-						<span class="arrow-icon" style="color: #ff0000;">&nearr;</span>
 					</a>
 				</li>
 				<li class="nav-item">
 					<a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="nav-link">
 						<span class="social-title">GitHub</span>
-						<span class="arrow-icon" style="color: #ffffff;">&nearr;</span>
 					</a>
 				</li>
 				<li class="nav-item">
 					<a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="nav-link">
 						<span class="social-title">Printables</span>
-						<span class="arrow-icon" style="color: #fa6b25;">&nearr;</span>
 					</a>
 				</li>
 			</ul>
