@@ -1,5 +1,7 @@
 ---
 // src/pages/files.astro
+import BackgroundEffects from '../components/BackgroundEffects.astro';
+
 export const prerender = false;
 
 // --- Configuration ---
@@ -74,8 +76,6 @@ async function getPrintablesDescription(url: string) {
 }
 
 // --- Main Logic ---
-import BackgroundEffects from '../components/BackgroundEffects.astro';
-
 try {
   const data = await getRepoFiles();
 
@@ -334,6 +334,8 @@ try {
 		</style>
 	</head>
 	<body>
+        <BackgroundEffects />
+
 		<div class="header-box">
 			<h1>3D Printing Files</h1>
 			<p class="subtitle">Files synced from GitHub</p>
