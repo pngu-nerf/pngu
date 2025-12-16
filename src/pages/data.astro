@@ -1,5 +1,116 @@
 ---
 // src/pages/data.astro
+export const prerender = false;
+
+// --- Configuration ---
+const GITHUB_USER = 'pngu-nerf';
+const GITHUB_REPO = 'PNGU-Blaster-Data'; // Updated Repo
+const BRANCH = 'main';
+
+// --- Caching ---
+Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600, stale-while-revalidate=60');
+
+// --- Types ---
+type FileItem = {
+  name: string;
+  path: string;
+  downloadUrl: string;
+  previewUrl: string;
+};
+
+type ProjectItem = {
+  title: string;
+  files: FileItem[];
+};
+
+// --- Variables ---
+let errorMessage = "";
+let projectList: ProjectItem[] = [];
+let projects: Record<string, ProjectItem> = {};
+
+// --- Helper Functions ---
+async function getRepoFiles() {
+  const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
+  
+  try {
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'PNGU-Website',
+        'Accept': 'application/vnd.github.v3+json',
+        // 'Authorization': `token ${import.meta.env.GITHUB_TOKEN}` // Uncomment if using token
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 403) throw new Error("GitHub Rate Limit Exceeded.");
+      if (response.status === 404) throw new Error("Repository not found.");
+      throw new Error(`GitHub API Error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (e: any) {
+    console.error("Fetch Error:", e.message);
+    throw e;
+  }
+}
+
+// --- Main Logic ---
+try {
+  const data = await getRepoFiles();
+
+  if (data && data.tree) {
+    for (const item of data.tree) {
+      if (item.type === 'blob') {
+        const pathParts = item.path.split('/');
+        
+        // Ensure it is inside a subfolder
+        if (pathParts.length > 1) {
+          const folderName = pathParts[0];
+          const fileName = pathParts[pathParts.length - 1];
+          const lowerName = fileName.toLowerCase();
+
+          // Initialize Project
+          if (!projects[folderName]) {
+            projects[folderName] = {
+              title: folderName,
+              files: []
+            };
+          }
+
+          // Check for Excel or Word files
+          if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls') || 
+              lowerName.endsWith('.docx') || lowerName.endsWith('.doc')) {
+            
+            const rawUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`;
+            
+            // Generate Microsoft Office Viewer URL
+            const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+
+            projects[folderName].files.push({
+              name: fileName,
+              path: item.path,
+              downloadUrl: rawUrl,
+              previewUrl: officeViewerUrl
+            });
+          }
+        }
+      }
+    }
+
+    // Sort files and remove empty folders
+    projectList = Object.values(projects)
+        .map(p => {
+            p.files.sort((a, b) => a.name.localeCompare(b.name));
+            return p;
+        })
+        .filter(p => p.files.length > 0);
+
+  } else {
+      errorMessage = "Received empty data from GitHub.";
+  }
+} catch (error: any) {
+  errorMessage = error.message;
+}
 ---
 
 <html lang="en">
@@ -7,96 +118,198 @@
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
-		<title>Blaster Database | PNGU</title>
+		<title>Blaster Data | PNGU</title>
 		<style>
-			body { 
-				font-family: sans-serif; 
+			body {
+				font-family: sans-serif;
 				padding: 2rem;
 				text-align: center;
-				max-width: 600px;
+				max-width: 900px;
 				margin: 0 auto;
 				background-color: #0f0f0f;
 				color: #ffffff;
 			}
 			
+			.header-box {
+				text-align: center;
+				margin-bottom: 3rem;
+			}
+
 			.content-box {
 				background-color: #272727;
 				border-radius: 12px;
 				padding: 2rem;
 				margin: 2rem 0;
 				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+				text-align: left;
 			}
-			
-			a { 
-				color: #ffffff; 
-				text-decoration: none; 
-				font-weight: 500;
-			}
-			
-			a:hover { 
-				text-decoration: underline;
-				color: #e0e0e0;
-			}
-			
-			h1 {
-				margin-top: 0;
-				color: #ffffff;
-				font-size: 2.5rem;
-				margin-bottom: 1.5rem;
-			}
-			
-			p {
-				color: #e0e0e0;
-				line-height: 1.6;
-				font-size: 1.1rem;
-				margin-bottom: 1.5rem;
-			}
-			
+
+			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
+			h2 { color: #ffffff; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
+			.subtitle { color: #a0a0a0; font-size: 1.2rem; }
+
 			.back-link {
 				display: inline-block;
 				margin-top: 1rem;
-				padding: 0;
 				background-color: #272727;
 				border-radius: 6px;
 			}
-			
-			.back-link:hover {
-				background-color: #333333;
-			}
-			
-			/* Make the back link anchor fill its container too */
 			.back-link a {
 				display: block;
 				padding: 0.5rem 1rem;
-				border-radius: 6px;
-			}
-			
-			.back-link a:hover {
+				color: #fff;
 				text-decoration: none;
-				background-color: #333333;
 			}
-			
-			/* Add some personality */
-			.highlight {
-				color: #646cff;
-				font-weight: bold;
-			}
-			
-			.subtitle {
-				color: #a0a0a0;
-				font-size: 1.2rem;
-				margin-bottom: 2rem;
-			}
+			.back-link:hover { background-color: #333; }
+
+            /* --- File List & Preview Styling --- */
+            .file-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            /* Each file is now a details element */
+            details.file-item {
+                background-color: #1a1a1a;
+                margin-bottom: 10px;
+                border-radius: 6px;
+                overflow: hidden;
+                border: 1px solid transparent;
+                transition: border-color 0.2s;
+            }
+
+            details.file-item[open] {
+                border-color: #444;
+            }
+
+            summary {
+                padding: 12px 16px;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                list-style: none;
+                background-color: #1a1a1a;
+            }
+
+            summary:hover {
+                background-color: #333;
+            }
+            
+            /* Remove default details marker */
+            summary::-webkit-details-marker { display: none; }
+
+            .file-name {
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            /* Add an icon or arrow */
+            .file-name::before {
+                content: '📄'; 
+                font-size: 1.2rem;
+            }
+            
+            details[open] .file-name::before {
+                content: '📂';
+            }
+
+            .actions {
+                display: flex;
+                gap: 15px;
+                font-size: 0.9rem;
+            }
+
+            .preview-label {
+                color: #aaa;
+                font-size: 0.8rem;
+                margin-right: 5px;
+            }
+
+            a.download-btn {
+                color: #646cff;
+                text-decoration: none;
+                font-weight: bold;
+                padding: 4px 8px;
+                border: 1px solid #646cff;
+                border-radius: 4px;
+                transition: all 0.2s;
+            }
+
+            a.download-btn:hover {
+                background-color: #646cff;
+                color: #fff;
+            }
+
+            /* The Preview Window */
+            .preview-container {
+                background-color: #fff;
+                height: 500px; /* Fixed height for preview */
+                width: 100%;
+                border-top: 1px solid #444;
+            }
+
+            iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+
+            .error-box {
+                background-color: #3f1a1a;
+                border: 1px solid #ff4444;
+                color: #ffcccc;
+                padding: 1rem;
+                border-radius: 8px;
+            }
 		</style>
 	</head>
 	<body>
-		<div class="content-box">
+		<div class="header-box">
 			<h1>Blaster Data</h1>
-			<p class="subtitle">Nothing to see yet...</p>
-			
-			
-			
+			<p class="subtitle">Spreadsheets & Docs</p>
 			<p class="back-link"><a href="/">← Back to Home</a></p>
 		</div>
+
+        {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
+
+        {projectList.length === 0 && !errorMessage ? (
+            <div class="content-box" style="text-align: center;">
+                <p>No spreadsheets or documents found.</p>
+            </div>
+        ) : (
+            projectList.map((item) => (
+                <div class="content-box">
+                    <h2>{item.title}</h2>
+                    <div class="file-list">
+                        {item.files.map((file) => (
+                            <details class="file-item">
+                                <summary>
+                                    <span class="file-name">{file.name}</span>
+                                    <div class="actions">
+                                        <span class="preview-label">▼ Click to Preview</span>
+                                        <a href={file.downloadUrl} class="download-btn" download>Download</a>
+                                    </div>
+                                </summary>
+                                <div class="preview-container">
+                                    <iframe 
+                                        src={file.previewUrl} 
+                                        frameborder="0"
+                                        title={`Preview of ${file.name}`}>
+                                    </iframe>
+                                </div>
+                            </details>
+                        ))}
+                    </div>
+                </div>
+            ))
+        )}
+        
+        <div style="margin-top: 3rem; opacity: 0.5; font-size: 0.8rem;">
+             <p>Powered by Microsoft Office Online Viewer.</p>
+        </div>
 	</body>
 </html>
