@@ -198,7 +198,7 @@ try {
                 /* Desktop Width */
 				width: 75%;
 				margin: 2rem auto; 
-                
+				
 				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 				text-align: left;
 
@@ -271,21 +271,17 @@ try {
             /* --- File List Styling --- */
             .file-list { list-style: none; padding: 0; margin: 0; }
 
-            /* User Request: Keep file buttons OPAQUE dark grey.
-               We use #1a1a1a solid color here.
-            */
             details.file-item {
                 background-color: #1a1a1a; 
                 margin-bottom: 10px;
                 border-radius: 12px;
                 overflow: hidden;
-                border: 1px solid rgba(255,255,255,0.05); /* Subtle border for definition */
+                border: 1px solid rgba(255,255,255,0.05); 
                 transition: border-color 0.2s, transform 0.2s;
             }
 
             details.file-item[open] { border-color: rgba(255,255,255,0.2); }
             
-            /* Slight hover effect on the item itself */
             details.file-item:hover {
                 border-color: rgba(255,255,255,0.2);
                 transform: translateY(-1px);
@@ -298,13 +294,12 @@ try {
                 justify-content: space-between;
                 align-items: center;
                 list-style: none;
-                background-color: #1a1a1a; /* Solid Opaque */
+                background-color: #1a1a1a;
             }
 
             details.file-item summary:hover { background-color: #252525; }
             details.file-item summary::-webkit-details-marker { display: none; }
 
-            /* The Arrow */
             details.file-item summary::after {
                 content: '▼'; 
                 font-size: 0.8rem;
@@ -313,7 +308,6 @@ try {
                 transition: transform 0.2s ease;
             }
 
-            /* Rotate arrow when open */
             details.file-item[open] summary::after {
                 transform: rotate(180deg);
             }
@@ -392,6 +386,27 @@ try {
                 color: #fff; text-decoration: none;
 			}
             
+            /* --- Github Button Style --- */
+            .github-direct-btn {
+                display: inline-block;
+                margin-top: 10px;
+                padding: 10px 20px;
+                background-color: #272727;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 8px;
+                color: #fff;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            
+            .github-direct-btn:hover {
+                background-color: #333;
+                border-color: rgba(255,255,255,0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+            
             /* Responsive */
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
@@ -409,7 +424,7 @@ try {
 
         <div class="header-box">
 			<h1>3D Printing Files</h1>
-			<p class="subtitle">Click to preview before downloading</p>
+			<p class="subtitle">Files synced from GitHub</p>
 			<p class="back-link"><a href="/">← Back to Home</a></p>
 		</div>
 
@@ -453,9 +468,14 @@ try {
              ))
          )}
          
-         <div style="margin-top: 3rem; opacity: 0.5; font-size: 0.8rem;">
-             <p>Files hosted on GitHub. Updates every ~10 minutes.</p>
+         <div style="margin-top: 3rem; text-align: center;">
+             <p style="opacity: 0.5; font-size: 0.8rem; margin-bottom: 0.5rem;">Files hosted on GitHub. Updates every ~10 minutes.</p>
+             <a href={`https://github.com/${GITHUB_USER}/${GITHUB_REPO}`} target="_blank" class="github-direct-btn">
+                 Access GitHub Directly &rarr;
+             </a>
          </div>
+         
+         <div style="height: 40px;"></div>
 
          <script type="importmap">
             {
