@@ -1,6 +1,11 @@
 ---
 // src/pages/index.astro
 import BackgroundEffects from '../components/BackgroundEffects.astro';
+
+// --- Joke Image Logic (Build Time) ---
+// This grabs all files in the folder and creates a list of URLs
+const jokeFiles = import.meta.glob('/public/site-assets/Joke Images/*.{jpg,jpeg,png,webp,gif}');
+const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public', ''));
 ---
 
 <html lang="en">
@@ -40,7 +45,8 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				margin-bottom: 2rem;
 				display: flex;
 				justify-content: center;
-                padding: 0 10px; /* Slight buffer on mobile */
+                padding: 0 10px;
+                position: relative; /* Essential for absolute positioning of joke image */
 			}
 			
 			.banner-image {
@@ -50,11 +56,32 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 				display: block;
                 transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
+                cursor: pointer; /* Suggests clickability */
 			}
 
             .banner-image:hover {
                 transform: scale(1.015) translateY(-2px);
                 box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            }
+            
+            /* --- Joke Image Styling --- */
+            #joke-overlay {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%); /* Center horizontally */
+                
+                /* Constrain by vertical edges */
+                height: 100%; 
+                width: auto;
+                
+                border-radius: 12px;
+                pointer-events: none; /* Let clicks pass through so you can click banner again */
+                opacity: 0;
+                z-index: 10;
+                
+                /* Default transition for the fade out */
+                transition: opacity 3s ease-out;
             }
 
 			.content-box {
@@ -66,7 +93,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				border-radius: 16px;
 				padding: 2rem;
 				
-                /* Desktop Width */
 				width: 75%;
 				margin: 2rem auto; 
 				
@@ -143,7 +169,7 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
                 text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             }
 
-            /* --- 2. Mobile Specific Fixes --- */
+            /* --- Mobile Specific Fixes --- */
 			@media (max-width: 600px) {
 				body { 
                     padding: 1rem; 
@@ -151,13 +177,10 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
                 
                 .content-box { 
 					padding: 1.5rem; 
-					
-                    /* Force full width on mobile */
                     width: 100%; 
                     margin: 1.5rem 0;
 				}
 				
-                /* Reduce banner bottom margin on mobile */
                 .banner-container {
                     margin-bottom: 1rem;
                     padding: 0;
@@ -171,12 +194,13 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 		<div id="bg-layer"></div>
 		<BackgroundEffects />
 
-		<div class="banner-container">
+		<div class="banner-container" id="banner-trigger">
 			<img 
 				src="/site-assets/Site Banner.jpg" 
 				alt="PNGU Banner"
 				class="banner-image"
 			/>
+            <img src="" id="joke-overlay" alt="Surprise" />
 		</div>
 
 		<div class="content-box">
@@ -238,5 +262,85 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 		</div>
 
 		<div style="height: 40px;"></div>
+
+        <script define:vars={{ jokeImageUrls }}>
+            // 1. Setup
+            const bannerTrigger = document.getElementById('banner-trigger');
+            const jokeOverlay = document.getElementById('joke-overlay');
+            
+            // Queue state
+            let imageQueue = [];
+            let isAnimating = false;
+            let fadeOutTimeout = null;
+
+            // 2. Fisher-Yates Shuffle Algorithm
+            function shuffle(array) {
+                let currentIndex = array.length, randomIndex;
+                // While there remain elements to shuffle.
+                while (currentIndex > 0) {
+                    // Pick a remaining element.
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    // And swap it with the current element.
+                    [array[currentIndex], array[randomIndex]] = [
+                        array[randomIndex], array[currentIndex]];
+                }
+                return array;
+            }
+
+            // 3. Get Next Image Logic
+            function getNextImage() {
+                // If queue is empty, refill it with a fresh shuffle of ALL images
+                if (imageQueue.length === 0) {
+                    if (jokeImageUrls.length === 0) return null; // Safety check
+                    imageQueue = shuffle([...jokeImageUrls]);
+                    console.log("Refilled Joke Queue:", imageQueue);
+                }
+                return imageQueue.pop();
+            }
+
+            // 4. Click Handler
+            if (bannerTrigger && jokeOverlay && jokeImageUrls.length > 0) {
+                bannerTrigger.addEventListener('click', () => {
+                    // Prevent spam clicking while the "show" phase is active? 
+                    // Optional: Remove this check if you want spamming to just reset the timer
+                    if (isAnimating) {
+                        // If already showing, just clear the fade out timer and restart the 2s hold
+                        clearTimeout(fadeOutTimeout);
+                    }
+
+                    const nextImg = getNextImage();
+                    if (!nextImg) return;
+
+                    // Set Image
+                    jokeOverlay.src = nextImg;
+                    isAnimating = true;
+
+                    // Phase 1: Appear Instantly (Fast transition)
+                    // We remove the slow transition class temporarily
+                    jokeOverlay.style.transition = 'opacity 0.1s ease-in';
+                    
+                    // Force reflow to ensure transition update applies
+                    void jokeOverlay.offsetWidth; 
+                    
+                    jokeOverlay.style.opacity = '1';
+
+                    // Phase 2: Wait 2 seconds, then Fade Out
+                    fadeOutTimeout = setTimeout(() => {
+                        // Phase 3: Fade out slowly (3s)
+                        jokeOverlay.style.transition = 'opacity 3s ease-out';
+                        jokeOverlay.style.opacity = '0';
+                        
+                        // Reset animating flag after fade completes
+                        setTimeout(() => {
+                            isAnimating = false;
+                        }, 3000);
+                        
+                    }, 2000); // 2 seconds hold
+                });
+            } else {
+                console.log("No joke images found or elements missing.");
+            }
+        </script>
 	</body>
 </html>
