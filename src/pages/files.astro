@@ -99,7 +99,6 @@ try {
           }
 
           if (fileName.toLowerCase().endsWith('.stl')) {
-            // FIX: Encode path parts individually to preserve slashes
             const safePath = item.path.split('/').map(encodeURIComponent).join('/');
             
             projects[folderName].files.push({
@@ -160,13 +159,18 @@ try {
 		<title>3D Files | PNGU</title>
 
 		<style>
+            /* MOVED BACKGROUND COLOR TO HTML so the negative z-index canvas shows */
+            html {
+                background-color: #0f0f0f;
+            }
+
 			body {
 				font-family: sans-serif;
 				padding: 2rem;
 				text-align: center;
 				max-width: 900px;
 				margin: 0 auto;
-				background-color: #0f0f0f;
+				background-color: transparent; /* Changed from #0f0f0f */
 				color: #ffffff;
 			}
 			
