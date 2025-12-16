@@ -97,7 +97,7 @@ try {
           if (!projects[folderName]) {
             projects[folderName] = {
               title: folderName,
-              description: "Loading...",
+              description: "Loading...", // Default state
               printablesUrl: null,
               files: []
             };
@@ -120,18 +120,33 @@ try {
                 projects[folderName].printablesUrl = rawUrl.trim();
              }
           }
+
+          // NEW: Handle "description" file
+          // Checks for "description", "description.txt", "description.md"
+          if (fileName.toLowerCase().startsWith('description')) {
+             const rawDescRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`);
+             if (rawDescRes.ok) {
+                 const rawDesc = await rawDescRes.text();
+                 projects[folderName].description = rawDesc.trim();
+             }
+          }
         }
       }
     }
 
-    // 2. Fetch Descriptions (Parallel)
+    // 2. Finalize Descriptions (Parallel)
     await Promise.all(
       Object.values(projects).map(async (project) => {
-        if (project.printablesUrl) {
-          project.description = await getPrintablesDescription(project.printablesUrl);
-        } else {
-          project.description = "No Printables link found in folder.";
+        // Only fetch from Printables if we DID NOT find a local description file
+        if (project.description === "Loading...") {
+            if (project.printablesUrl) {
+                project.description = await getPrintablesDescription(project.printablesUrl);
+            } else {
+                project.description = "No description available.";
+            }
         }
+        
+        // Sort files alphabetically
         project.files.sort((a, b) => a.name.localeCompare(b.name));
       })
     );
@@ -237,6 +252,7 @@ try {
                 color: #ccc;
                 font-size: 0.95rem;
                 border-top: 1px solid #444;
+                white-space: pre-wrap; /* Preserves newlines from your text file */
             }
 
             /* --- Updated File List Styling --- */
