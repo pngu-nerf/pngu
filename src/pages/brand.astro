@@ -1,3 +1,18 @@
+---
+// src/pages/brand.astro
+// No fetch logic needed since files are local, but we organize them in data for cleaner HTML.
+
+const assets = [
+  { name: "Logo White (SVG)", path: "/brand-assets/PNGU logo white.svg", type: "image" },
+  { name: "Logo Black (SVG)", path: "/brand-assets/PNGU logo black.svg", type: "image" },
+  { name: "Profile Image", path: "/brand-assets/Youtube Profile.png", type: "image" },
+  { name: "Brand Youtube Banner", path: "/brand-assets/Youtube Banner.jpg", type: "image" },
+  { name: "Brand Font (OTF)", path: "/brand-assets/Jump Winter.otf", type: "font" },
+  { name: "Brand Font (TTF)", path: "/brand-assets/Jump Winter.ttf", type: "font" },
+];
+
+---
+
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
@@ -5,74 +20,22 @@
 		<meta name="viewport" content="width=device-width" />
 		<title>Brand | PNGU</title>
 		<style>
-			body { 
-				font-family: sans-serif; 
+			body {
+				font-family: sans-serif;
 				padding: 2rem;
 				text-align: center;
-				max-width: 600px;
+				max-width: 900px; /* Matches other pages */
 				margin: 0 auto;
 				background-color: #0f0f0f;
 				color: #ffffff;
 			}
 			
-			.content-box {
-				background-color: #272727;
-				border-radius: 12px;
-				padding: 2rem;
-				margin: 2rem 0;
-				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-			}
+			/* --- Header Styling --- */
+			.header-box { text-align: center; margin-bottom: 3rem; }
 			
-			a { 
-				color: #ffffff; 
-				text-decoration: none; 
-				font-weight: 500;
-			}
-			
-			a:hover { 
-				text-decoration: underline;
-				color: #e0e0e0;
-			}
-			
-			.asset-list {
-				list-style-type: none;
-				padding: 0;
-				margin: 1.5rem 0;
-			}
-			
-			.asset-list li {
-				margin: 0.75rem 0;
-				padding: 0;
-				background-color: rgba(255, 255, 255, 0.05);
-				border-radius: 6px;
-				transition: background-color 0.2s ease;
-			}
-			
-			.asset-list li:hover {
-				background-color: rgba(255, 255, 255, 0.1);
-			}
-			
-			/* Make the anchor fill the entire list item */
-			.asset-list li a {
-				display: block;
-				padding: 0.75rem 1rem;
-				border-radius: 6px;
-			}
-			
-			.asset-list li a:hover {
-				text-decoration: none;
-				background-color: rgba(255, 255, 255, 0.1);
-			}
-			
-			h1 {
-				margin-top: 0;
-				color: #ffffff;
-			}
-			
-			p {
-				color: #e0e0e0;
-			}
-			
+			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
+			.subtitle { color: #a0a0a0; font-size: 1.2rem; }
+
 			.back-link {
 				display: inline-block;
 				margin-top: 1rem;
@@ -80,38 +43,148 @@
 				background-color: #272727;
 				border-radius: 6px;
 			}
-			
-			.back-link:hover {
-				background-color: #333333;
-			}
-			
-			/* Make the back link anchor fill its container too */
+			.back-link:hover { background-color: #333333; }
 			.back-link a {
 				display: block;
 				padding: 0.5rem 1rem;
-				border-radius: 6px;
+				color: #fff; text-decoration: none;
+			}
+
+			/* --- Content Box --- */
+			.content-box {
+				background-color: #272727;
+				border-radius: 12px;
+				padding: 2rem;
+				margin: 2rem 0;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+				text-align: left;
 			}
 			
-			.back-link a:hover {
+			h2 { color: #ffffff; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; }
+
+			/* --- List & Dropdown Styling --- */
+			.file-list { list-style: none; padding: 0; margin: 0; }
+
+			details.file-item {
+				background-color: #1a1a1a;
+				margin-bottom: 10px;
+				border-radius: 6px;
+				overflow: hidden;
+				border: 1px solid transparent;
+				transition: border-color 0.2s;
+			}
+
+			details.file-item[open] { border-color: #444; }
+
+			details.file-item summary {
+				padding: 12px 16px;
+				cursor: pointer;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				list-style: none;
+				background-color: #1a1a1a;
+			}
+
+			details.file-item summary:hover { background-color: #333; }
+			details.file-item summary::-webkit-details-marker { display: none; }
+
+			/* The Arrow */
+			details.file-item summary::after {
+				content: '▼'; 
+				font-size: 0.8rem;
+				color: #888;
+				margin-left: 10px;
+				transition: transform 0.2s ease;
+			}
+
+			details.file-item[open] summary::after { transform: rotate(180deg); }
+
+			.file-name { font-weight: 500; }
+
+			.actions {
+				display: flex;
+				gap: 15px;
+				font-size: 0.9rem;
+				align-items: center;
+				margin-left: auto; 
+				margin-right: 15px;
+			}
+
+			.preview-label { color: #aaa; font-size: 0.8rem; margin-right: 5px; }
+			@media (max-width: 600px) {
+				.preview-label { display: none; } 
+			}
+
+			a.download-btn {
+				color: #646cff;
 				text-decoration: none;
-				background-color: #333333;
+				font-weight: bold;
+				padding: 4px 8px;
+				border: 1px solid #646cff;
+				border-radius: 4px;
+				transition: all 0.2s;
+			}
+
+			a.download-btn:hover { background-color: #646cff; color: #fff; }
+
+			/* --- Preview Container --- */
+			.preview-container {
+				background-color: #555; /* Mid-grey to see both Black and White logos */
+				min-height: 200px;
+				width: 100%;
+				border-top: 1px solid #444;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 2rem;
+				box-sizing: border-box;
+			}
+
+			.preview-container img {
+				max-width: 100%;
+				max-height: 300px;
+				object-fit: contain;
+				box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+			}
+
+			.no-preview {
+				color: #ccc;
+				font-style: italic;
 			}
 		</style>
 	</head>
 	<body>
-		<div class="content-box">
+		<div class="header-box">
 			<h1>Brand Assets</h1>
-			
-			<ul class="asset-list">
-				<li><a href="/brand-assets/PNGU logo white.svg" download>Logo White (SVG)</a></li>
-				<li><a href="/brand-assets/PNGU logo black.svg" download>Logo Black (SVG)</a></li>
-				<li><a href="/brand-assets/Youtube Profile.png" download>Profile Image</a></li>
-				<li><a href="/brand-assets/Youtube Banner.jpg" download>Brand Youtube Banner</a></li>
-				<li><a href="/brand-assets/Jump Winter.otf" download>Brand Font (OTF)</a></li>
-				<li><a href="/brand-assets/Jump Winter.ttf" download>Brand Font (TTF)</a></li>
-			</ul>
-			
+			<p class="subtitle">Logos, Banners & Fonts</p>
 			<p class="back-link"><a href="/">← Back to Home</a></p>
+		</div>
+
+		<div class="content-box">
+			<h2>Downloads</h2>
+			
+			<div class="file-list">
+				{assets.map((asset) => (
+					<details class="file-item">
+						<summary>
+							<span class="file-name">{asset.name}</span>
+							<div class="actions">
+								{asset.type === 'image' && <span class="preview-label">Click to Preview</span>}
+								<a href={asset.path} class="download-btn" download>Download</a>
+							</div>
+						</summary>
+						
+						<div class="preview-container">
+							{asset.type === 'image' ? (
+								<img src={asset.path} alt={`Preview of ${asset.name}`} loading="lazy" />
+							) : (
+								<p class="no-preview">Preview not available for font files. Please download to view.</p>
+							)}
+						</div>
+					</details>
+				))}
+			</div>
 		</div>
 	</body>
 </html>
