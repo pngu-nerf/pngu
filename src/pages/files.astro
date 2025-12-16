@@ -1,6 +1,6 @@
 ---
 // src/pages/files.astro
-export const prerender = false; // Enables Server Side Rendering for auto-sync
+export const prerender = false; // Enables Server Side Rendering
 
 // --- Configuration ---
 const GITHUB_USER = 'pngu-nerf';
@@ -8,8 +8,6 @@ const GITHUB_REPO = 'PNGU-3D-Files';
 const BRANCH = 'main';
 
 // --- Caching Strategy ---
-// Tells the browser/CDN to cache this page for 10 minutes (600 seconds)
-// This prevents hitting GitHub rate limits while keeping the site relatively fresh.
 Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600, stale-while-revalidate=60');
 
 // --- Types ---
@@ -26,103 +24,127 @@ type ProjectItem = {
   files: FileItem[];
 };
 
+// --- Variables ---
+let errorMessage = "";
+let projects: Record<string, ProjectItem> = {};
+let projectList: ProjectItem[] = [];
+
 // --- Helper Functions ---
 
-// 1. Fetch the Repo Tree
 async function getRepoFiles() {
+  const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
+  console.log(`Fetching: ${apiUrl}`); // Debug log
+
   try {
-    const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`);
-    if (!response.ok) return null;
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'PNGU-Website', // GitHub requires a User-Agent
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 403) throw new Error("GitHub Rate Limit Exceeded. Try again in an hour.");
+      if (response.status === 404) throw new Error("Repository not found. Check repo name/visibility.");
+      throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
+    }
+
     return await response.json();
-  } catch (e) {
-    console.error("GitHub API Error:", e);
-    return null;
+  } catch (e: any) {
+    console.error("Fetch Error:", e.message);
+    throw e;
   }
 }
 
-// 2. Scrape Description from Printables
-async function getPrintablesDescription(url) {
+async function getPrintablesDescription(url: string) {
   if (!url) return "No description available.";
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, {
+        headers: { 'User-Agent': 'PNGU-Website' }
+    });
+    if (!res.ok) return "Could not fetch description from Printables.";
+    
     const html = await res.text();
-    // Simple Regex to find the meta description to avoid installing heavy parsing libraries
     const match = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i) || 
                   html.match(/<meta\s+property="og:description"\s+content="([^"]*)"/i);
     
     if (match && match[1]) {
-        // Decode HTML entities usually found in meta tags
         return match[1].replace(/&quot;/g, '"').replace(/&#39;/g, "'");
     }
-    return "Could not load description. Click the link file to view on Printables.";
+    return "Could not load description. Click the link to view on Printables.";
   } catch (e) {
-    return "Error loading description from Printables.";
+    return "Error loading description.";
   }
 }
 
 // --- Main Logic ---
 
-const data = await getRepoFiles();
-const projects: Record<string, ProjectItem> = {};
+try {
+  const data = await getRepoFiles();
 
-if (data && data.tree) {
-  // 1. Group files by Folder
-  for (const item of data.tree) {
-    if (item.type === 'blob') { // It's a file
-      const pathParts = item.path.split('/');
-      
-      // We only care if it's inside a subfolder (Folder/File)
-      if (pathParts.length > 1) {
-        const folderName = pathParts[0];
-        const fileName = pathParts[pathParts.length - 1];
-
-        // Initialize Project Object if strictly new
-        if (!projects[folderName]) {
-          projects[folderName] = {
-            title: folderName,
-            description: "Loading description...",
-            printablesUrl: null,
-            files: []
-          };
-        }
-
-        // Handle ".stl" files
-        if (fileName.toLowerCase().endsWith('.stl')) {
-          projects[folderName].files.push({
-            name: fileName,
-            path: item.path,
-            // Create raw download link
-            url: `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/raw/${BRANCH}/${encodeURIComponent(item.path)}` 
-          });
-        }
+  if (data && data.tree) {
+    // 1. Group files by Folder
+    for (const item of data.tree) {
+      if (item.type === 'blob') { 
+        const pathParts = item.path.split('/');
         
-        // Handle "link" file
-        if (fileName.toLowerCase().includes('link')) {
-             // Fetch the content of the link file from GitHub
+        // Only process if it is inside a subfolder (Folder/File)
+        if (pathParts.length > 1) {
+          const folderName = pathParts[0];
+          const fileName = pathParts[pathParts.length - 1];
+
+          // Initialize Project Object
+          if (!projects[folderName]) {
+            projects[folderName] = {
+              title: folderName,
+              description: "Loading...",
+              printablesUrl: null,
+              files: []
+            };
+          }
+
+          // Handle ".stl" files
+          if (fileName.toLowerCase().endsWith('.stl')) {
+            projects[folderName].files.push({
+              name: fileName,
+              path: item.path,
+              url: `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/raw/${BRANCH}/${encodeURIComponent(item.path)}` 
+            });
+          }
+          
+          // Handle "link" file
+          if (fileName.toLowerCase().includes('link')) {
              const rawLinkRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`);
-             const rawUrl = await rawLinkRes.text();
-             projects[folderName].printablesUrl = rawUrl.trim();
+             if (rawLinkRes.ok) {
+                const rawUrl = await rawLinkRes.text();
+                projects[folderName].printablesUrl = rawUrl.trim();
+             }
+          }
         }
       }
     }
+
+    // 2. Fetch Descriptions (Parallel)
+    await Promise.all(
+      Object.values(projects).map(async (project) => {
+        if (project.printablesUrl) {
+          project.description = await getPrintablesDescription(project.printablesUrl);
+        } else {
+          project.description = "No Printables link found in folder.";
+        }
+        project.files.sort((a, b) => a.name.localeCompare(b.name));
+      })
+    );
+    
+    // Filter out folders that have no STL files
+    projectList = Object.values(projects).filter(p => p.files.length > 0);
+
+  } else {
+      errorMessage = "Received empty data from GitHub.";
   }
-
-  // 2. Fetch Descriptions (in parallel to be faster)
-  await Promise.all(
-    Object.values(projects).map(async (project) => {
-      if (project.printablesUrl) {
-        project.description = await getPrintablesDescription(project.printablesUrl);
-      } else {
-        project.description = "No Printables link found in folder.";
-      }
-      // Sort files alphabetically
-      project.files.sort((a, b) => a.name.localeCompare(b.name));
-    })
-  );
+} catch (error: any) {
+  errorMessage = error.message;
 }
-
-// Convert object to array for rendering
-const projectList = Object.values(projects);
 ---
 
 <html lang="en">
@@ -136,25 +158,33 @@ const projectList = Object.values(projects);
 				font-family: sans-serif;
 				padding: 2rem;
 				text-align: center;
-				max-width: 800px; /* Widened slightly for file lists */
+				max-width: 800px;
 				margin: 0 auto;
 				background-color: #0f0f0f;
 				color: #ffffff;
 			}
 			
-			/* Item Block Styling */
 			.content-box {
 				background-color: #272727;
 				border-radius: 12px;
 				padding: 2rem;
 				margin: 2rem 0;
 				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-				text-align: left; /* Align content inside boxes to left */
+				text-align: left;
 			}
 
             .header-box {
                 text-align: center;
                 margin-bottom: 3rem;
+            }
+            
+            .error-box {
+                background-color: #3f1a1a;
+                border: 1px solid #ff4444;
+                color: #ffcccc;
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 2rem;
             }
 			
 			h1 {
@@ -178,7 +208,6 @@ const projectList = Object.values(projects);
 				font-size: 1.2rem;
 			}
 
-            /* Dropdown Styling */
             details {
                 background-color: #1f1f1f;
                 border-radius: 8px;
@@ -192,26 +221,15 @@ const projectList = Object.values(projects);
                 font-weight: bold;
                 color: #e0e0e0;
                 background-color: #333;
-                list-style: none; /* Hides default triangle in some browsers */
+                list-style: none;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
             }
             
-            summary::after {
-                content: '+'; 
-                font-size: 1.2rem;
-                font-weight: bold;
-            }
-            
-            details[open] summary::after {
-                content: '-';
-            }
-
-            /* Hides default marker in Chrome/Safari */
-            summary::-webkit-details-marker {
-                display: none;
-            }
+            summary::after { content: '+'; font-size: 1.2rem; font-weight: bold; }
+            details[open] summary::after { content: '-'; }
+            summary::-webkit-details-marker { display: none; }
 
             .description-content {
                 padding: 1rem;
@@ -221,7 +239,6 @@ const projectList = Object.values(projects);
                 border-top: 1px solid #444;
             }
 
-            /* File List Styling */
             .file-list {
                 list-style: none;
                 padding: 0;
@@ -239,9 +256,7 @@ const projectList = Object.values(projects);
                 transition: background-color 0.2s;
             }
 
-            .file-item:hover {
-                background-color: #333;
-            }
+            .file-item:hover { background-color: #333; }
 
 			a.download-link {
 				color: #646cff;
@@ -252,10 +267,7 @@ const projectList = Object.values(projects);
                 gap: 8px;
 			}
 			
-			a.download-link:hover {
-				text-decoration: underline;
-				color: #8289ff;
-			}
+			a.download-link:hover { text-decoration: underline; color: #8289ff; }
 			
 			.back-link {
 				display: inline-block;
@@ -266,10 +278,7 @@ const projectList = Object.values(projects);
                 text-align: center;
 			}
 			
-			.back-link:hover {
-				background-color: #333333;
-			}
-			
+			.back-link:hover { background-color: #333333; }
 			.back-link a {
 				display: block;
 				padding: 0.5rem 1rem;
@@ -278,24 +287,25 @@ const projectList = Object.values(projects);
                 text-decoration: none;
 			}
             
-            .empty-msg {
-                text-align: center;
-                color: #666;
-                padding: 2rem;
-            }
-
+            .empty-msg { text-align: center; color: #666; padding: 2rem; }
 		</style>
 	</head>
 	<body>
-        <div class="header-box">
+		<div class="header-box">
 			<h1>3D Printing Files</h1>
 			<p class="subtitle">Files synced from GitHub</p>
 			<p class="back-link"><a href="/">← Back to Home</a></p>
 		</div>
 
-        {projectList.length === 0 ? (
+         {errorMessage && (
+             <div class="error-box">
+                 <strong>Error:</strong> {errorMessage}
+             </div>
+         )}
+
+         {projectList.length === 0 && !errorMessage ? (
              <div class="content-box">
-                <p class="empty-msg">Loading files or no files found...</p>
+                <p class="empty-msg">No files found in repo matching the criteria.</p>
              </div>
          ) : (
              projectList.map((item) => (
@@ -316,7 +326,7 @@ const projectList = Object.values(projects);
                             <li class="file-item">
                                 <span>{file.name}</span>
                                 <a href={file.url} class="download-link" download>
-                                    Download SVG/STL
+                                    Download STL
                                 </a>
                             </li>
                         ))}
@@ -328,6 +338,5 @@ const projectList = Object.values(projects);
          <div style="margin-top: 3rem; opacity: 0.5; font-size: 0.8rem;">
              <p>Files hosted on GitHub. Updates every ~10 minutes.</p>
          </div>
-
 	</body>
 </html>
