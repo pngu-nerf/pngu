@@ -32,25 +32,25 @@
 			/* YouTube-style banner container - Shrunk to 90% */
 			.banner-container {
 				width: 100%;
-				background-color: #0f0f0f; /* Black border */
+				background-color: #0f0f0f;
 				display: flex;
 				justify-content: center;
 				align-items: center;
-				padding: 20px 0; /* Vertical padding for black border */
+				padding: 20px 0;
 				position: relative;
 				overflow: hidden;
-				border-radius: 12px 12px 0 0; /* Rounded top corners */
-				margin-bottom: 2rem; /* Space between banner and content */
+				border-radius: 12px 12px 0 0;
+				margin-bottom: 2rem;
 			}
 			
 			/* YouTube-style banner image - 90% size */
 			.banner-image {
-				width: 90%; /* Shrunk to 90% of container */
-				max-width: 2304px; /* 90% of 2560px */
+				width: 90%;
+				max-width: 2304px;
 				height: auto;
 				display: block;
-				object-fit: contain; /* Show full image without cropping */
-				border-radius: 8px; /* Slight rounding on image itself */
+				object-fit: contain;
+				border-radius: 8px;
 			}
 			
 			/* Links container with content box styling */
@@ -103,7 +103,6 @@
 			
 			.link-item a:hover {
 				color: #e0e0e0;
-				background-color: transparent;
 			}
 			
 			/* Link descriptions - centered */
@@ -183,8 +182,6 @@
 			
 			.social-link-item a:hover {
 				background-color: rgba(255, 255, 255, 0.1);
-				text-decoration: none;
-				color: #ffffff;
 			}
 			
 			/* Social link title */
@@ -197,31 +194,21 @@
 			
 			/* Bottom blank space */
 			.bottom-space {
-				height: 40px; /* Adjust this value for more/less space */
+				height: 40px;
 				width: 100%;
 				flex-shrink: 0;
 			}
 			
 			/* Responsive adjustments */
-			@media (max-width: 2560px) {
-				.banner-container {
-					border-radius: 12px 12px 0 0;
-				}
-				
-				.banner-image {
-					max-width: 90%; /* Keep 90% scaling */
-				}
-			}
-			
 			@media (max-width: 768px) {
 				.banner-container {
 					border-radius: 10px 10px 0 0;
 					margin-bottom: 1.5rem;
-					padding: 15px 0; /* Smaller padding on mobile */
+					padding: 15px 0;
 				}
 				
 				.banner-image {
-					width: 92%; /* Slightly larger on mobile for better visibility */
+					width: 92%;
 				}
 				
 				.links-container {
@@ -238,7 +225,7 @@
 				}
 				
 				.bottom-space {
-					height: 30px; /* Less space on mobile */
+					height: 30px;
 				}
 			}
 			
@@ -250,7 +237,7 @@
 				}
 				
 				.banner-image {
-					width: 94%; /* Even larger on small mobile */
+					width: 94%;
 					border-radius: 6px;
 				}
 				
@@ -326,6 +313,11 @@
 							<li class="social-link-item">
 								<a href="https://github.com/pngu-nerf" target="_blank" rel="noopener">
 									<span class="social-link-title">GitHub</span>
+								</a>
+							</li>
+							<li class="social-link-item">
+								<a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener">
+									<span class="social-link-title">Printables</span>
 								</a>
 							</li>
 						</ul>
