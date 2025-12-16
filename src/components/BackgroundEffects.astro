@@ -16,10 +16,10 @@
         /* Blur Effect */
         filter: blur(30px);
 
-        /* Initial State: 50% Opacity */
-        opacity: 0.5;
+        /* Initial State: Lowered starting opacity */
+        opacity: 0.4;
         
-        /* Animation: Smoothly brighten to 100% */
+        /* Animation: Smoothly brighten to 0.8 (20% overall reduction) */
         animation: brightenUp 2s ease-out forwards;
 
         /* Mobile Optimization */
@@ -27,8 +27,8 @@
     }
 
     @keyframes brightenUp {
-        from { opacity: 0.5; }
-        to { opacity: 1; } 
+        from { opacity: 0.4; }
+        to { opacity: 0.8; } 
     }
 </style>
 
@@ -47,8 +47,6 @@
         mouseX = e.clientX;
     });
 
-    // Randomly choose 5 or 6 strands
-    const STRAND_COUNT = Math.floor(Math.random() * 2) + 5;
     const STRAND_COLOR = '255, 255, 255'; 
 
     class Strand {
@@ -61,29 +59,38 @@
         depth: number;
         strumVal: number; 
         strumVel: number; 
-        highlight: number; 
+        highlight: number;
+        
+        // New properties for layering
+        alphaMult: number; 
+        drawnDepth: number;
 
-        // New: Accept index and total count to calculate position slot
-        constructor(index, totalStrands) {
-            this.init(index, totalStrands);
+        // Updated constructor to accept layer config
+        constructor(index, totalStrands, layerCfg) {
+            this.init(index, totalStrands, layerCfg);
         }
 
-        init(index, totalStrands) {
-            // SPACING LOGIC:
-            // Divide screen into equal slots (e.g., 5 slots if 5 strands)
-            // Place strand randomly strictly within its slot.
+        init(index, totalStrands, layerCfg) {
+            // Jittered spacing logic
             const slotWidth = width / totalStrands;
             const slotStart = index * slotWidth;
-            
-            // Add random padding so it's not right on the edge of the slot
             this.x = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
 
             this.length = height; 
             
+            // Base depth (0.0 to 1.0) within its own layer
             this.depth = Math.random();
 
-            // Thickness (5px to 45px)
-            this.thickness = (0.5 + (this.depth * 4)) * 10;
+            // Calculate actual depth for sorting (ensures back layers stay back)
+            this.drawnDepth = this.depth + layerCfg.zOffset;
+
+            // Store brightness multiplier
+            this.alphaMult = layerCfg.alphaMult;
+
+            // Calculate Thickness: 
+            // Base (5px-45px) * Layer Multiplier
+            const baseThickness = (0.5 + (this.depth * 4)) * 10;
+            this.thickness = baseThickness * layerCfg.thickMult;
             
             this.offset = Math.random() * 100; 
             this.amplitude = Math.random() * 50 + 20; 
@@ -109,7 +116,9 @@
 
             const dist = Math.abs(mouseX - this.x);
             
-            if (dist < 150) { 
+            // Interaction radius scales slightly with layer thickness mult
+            if (dist < (150 * this.alphaMult)) { 
+                // Interaction physics relies on relative depth within layer
                 const depthImpact = 0.1 + (this.depth * 0.9);
                 this.strumVel += (mouseSpeedX * 0.02) * depthImpact;
                 this.highlight = Math.min(this.highlight + 0.1 + Math.abs(mouseSpeedX * 0.005), 1.0);
@@ -121,19 +130,17 @@
             
             ctx.beginPath();
             
-            const maxAlpha = 0.2 + (this.depth * 0.8);
+            // Calculate base brightness based on depth
+            const baseMaxAlpha = 0.2 + (this.depth * 0.8);
+            // Apply layer multiplier
+            const finalMaxAlpha = baseMaxAlpha * this.alphaMult;
 
             const grad = ctx.createLinearGradient(this.x, 0, this.x, height);
             
-            // FADE LOGIC:
-            // 0% (Top): Transparent
+            // Use finalMaxAlpha for gradient colors
             grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
-            
-            // 20% down: Full Opacity
-            grad.addColorStop(0.2, `rgba(${STRAND_COLOR}, ${maxAlpha})`); 
-            
-            // 100% (Bottom): Still Full Opacity (No fade out)
-            grad.addColorStop(1, `rgba(${STRAND_COLOR}, ${maxAlpha})`);
+            grad.addColorStop(0.2, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); 
+            grad.addColorStop(1, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`);
 
             ctx.strokeStyle = grad;
             
@@ -157,8 +164,9 @@
                 ctx.lineTo(this.x + ambientSway + strumEffect, currentY);
             }
 
+            // Scale shadow intensity by alphaMult
             ctx.shadowBlur = (5 + (this.highlight * 20)) * this.depth;
-            ctx.shadowColor = `rgba(255, 255, 255, ${0.5 + this.highlight * 0.5})`;
+            ctx.shadowColor = `rgba(255, 255, 255, ${(0.5 + this.highlight * 0.5) * this.alphaMult})`;
 
             ctx.stroke();
             ctx.shadowBlur = 0; 
@@ -172,18 +180,35 @@
         canvas.height = height;
         
         strands = [];
-        // Pass index 'i' and total count to constructor
-        for (let i = 0; i < STRAND_COUNT; i++) {
-            strands.push(new Strand(i, STRAND_COUNT));
-        }
+        const BASE_COUNT = Math.floor(Math.random() * 2) + 5;
+
+        // Define Layers (Back to Front)
+        // zOffset ensures sorting order. 
+        // alphaMult calculates the compounding 50% dimmer requirement.
+        const layers = [
+            // Layer 3 (Backmost): 2.25x count, 0.25x thick, 20% bright, offset -2
+            { countMult: 2.25, thickMult: 0.25, alphaMult: 0.2, zOffset: -2 },
+            // Layer 2 (Middle): 1.5x count, 0.5x thick, 40% bright, offset -1
+            { countMult: 1.5,  thickMult: 0.5,  alphaMult: 0.4, zOffset: -1 },
+            // Layer 1 (Front): 1x count, 1x thick, 80% bright (Base), offset 0
+            { countMult: 1.0,  thickMult: 1.0,  alphaMult: 0.8, zOffset: 0  }
+        ];
+
+        // Generate strands for each layer
+        layers.forEach(layerCfg => {
+            const layerCount = Math.round(BASE_COUNT * layerCfg.countMult);
+            for (let i = 0; i < layerCount; i++) {
+                strands.push(new Strand(i, layerCount, layerCfg));
+            }
+        });
     }
 
     function animate() {
         if (!ctx) return;
         ctx.clearRect(0, 0, width, height);
 
-        // Sort strands by depth for layering
-        strands.sort((a, b) => a.depth - b.depth);
+        // Important: Sort by drawnDepth so back layers draw first
+        strands.sort((a, b) => a.drawnDepth - b.drawnDepth);
 
         strands.forEach(strand => {
             strand.update();
