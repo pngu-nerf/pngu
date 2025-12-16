@@ -1,5 +1,7 @@
 ---
 // src/pages/data.astro
+import BackgroundEffects from '../components/BackgroundEffects.astro';
+
 export const prerender = false;
 
 // --- Configuration ---
@@ -54,8 +56,6 @@ async function getRepoFiles() {
 }
 
 // --- Main Logic ---
-import BackgroundEffects from '../components/BackgroundEffects.astro';
-
 try {
   const data = await getRepoFiles();
 
@@ -255,47 +255,49 @@ try {
 		</style>
 	</head>
 	<body>
+        <BackgroundEffects />
+
 		<div class="header-box">
 			<h1>Blaster Data</h1>
 			<p class="subtitle">Spreadsheets & Docs</p>
 			<p class="back-link"><a href="/">← Back to Home</a></p>
 		</div>
 
-        {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
+        {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
 
-        {projectList.length === 0 && !errorMessage ? (
-            <div class="content-box" style="text-align: center;">
-                <p style="color:#666;">No spreadsheets or documents found.</p>
-            </div>
-        ) : (
-            projectList.map((item) => (
-                <div class="content-box">
-                    <h2>{item.title}</h2>
-                    <div class="file-list">
-                        {item.files.map((file) => (
-                            <details class="file-item">
-                                <summary>
-                                    <span class="file-name">{file.name}</span>
-                                    <div class="actions">
-                                        <span class="preview-label">Click to Preview</span>
-                                        <a href={file.downloadUrl} class="download-btn" download>Download</a>
-                                    </div>
-                                </summary>
-                                <div class="preview-container">
-                                    <iframe 
-                                        src={file.previewUrl} 
-                                        title={`Preview of ${file.name}`}>
-                                    </iframe>
-                                </div>
-                            </details>
-                        ))}
-                    </div>
-                </div>
-            ))
-        )}
-        
-        <div style="margin-top: 3rem; opacity: 0.5; font-size: 0.8rem;">
-             <p>Files hosted on GitHub. Updates every ~10 minutes.</p>
-        </div>
+        {projectList.length === 0 && !errorMessage ? (
+            <div class="content-box" style="text-align: center;">
+                <p style="color:#666;">No spreadsheets or documents found.</p>
+            </div>
+        ) : (
+            projectList.map((item) => (
+                <div class="content-box">
+                    <h2>{item.title}</h2>
+                    <div class="file-list">
+                        {item.files.map((file) => (
+                            <details class="file-item">
+                                <summary>
+                                    <span class="file-name">{file.name}</span>
+                                    <div class="actions">
+                                        <span class="preview-label">Click to Preview</span>
+                                        <a href={file.downloadUrl} class="download-btn" download>Download</a>
+                                    </div>
+                                </summary>
+                                <div class="preview-container">
+                                    <iframe 
+                                        src={file.previewUrl} 
+                                        title={`Preview of ${file.name}`}>
+                                    </iframe>
+                                </div>
+                            </details>
+                        ))}
+                    </div>
+                </div>
+            ))
+        )}
+        
+        <div style="margin-top: 3rem; opacity: 0.5; font-size: 0.8rem;">
+             <p>Files hosted on GitHub. Updates every ~10 minutes.</p>
+        </div>
 	</body>
 </html>
