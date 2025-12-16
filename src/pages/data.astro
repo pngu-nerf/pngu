@@ -43,7 +43,7 @@ async function getRepoFiles() {
     });
 
     if (!response.ok) {
-      if (response.status === 403) throw new Error("GitHub Rate Limit Exceeded.");
+      if (response.status === 403) throw new Error("GitHub Rate Limit Exceeded. Try refreshing the page or waiting a few minutes.");
       if (response.status === 404) throw new Error("Repository not found.");
       throw new Error(`GitHub API Error: ${response.status}`);
     }
