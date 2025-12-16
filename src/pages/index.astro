@@ -1,4 +1,8 @@
+---
+// src/pages/index.astro
 import BackgroundEffects from '../components/BackgroundEffects.astro';
+---
+
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
@@ -33,7 +37,8 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 			/* YouTube-style banner container - Shrunk to 90% */
 			.banner-container {
 				width: 100%;
-				background-color: #0f0f0f;
+				/* Transparent background so lines show through if needed, or keep dark */
+				background-color: transparent; 
 				display: flex;
 				justify-content: center;
 				align-items: center;
@@ -52,6 +57,8 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				display: block;
 				object-fit: contain;
 				border-radius: 8px;
+                /* Ensure banner stays above background lines if they overlap */
+                z-index: 1; 
 			}
 			
 			/* Links container with content box styling */
@@ -60,6 +67,7 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				margin: 0 auto;
 				padding: 0 20px;
 				flex: 1;
+                z-index: 1; /* Ensure content is above background */
 			}
 			
 			.content-box {
@@ -262,8 +270,9 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 		</style>
 	</head>
 	<body>
+        <BackgroundEffects />
+
 		<div class="main-content">
-			<!-- 1. YouTube-style Banner (90% size) -->
 			<div class="banner-container">
 				<img 
 					src="/site-assets/Site Banner.jpg" 
@@ -272,7 +281,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				/>
 			</div>
 
-			<!-- 2. Content Area -->
 			<div class="links-container">
 				<div class="content-box">
 					<ul class="links-list">
@@ -302,7 +310,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 						</li>
 					</ul>
 					
-					<!-- Social Links Section - Back Button Style -->
 					<div class="social-section">
 						<h2 class="social-heading">External Links</h2>
 						<ul class="social-links">
@@ -326,7 +333,6 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 				</div>
 			</div>
 			
-			<!-- 3. Bottom blank space -->
 			<div class="bottom-space"></div>
 		</div>
 	</body>
