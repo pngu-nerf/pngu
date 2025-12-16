@@ -13,13 +13,22 @@
         z-index: -1;
         pointer-events: none;
         
-        opacity: 0;
-        animation: subtleFadeIn 1s ease-in-out 1s forwards;
+        /* Blur Effect */
+        filter: blur(30px);
+
+        /* Initial State: 50% Opacity */
+        opacity: 0.5;
+        
+        /* Animation: Removed the 1s delay for instant, smooth start */
+        animation: brightenUp 2s ease-out forwards;
+
+        /* Mobile Optimization: Tells the browser to prep for opacity changes */
+        will-change: opacity;
     }
 
-    @keyframes subtleFadeIn {
-        from { opacity: 0; }
-        to { opacity: 0.3; } 
+    @keyframes brightenUp {
+        from { opacity: 0.5; }
+        to { opacity: 1; } 
     }
 </style>
 
@@ -38,7 +47,8 @@
         mouseX = e.clientX;
     });
 
-    const STRAND_COUNT = 20; // Increased count slightly for depth density
+    // Randomly choose 5 or 6 strands
+    const STRAND_COUNT = Math.floor(Math.random() * 2) + 5;
     const STRAND_COLOR = '255, 255, 255'; 
 
     class Strand {
@@ -48,15 +58,9 @@
         offset: number;
         amplitude: number;
         frequency: number;
-        
-        // Depth: 0 = Far/Small/Dim, 1 = Close/Big/Bright
         depth: number;
-
-        // Physics
         strumVal: number; 
         strumVel: number; 
-        
-        // Glow State
         highlight: number; 
 
         constructor() {
@@ -70,9 +74,8 @@
             // 1. RANDOMIZE DEPTH
             this.depth = Math.random();
 
-            // 2. SIZE BASED ON DEPTH
-            // Far strands are 0.5px, Close strands up to 4.5px
-            this.thickness = 0.5 + (this.depth * 4);
+            // 2. THICKNESS INCREASED 10x (5px to 45px)
+            this.thickness = (0.5 + (this.depth * 4)) * 10;
             
             this.offset = Math.random() * 100; 
             this.amplitude = Math.random() * 50 + 20; 
@@ -86,9 +89,7 @@
         update() {
             this.offset += 0.005;
 
-            // 3. STABILIZED PHYSICS (Less Wobbly)
-            // Higher tension (0.1) makes it snap back faster
-            // Lower damping (0.9) makes it settle/stop moving faster
+            // 3. STABILIZED PHYSICS
             const tension = 0.5; 
             const damping = 0.2; 
             
@@ -102,16 +103,9 @@
             // Mouse Interaction
             const dist = Math.abs(mouseX - this.x);
             
-            // Larger hit area for smoother feel
-            if (dist < 60) {
-                // 4. DEPTH-BASED INTERACTION
-                // Close strands (depth 1) get full force
-                // Far strands (depth 0) get 10% force
+            if (dist < 150) { 
                 const depthImpact = 0.1 + (this.depth * 0.9);
-
-                // Reduced base multiplier (0.02) for less chaos
                 this.strumVel += (mouseSpeedX * 0.02) * depthImpact;
-                
                 this.highlight = Math.min(this.highlight + 0.1 + Math.abs(mouseSpeedX * 0.005), 1.0);
             }
         }
@@ -121,8 +115,8 @@
             
             ctx.beginPath();
             
-            // 5. BRIGHTNESS BASED ON DEPTH
-            // Far strands max out at 0.2 opacity, Close at 1.0
+            // 5. BRIGHTNESS (Alpha logic)
+            // Note: Since Canvas opacity is 100%, we control transparency here
             const maxAlpha = 0.2 + (this.depth * 0.8);
 
             const grad = ctx.createLinearGradient(this.x, 0, this.x, height);
@@ -132,7 +126,6 @@
 
             ctx.strokeStyle = grad;
             
-            // Dynamic thickness + highlight expansion
             ctx.lineWidth = this.thickness + (this.highlight * 2);
             ctx.lineCap = 'round';
             
@@ -153,12 +146,10 @@
                 ctx.lineTo(this.x + ambientSway + strumEffect, currentY);
             }
 
-            // Glow increases based on depth too (closer glows more)
             ctx.shadowBlur = (5 + (this.highlight * 20)) * this.depth;
             ctx.shadowColor = `rgba(255, 255, 255, ${0.5 + this.highlight * 0.5})`;
 
             ctx.stroke();
-            
             ctx.shadowBlur = 0; 
         }
     }
@@ -179,8 +170,6 @@
         if (!ctx) return;
         ctx.clearRect(0, 0, width, height);
 
-        // Sort strands by depth (draw far ones first, close ones last)
-        // This ensures correct layering
         strands.sort((a, b) => a.depth - b.depth);
 
         strands.forEach(strand => {
