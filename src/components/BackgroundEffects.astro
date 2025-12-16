@@ -14,7 +14,6 @@
         pointer-events: none;
         
         opacity: 0;
-        /* 1. FASTER FADE: Duration 1s, Delay reduced to 1s */
         animation: subtleFadeIn 1s ease-in-out 1s forwards;
     }
 
@@ -39,7 +38,7 @@
         mouseX = e.clientX;
     });
 
-    const STRAND_COUNT = 15;
+    const STRAND_COUNT = 20; // Increased count slightly for depth density
     const STRAND_COLOR = '255, 255, 255'; 
 
     class Strand {
@@ -50,12 +49,15 @@
         amplitude: number;
         frequency: number;
         
+        // Depth: 0 = Far/Small/Dim, 1 = Close/Big/Bright
+        depth: number;
+
         // Physics
         strumVal: number; 
         strumVel: number; 
         
-        // 2. GLOW STATE
-        highlight: number; // 0 to 1, indicates "excitement"
+        // Glow State
+        highlight: number; 
 
         constructor() {
             this.init();
@@ -65,7 +67,12 @@
             this.x = Math.random() * width;
             this.length = height; 
             
-            this.thickness = Math.random() * 4 + 1; 
+            // 1. RANDOMIZE DEPTH
+            this.depth = Math.random();
+
+            // 2. SIZE BASED ON DEPTH
+            // Far strands are 0.5px, Close strands up to 4.5px
+            this.thickness = 0.5 + (this.depth * 4);
             
             this.offset = Math.random() * 100; 
             this.amplitude = Math.random() * 50 + 20; 
@@ -79,28 +86,33 @@
         update() {
             this.offset += 0.005;
 
-            // Physics (Spring)
-            const tension = 0.05; 
-            const damping = 0.95; 
+            // 3. STABILIZED PHYSICS (Less Wobbly)
+            // Higher tension (0.1) makes it snap back faster
+            // Lower damping (0.9) makes it settle/stop moving faster
+            const tension = 0.1; 
+            const damping = 0.9; 
             
             const force = -tension * this.strumVal;
             this.strumVel += force;
             this.strumVel *= damping; 
             this.strumVal += this.strumVel;
 
-            // Decay the highlight (fade out the extra glow)
             this.highlight *= 0.9; 
 
             // Mouse Interaction
             const dist = Math.abs(mouseX - this.x);
             
-            if (dist < 50) {
-                // Add velocity based on mouse speed
-                this.strumVel += mouseSpeedX * 0.05;
+            // Larger hit area for smoother feel
+            if (dist < 60) {
+                // 4. DEPTH-BASED INTERACTION
+                // Close strands (depth 1) get full force
+                // Far strands (depth 0) get 10% force
+                const depthImpact = 0.1 + (this.depth * 0.9);
+
+                // Reduced base multiplier (0.02) for less chaos
+                this.strumVel += (mouseSpeedX * 0.02) * depthImpact;
                 
-                // 3. TRIGGER GLOW: Spike highlight to 1.0 on contact
-                // We add a little absolute value from speed to make hard hits brighter
-                this.highlight = Math.min(this.highlight + 0.2 + Math.abs(mouseSpeedX * 0.01), 1.0);
+                this.highlight = Math.min(this.highlight + 0.1 + Math.abs(mouseSpeedX * 0.005), 1.0);
             }
         }
 
@@ -109,15 +121,19 @@
             
             ctx.beginPath();
             
+            // 5. BRIGHTNESS BASED ON DEPTH
+            // Far strands max out at 0.2 opacity, Close at 1.0
+            const maxAlpha = 0.2 + (this.depth * 0.8);
+
             const grad = ctx.createLinearGradient(this.x, 0, this.x, height);
             grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
-            grad.addColorStop(0.5, `rgba(${STRAND_COLOR}, 1.0)`); 
+            grad.addColorStop(0.5, `rgba(${STRAND_COLOR}, ${maxAlpha})`); 
             grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);
 
             ctx.strokeStyle = grad;
             
-            // 4. DYNAMIC THICKNESS: Gets slightly thicker when highlighted
-            ctx.lineWidth = this.thickness + (this.highlight * 3);
+            // Dynamic thickness + highlight expansion
+            ctx.lineWidth = this.thickness + (this.highlight * 2);
             ctx.lineCap = 'round';
             
             const segments = 25;
@@ -137,11 +153,8 @@
                 ctx.lineTo(this.x + ambientSway + strumEffect, currentY);
             }
 
-            // 5. DYNAMIC GLOW: Blur increases significantly based on highlight
-            // Base blur 15, adds up to 30 more (total 45) when strummed
-            ctx.shadowBlur = 15 + (this.highlight * 30);
-            
-            // Make the shadow stronger white when highlighted
+            // Glow increases based on depth too (closer glows more)
+            ctx.shadowBlur = (5 + (this.highlight * 20)) * this.depth;
             ctx.shadowColor = `rgba(255, 255, 255, ${0.5 + this.highlight * 0.5})`;
 
             ctx.stroke();
@@ -165,6 +178,10 @@
     function animate() {
         if (!ctx) return;
         ctx.clearRect(0, 0, width, height);
+
+        // Sort strands by depth (draw far ones first, close ones last)
+        // This ensures correct layering
+        strands.sort((a, b) => a.depth - b.depth);
 
         strands.forEach(strand => {
             strand.update();
