@@ -78,24 +78,20 @@ const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public',
                 transition: opacity 3s ease-out;
             }
 
-            /* --- The Separator (~) --- */
+            /* --- The Separators --- */
             .separator {
                 text-align: center;
-                font-size: 1rem;
-                color: rgba(255, 255, 255, 0.3); /* Subtle transparent white */
-                margin: 4rem 0; /* Extra vertical spacing */
+                font-size: 2rem;
+                color: rgba(255, 255, 255, 0.3); 
+                margin: 3rem 0; 
                 font-weight: 300;
                 user-select: none;
             }
 
-            /* --- The Separator (~) --- */
             .separator-small {
-                text-align: center;
-                font-size: 0rem;
-                color: rgba(255, 255, 255, 0.3); /* Subtle transparent white */
-                margin: 1rem 0; /* Extra vertical spacing */
-                font-weight: 300;
-                user-select: none;
+                /* Removed text/font settings, purely spacing now */
+                margin: 2rem 0; 
+                height: 20px; /* Preserve vertical space */
             }
 
 			.content-box {
@@ -141,9 +137,11 @@ const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public',
 				display: flex;
 				justify-content: center; 
 				align-items: center;
-				background-color: rgba(255, 255, 255, 0.05);
+                
+                /* Updated: Opaque Dark Grey to match other pages */
+				background-color: #1a1a1a;
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                
 				padding: 16px 20px;
 				border-radius: 12px;
 				text-decoration: none;
@@ -151,10 +149,12 @@ const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public',
 			}
 
 			a.nav-link:hover {
-				background-color: rgba(255, 255, 255, 0.15);
+                /* Updated: Brighter grey on hover */
+				background-color: #333;
                 border-color: rgba(255, 255, 255, 0.3);
+                
 				transform: translateY(-3px) scale(1.02);
-				box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+				box-shadow: 0 8px 20px rgba(0,0,0,0.4);
 			}
 
 			.link-content {
@@ -191,8 +191,10 @@ const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public',
                 
                 .content-box { 
 					padding: 1.5rem; 
-                    width: 100%; 
-                    margin: 1.5rem 0;
+                    
+                    /* Updated: Keep 75% width on mobile */
+                    width: 75%; 
+                    margin: 1.5rem auto;
 				}
 				
                 .banner-container {
@@ -258,7 +260,7 @@ const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public',
 			</ul>
 		</div>
 
-        <div class="separator-small">~</div>
+        <div class="separator-small"></div>
 
 		<div class="content-box">
 			<h2>External Links</h2>
