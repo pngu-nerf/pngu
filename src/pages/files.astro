@@ -8,7 +8,7 @@ const GITHUB_REPO = 'PNGU-3D-Files';
 const BRANCH = 'main';
 
 // --- Caching Strategy ---
-Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=600, stale-while-revalidate=60');
+Astro.response.headers.set('Cache-Control', 'public, max-age=1000, s-maxage=1000');
 
 // --- Types ---
 type FileItem = {
