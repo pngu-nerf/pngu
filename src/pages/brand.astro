@@ -1,6 +1,5 @@
 ---
 // src/pages/brand.astro
-// No fetch logic needed since files are local, but we organize them in data for cleaner HTML.
 import BackgroundEffects from '../components/BackgroundEffects.astro';
 
 const assets = [
@@ -11,7 +10,6 @@ const assets = [
   { name: "Brand Font (OTF)", path: "/brand-assets/Jump Winter.otf", type: "font" },
   { name: "Brand Font (TTF)", path: "/brand-assets/Jump Winter.ttf", type: "font" },
 ];
-
 ---
 
 <html lang="en">
@@ -25,10 +23,13 @@ const assets = [
 				font-family: sans-serif;
 				padding: 2rem;
 				text-align: center;
-				max-width: 900px; /* Matches other pages */
+				max-width: 900px;
 				margin: 0 auto;
 				background-color: #0f0f0f;
 				color: #ffffff;
+                /* Ensure content sits above the background */
+                position: relative; 
+                z-index: 1; 
 			}
 			
 			/* --- Header Styling --- */
@@ -131,7 +132,7 @@ const assets = [
 
 			/* --- Preview Container --- */
 			.preview-container {
-				background-color: #555; /* Mid-grey to see both Black and White logos */
+				background-color: #555;
 				min-height: 200px;
 				width: 100%;
 				border-top: 1px solid #444;
@@ -156,6 +157,8 @@ const assets = [
 		</style>
 	</head>
 	<body>
+        <BackgroundEffects />
+
 		<div class="header-box">
 			<h1>Brand Assets</h1>
 			<p class="subtitle">Logos, Banners & Fonts</p>
