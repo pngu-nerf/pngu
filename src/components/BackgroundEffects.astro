@@ -19,10 +19,10 @@
         /* Initial State: 50% Opacity */
         opacity: 0.5;
         
-        /* Animation: Removed the 1s delay for instant, smooth start */
+        /* Animation: Smoothly brighten to 100% */
         animation: brightenUp 2s ease-out forwards;
 
-        /* Mobile Optimization: Tells the browser to prep for opacity changes */
+        /* Mobile Optimization */
         will-change: opacity;
     }
 
@@ -63,18 +63,26 @@
         strumVel: number; 
         highlight: number; 
 
-        constructor() {
-            this.init();
+        // New: Accept index and total count to calculate position slot
+        constructor(index, totalStrands) {
+            this.init(index, totalStrands);
         }
 
-        init() {
-            this.x = Math.random() * width;
+        init(index, totalStrands) {
+            // SPACING LOGIC:
+            // Divide screen into equal slots (e.g., 5 slots if 5 strands)
+            // Place strand randomly strictly within its slot.
+            const slotWidth = width / totalStrands;
+            const slotStart = index * slotWidth;
+            
+            // Add random padding so it's not right on the edge of the slot
+            this.x = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
+
             this.length = height; 
             
-            // 1. RANDOMIZE DEPTH
             this.depth = Math.random();
 
-            // 2. THICKNESS INCREASED 10x (5px to 45px)
+            // Thickness (5px to 45px)
             this.thickness = (0.5 + (this.depth * 4)) * 10;
             
             this.offset = Math.random() * 100; 
@@ -89,7 +97,6 @@
         update() {
             this.offset += 0.005;
 
-            // 3. STABILIZED PHYSICS
             const tension = 0.5; 
             const damping = 0.2; 
             
@@ -100,7 +107,6 @@
 
             this.highlight *= 0.9; 
 
-            // Mouse Interaction
             const dist = Math.abs(mouseX - this.x);
             
             if (dist < 150) { 
@@ -115,14 +121,19 @@
             
             ctx.beginPath();
             
-            // 5. BRIGHTNESS (Alpha logic)
-            // Note: Since Canvas opacity is 100%, we control transparency here
             const maxAlpha = 0.2 + (this.depth * 0.8);
 
             const grad = ctx.createLinearGradient(this.x, 0, this.x, height);
+            
+            // FADE LOGIC:
+            // 0% (Top): Transparent
             grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
-            grad.addColorStop(0.5, `rgba(${STRAND_COLOR}, ${maxAlpha})`); 
-            grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);
+            
+            // 20% down: Full Opacity
+            grad.addColorStop(0.2, `rgba(${STRAND_COLOR}, ${maxAlpha})`); 
+            
+            // 100% (Bottom): Still Full Opacity (No fade out)
+            grad.addColorStop(1, `rgba(${STRAND_COLOR}, ${maxAlpha})`);
 
             ctx.strokeStyle = grad;
             
@@ -161,8 +172,9 @@
         canvas.height = height;
         
         strands = [];
+        // Pass index 'i' and total count to constructor
         for (let i = 0; i < STRAND_COUNT; i++) {
-            strands.push(new Strand());
+            strands.push(new Strand(i, STRAND_COUNT));
         }
     }
 
@@ -170,6 +182,7 @@
         if (!ctx) return;
         ctx.clearRect(0, 0, width, height);
 
+        // Sort strands by depth for layering
         strands.sort((a, b) => a.depth - b.depth);
 
         strands.forEach(strand => {
