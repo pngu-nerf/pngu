@@ -1,12 +1,10 @@
 ---
-// src/components/BackgroundEffects.astro
+// src/components/AuroraBackground.astro
 ---
 <div id="bg-container">
-    <canvas id="tech-canvas"></canvas>
+    <canvas id="aurora-canvas"></canvas>
     
-    <div id="glass-overlay"></div>
-    
-    <div id="glow-overlay"></div>
+    <div id="atmosphere-overlay"></div>
 </div>
 
 <style>
@@ -19,202 +17,139 @@
         z-index: -1;
         pointer-events: none;
         overflow: hidden; 
-        background-color: #000; 
+        /* Deep space background gradient */
+        background: radial-gradient(circle at 50% 100%, #1a2a3a, #000000); 
     }
 
-    #tech-canvas {
+    #aurora-canvas {
         position: absolute;
         width: 120%; 
         height: 100%;
         left: -10%; 
         
-        filter: blur(20px);
+        /* High blur is essential for the gaseous look */
+        filter: blur(40px) contrast(1.2);
 
-        /* Initial Opacity */
-        opacity: 0.2;
-        animation: brightenUp 2s ease-out forwards;
+        opacity: 0.6;
+        animation: fadeIn 3s ease-out forwards;
         will-change: opacity, transform;
     }
 
-    #glass-overlay {
+    #atmosphere-overlay {
         position: absolute;
         inset: 0;
         z-index: 1;
-        
-        backdrop-filter: saturate(180%) blur(50px);
-        -webkit-backdrop-filter: saturate(180%) blur(50px);
-
-        background-color: rgba(255, 255, 255, 0.03);
-
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-        
+        opacity: 0.07;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
         mix-blend-mode: overlay;
     }
 
-    #glow-overlay {
-        position: absolute;
-        inset: 0;
-        z-index: 2; 
-        background: linear-gradient(
-            to bottom, 
-            rgba(255, 255, 255, 0.12) 0%, 
-            rgba(255, 255, 255, 0.05) 10%, 
-            transparent 40%
-        );
-        pointer-events: none;
-    }
-
-    @keyframes brightenUp {
-        from { opacity: 0.2; }
-        to { opacity: 0.7; } 
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 0.8; } 
     }
 </style>
 
 <script>
-    const canvas = document.getElementById('tech-canvas') as HTMLCanvasElement;
+    const canvas = document.getElementById('aurora-canvas');
     const ctx = canvas.getContext('2d');
 
     let width, height;
     let strands = [];
-    const EXTENSION = 300; 
+    
+    // Auroras extend high up, so we need a large extension buffer
+    const EXTENSION = 400; 
 
     // --- PARALLAX STATE ---
     let targetX = 0;
-    let targetY = 0;
     let currentX = 0;
-    let currentY = 0;
 
     window.addEventListener('mousemove', (e) => {
+        // Subtle movement for parallax
         const normX = (e.clientX / window.innerWidth) * 2 - 1;
-        const normY = (e.clientY / window.innerHeight) * 2 - 1;
-        
-        targetX = normX * 40; 
-        targetY = normY * 12;  
+        targetX = normX * 50; 
     });
 
-    window.addEventListener('deviceorientation', (e) => {
-        if (!e.gamma || !e.beta) return;
-        const tiltX = Math.max(-45, Math.min(45, e.gamma));
-        const tiltY = Math.max(-45, Math.min(45, e.beta));
-        
-        targetX = (tiltX / 45) * 40;
-        targetY = (tiltY / 45) * 12;
-    });
-    
-    let mouseX = -1000;
-    let mouseSpeedX = 0;
-    window.addEventListener('mousemove', (e) => {
-        mouseSpeedX = e.movementX;
-        mouseX = e.clientX;
-    });
-
-    const STRAND_COLOR = '255, 255, 255'; 
+    // Auroras usually have these specific colors
+    // [R, G, B]
+    const PALETTE = [
+        [0, 255, 128],  // Teal/Green (Low altitude)
+        [100, 0, 255],  // Purple (Mid altitude)
+        [0, 200, 255]   // Cyan (High brightness)
+    ];
 
     class Strand {
-        x: number;
-        length: number;
-        thickness: number;
-        offset: number;
-        amplitude: number;
-        frequency: number;
-        depth: number;
-        strumVal: number; 
-        strumVel: number; 
-        highlight: number;
-        alphaMult: number; 
-        drawnDepth: number;
-        parallaxFactor: number;
-
         constructor(index, totalStrands, layerCfg) {
             this.init(index, totalStrands, layerCfg);
         }
 
         init(index, totalStrands, layerCfg) {
-            // --- POSITIONING LOGIC ---
-            // If this is the FRONT layer (Biggest threads, zOffset 0),
-            // constrain them to the middle 60% of the screen.
-            
-            let effectiveWidth, startX;
-
-            if (layerCfg.zOffset === 0) {
-                // Front Layer: Center Focus
-                effectiveWidth = width * 0.6; // Use only 60% of width
-                startX = width * 0.3;         // Start 30% in
-            } else {
-                // Background Layers: Fill entire width (120% for parallax buffer)
-                effectiveWidth = width * 1.2;
-                startX = 0; 
-            }
-
+            // Spread across the screen
+            const effectiveWidth = width * 1.4; // Wide spread
+            const startX = -width * 0.2; 
             const slotWidth = effectiveWidth / totalStrands;
-            const slotStart = startX + (index * slotWidth);
             
-            // Random position within its assigned slot
-            this.x = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
-
+            // Position
+            this.x = startX + (index * slotWidth) + (Math.random() * slotWidth);
             this.length = height + (EXTENSION * 2); 
-            this.depth = Math.random();
+            
+            // Layers
+            this.depth = Math.random(); 
             this.drawnDepth = this.depth + layerCfg.zOffset;
             this.alphaMult = layerCfg.alphaMult;
             this.parallaxFactor = layerCfg.parallaxFactor;
 
-            const baseThickness = (0.5 + (this.depth * 4)) * 10;
+            // Aurora ribbons are THICK
+            const baseThickness = 80 + (this.depth * 150); 
             this.thickness = baseThickness * layerCfg.thickMult;
             
+            // Movement properties
             this.offset = Math.random() * 100; 
-            this.amplitude = Math.random() * 50 + 20; 
+            // Large sweeping waves
+            this.amplitude = Math.random() * 100 + 50; 
+            this.speed = (Math.random() * 0.002) + 0.001;
             
-            this.strumVal = 0;
-            this.strumVel = 0;
-            this.highlight = 0;
+            // Color selection (Green dominant, occasional purple)
+            this.colorType = Math.random() > 0.7 ? 1 : 0; 
         }
 
         update() {
-            this.offset += 0.005;
-
-            const tension = 0.5; 
-            const damping = 0.2; 
-            const force = -tension * this.strumVal;
-            this.strumVel += force;
-            this.strumVel *= damping; 
-            this.strumVal += this.strumVel;
-
-            this.highlight *= 0.9; 
-
-            const drawX = this.x + (currentX * this.parallaxFactor);
-            const dist = Math.abs(mouseX - (drawX - (width * 0.1))); 
-            
-            if (dist < (150 * this.alphaMult)) { 
-                const depthImpact = 0.1 + (this.depth * 0.9);
-                this.strumVel += (mouseSpeedX * 0.02) * depthImpact;
-                this.highlight = Math.min(this.highlight + 0.1 + Math.abs(mouseSpeedX * 0.005), 1.0);
-            }
+            // Constant slow drift
+            this.offset += this.speed;
         }
 
         draw() {
             if (!ctx) return;
             
             const finalX = this.x + (currentX * this.parallaxFactor);
-            const finalYBase = (currentY * this.parallaxFactor * 0.5); 
+            const startY = -EXTENSION;
 
+            // Use 'lighter' (additive) blending to make overlapping strands glow
+            ctx.globalCompositeOperation = 'lighter';
+            
             ctx.beginPath();
             
-            const baseMaxAlpha = 0.2 + (this.depth * 0.8);
-            const finalMaxAlpha = baseMaxAlpha * this.alphaMult;
+            // Dynamic Gradient based on strand color type
+            const grad = ctx.createLinearGradient(finalX, startY, finalX, height + EXTENSION);
+            
+            const [r, g, b] = PALETTE[this.colorType];
+            const [r2, g2, b2] = PALETTE[2]; // Cyan highlights
 
-            const grad = ctx.createLinearGradient(finalX, -EXTENSION + finalYBase, finalX, height + EXTENSION + finalYBase);
-            grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
-            grad.addColorStop(0.1, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); 
-            grad.addColorStop(0.9, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); 
-            grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);
+            // Alpha logic: Fades in, stays bright, fades out
+            const maxAlpha = (0.15 + (this.depth * 0.2)) * this.alphaMult;
+
+            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
+            grad.addColorStop(0.2, `rgba(${r}, ${g}, ${b}, ${maxAlpha})`); 
+            grad.addColorStop(0.5, `rgba(${r2}, ${g2}, ${b2}, ${maxAlpha * 0.8})`); 
+            grad.addColorStop(0.8, `rgba(${r}, ${g}, ${b}, ${maxAlpha})`);
+            grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
 
             ctx.strokeStyle = grad;
-            ctx.lineWidth = this.thickness + (this.highlight * 2);
-            ctx.lineCap = 'round';
+            ctx.lineWidth = this.thickness;
+            ctx.lineCap = 'butt'; // Soft ends handled by gradient, not shape
             
-            const segments = 25;
+            const segments = 30;
             const segmentHeight = this.length / segments;
-            const startY = -EXTENSION + finalYBase;
 
             ctx.moveTo(
                 finalX + Math.sin(this.offset) * this.amplitude, 
@@ -224,17 +159,22 @@
             for (let i = 0; i <= segments; i++) {
                 let currentSegY = startY + (segmentHeight * i);
                 
-                const ambientSway = Math.sin(this.offset + (i * 0.2)) * this.amplitude;
-                const strumEffect = this.strumVal * Math.sin((i / segments) * Math.PI);
+                // Double Sine Wave for more "organic" gas fluid movement
+                // Wave 1: Large slow sweep
+                const wave1 = Math.sin(this.offset + (i * 0.1)) * this.amplitude;
+                // Wave 2: Smaller ripples
+                const wave2 = Math.cos(this.offset * 2 + (i * 0.3)) * (this.amplitude * 0.3);
                 
-                ctx.lineTo(finalX + ambientSway + strumEffect, currentSegY);
+                // Taper the movement at top and bottom so they don't wiggle off screen too much
+                const taper = Math.sin((i / segments) * Math.PI); 
+
+                ctx.lineTo(finalX + (wave1 + wave2) * taper, currentSegY);
             }
 
-            ctx.shadowBlur = (5 + (this.highlight * 20)) * this.depth;
-            ctx.shadowColor = `rgba(255, 255, 255, ${(0.5 + this.highlight * 0.5) * this.alphaMult})`;
-
             ctx.stroke();
-            ctx.shadowBlur = 0; 
+            
+            // Reset blend mode for safety (though we clear rect every frame)
+            ctx.globalCompositeOperation = 'source-over';
         }
     }
 
@@ -245,12 +185,13 @@
         canvas.height = height;
         
         strands = [];
-        const BASE_COUNT = Math.floor(Math.random() * 2) + 5;
+        // Fewer strands, but wider, creates the "curtain" look
+        const BASE_COUNT = 7; 
 
         const layers = [
-            { countMult: 2.25, thickMult: 0.25, alphaMult: 0.2, zOffset: -2, parallaxFactor: 0.2 },
-            { countMult: 1.5,  thickMult: 0.5,  alphaMult: 0.4, zOffset: -1, parallaxFactor: 0.5 },
-            { countMult: 1.0,  thickMult: 1.0,  alphaMult: 0.8, zOffset: 0,  parallaxFactor: 1.2 }
+            { countMult: 0.5, thickMult: 0.8, alphaMult: 0.5, zOffset: -2, parallaxFactor: 0.1 },
+            { countMult: 1.0, thickMult: 1.0, alphaMult: 0.8, zOffset: 0,  parallaxFactor: 0.3 },
+            { countMult: 0.8, thickMult: 1.5, alphaMult: 1.0, zOffset: 2,  parallaxFactor: 0.6 }
         ];
 
         layers.forEach(layerCfg => {
@@ -264,11 +205,11 @@
     function animate() {
         if (!ctx) return;
         
-        currentX += (targetX - currentX) * 0.05;
-        currentY += (targetY - currentY) * 0.05;
+        currentX += (targetX - currentX) * 0.02; // Slower parallax
 
         ctx.clearRect(0, 0, width * 1.2, height);
 
+        // Sort by depth preserves transparency logic
         strands.sort((a, b) => a.drawnDepth - b.drawnDepth);
 
         strands.forEach(strand => {
@@ -276,8 +217,6 @@
             strand.draw();
         });
         
-        mouseSpeedX = 0;
-
         requestAnimationFrame(animate);
     }
 
