@@ -1,10 +1,13 @@
 ---
 // src/components/BackgroundEffects.astro
 ---
-<canvas id="tech-canvas"></canvas>
+<div id="bg-container">
+    <canvas id="tech-canvas"></canvas>
+    <div id="glow-overlay"></div>
+</div>
 
 <style>
-    #tech-canvas {
+    #bg-container {
         position: fixed;
         top: 0;
         left: 0;
@@ -12,18 +15,38 @@
         height: 100%;
         z-index: -1;
         pointer-events: none;
+    }
+
+    #tech-canvas {
+        position: absolute;
+        width: 100%;
+        height: 100%;
         
         /* Blur Effect */
         filter: blur(30px);
 
-        /* Initial State: Lowered starting opacity */
+        /* Initial State */
         opacity: 0.4;
         
-        /* Animation: Smoothly brighten to 0.8 (20% overall reduction) */
+        /* Animation */
         animation: brightenUp 2s ease-out forwards;
-
-        /* Mobile Optimization */
         will-change: opacity;
+    }
+
+    /* New Glow Overlay */
+    #glow-overlay {
+        position: absolute;
+        inset: 0;
+        /* Linear gradient: White glow at top (0%), transparent middle, white glow at bottom (100%) */
+        background: linear-gradient(
+            to bottom, 
+            rgba(255, 255, 255, 0.08) 0%, 
+            transparent 25%, 
+            transparent 75%, 
+            rgba(255, 255, 255, 0.08) 100%
+        );
+        /* Slight blur to make the glow super soft */
+        backdrop-filter: blur(5px);
     }
 
     @keyframes brightenUp {
@@ -39,6 +62,9 @@
     let width, height;
     let strands = [];
     
+    // EXTENSION: How far past the screen (top/bottom) strands extend
+    const EXTENSION = 300; 
+
     let mouseX = -1000;
     let mouseSpeedX = 0;
 
@@ -61,34 +87,25 @@
         strumVel: number; 
         highlight: number;
         
-        // New properties for layering
         alphaMult: number; 
         drawnDepth: number;
 
-        // Updated constructor to accept layer config
         constructor(index, totalStrands, layerCfg) {
             this.init(index, totalStrands, layerCfg);
         }
 
         init(index, totalStrands, layerCfg) {
-            // Jittered spacing logic
             const slotWidth = width / totalStrands;
             const slotStart = index * slotWidth;
             this.x = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
 
-            this.length = height; 
+            // GEOMETRY UPDATE: Length is screen height + top extension + bottom extension
+            this.length = height + (EXTENSION * 2); 
             
-            // Base depth (0.0 to 1.0) within its own layer
             this.depth = Math.random();
-
-            // Calculate actual depth for sorting (ensures back layers stay back)
             this.drawnDepth = this.depth + layerCfg.zOffset;
-
-            // Store brightness multiplier
             this.alphaMult = layerCfg.alphaMult;
 
-            // Calculate Thickness: 
-            // Base (5px-45px) * Layer Multiplier
             const baseThickness = (0.5 + (this.depth * 4)) * 10;
             this.thickness = baseThickness * layerCfg.thickMult;
             
@@ -116,9 +133,7 @@
 
             const dist = Math.abs(mouseX - this.x);
             
-            // Interaction radius scales slightly with layer thickness mult
             if (dist < (150 * this.alphaMult)) { 
-                // Interaction physics relies on relative depth within layer
                 const depthImpact = 0.1 + (this.depth * 0.9);
                 this.strumVel += (mouseSpeedX * 0.02) * depthImpact;
                 this.highlight = Math.min(this.highlight + 0.1 + Math.abs(mouseSpeedX * 0.005), 1.0);
@@ -130,17 +145,18 @@
             
             ctx.beginPath();
             
-            // Calculate base brightness based on depth
             const baseMaxAlpha = 0.2 + (this.depth * 0.8);
-            // Apply layer multiplier
             const finalMaxAlpha = baseMaxAlpha * this.alphaMult;
 
-            const grad = ctx.createLinearGradient(this.x, 0, this.x, height);
+            // GRADIENT UPDATE: Covers the full extended height
+            // -EXTENSION (Top of strand) to height + EXTENSION (Bottom of strand)
+            const grad = ctx.createLinearGradient(this.x, -EXTENSION, this.x, height + EXTENSION);
             
-            // Use finalMaxAlpha for gradient colors
-            grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
-            grad.addColorStop(0.2, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); 
-            grad.addColorStop(1, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`);
+            // Solid color mostly, fading only at the extreme off-screen tips
+            grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);       // Off-screen top
+            grad.addColorStop(0.1, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); // Visible top
+            grad.addColorStop(0.9, `rgba(${STRAND_COLOR}, ${finalMaxAlpha})`); // Visible bottom
+            grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);       // Off-screen bottom
 
             ctx.strokeStyle = grad;
             
@@ -150,13 +166,17 @@
             const segments = 25;
             const segmentHeight = this.length / segments;
 
+            // DRAW LOOP UPDATE: Start drawing from -EXTENSION (off-screen top)
+            const startY = -EXTENSION;
+
             ctx.moveTo(
                 this.x + Math.sin(this.offset) * this.amplitude, 
-                0
+                startY
             );
 
             for (let i = 0; i <= segments; i++) {
-                let currentY = segmentHeight * i;
+                // Calculate Y relative to the extended start point
+                let currentY = startY + (segmentHeight * i);
                 
                 const ambientSway = Math.sin(this.offset + (i * 0.2)) * this.amplitude;
                 const strumEffect = this.strumVal * Math.sin((i / segments) * Math.PI);
@@ -164,7 +184,6 @@
                 ctx.lineTo(this.x + ambientSway + strumEffect, currentY);
             }
 
-            // Scale shadow intensity by alphaMult
             ctx.shadowBlur = (5 + (this.highlight * 20)) * this.depth;
             ctx.shadowColor = `rgba(255, 255, 255, ${(0.5 + this.highlight * 0.5) * this.alphaMult})`;
 
@@ -182,19 +201,13 @@
         strands = [];
         const BASE_COUNT = Math.floor(Math.random() * 2) + 5;
 
-        // Define Layers (Back to Front)
-        // zOffset ensures sorting order. 
-        // alphaMult calculates the compounding 50% dimmer requirement.
+        // Layer Config
         const layers = [
-            // Layer 3 (Backmost): 2.25x count, 0.25x thick, 20% bright, offset -2
             { countMult: 2.25, thickMult: 0.25, alphaMult: 0.2, zOffset: -2 },
-            // Layer 2 (Middle): 1.5x count, 0.5x thick, 40% bright, offset -1
             { countMult: 1.5,  thickMult: 0.5,  alphaMult: 0.4, zOffset: -1 },
-            // Layer 1 (Front): 1x count, 1x thick, 80% bright (Base), offset 0
             { countMult: 1.0,  thickMult: 1.0,  alphaMult: 0.8, zOffset: 0  }
         ];
 
-        // Generate strands for each layer
         layers.forEach(layerCfg => {
             const layerCount = Math.round(BASE_COUNT * layerCfg.countMult);
             for (let i = 0; i < layerCount; i++) {
@@ -207,7 +220,6 @@
         if (!ctx) return;
         ctx.clearRect(0, 0, width, height);
 
-        // Important: Sort by drawnDepth so back layers draw first
         strands.sort((a, b) => a.drawnDepth - b.drawnDepth);
 
         strands.forEach(strand => {
