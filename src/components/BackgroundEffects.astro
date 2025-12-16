@@ -36,7 +36,6 @@
         will-change: opacity, transform;
     }
 
-    /* --- APPLE "LIQUID GLASS" STYLE --- */
     #glass-overlay {
         position: absolute;
         inset: 0;
@@ -113,8 +112,6 @@
 
     class Strand {
         x: number;
-        targetBaseX: number; // New: The destination for the periodic refresh
-        
         length: number;
         thickness: number;
         offset: number;
@@ -127,27 +124,39 @@
         alphaMult: number; 
         drawnDepth: number;
         parallaxFactor: number;
-        
-        // Metadata for recalculating position
-        index: number;
-        totalInLayer: number;
 
         constructor(index, totalStrands, layerCfg) {
-            this.index = index;
-            this.totalInLayer = totalStrands;
-            this.init(layerCfg);
+            this.init(index, totalStrands, layerCfg);
         }
 
-        init(layerCfg) {
+        init(index, totalStrands, layerCfg) {
+            // --- POSITIONING LOGIC ---
+            // If this is the FRONT layer (Biggest threads, zOffset 0),
+            // constrain them to the middle 60% of the screen.
+            
+            let effectiveWidth, startX;
+
+            if (layerCfg.zOffset === 0) {
+                // Front Layer: Center Focus
+                effectiveWidth = width * 0.6; // Use only 60% of width
+                startX = width * 0.3;         // Start 30% in
+            } else {
+                // Background Layers: Fill entire width (120% for parallax buffer)
+                effectiveWidth = width * 1.2;
+                startX = 0; 
+            }
+
+            const slotWidth = effectiveWidth / totalStrands;
+            const slotStart = startX + (index * slotWidth);
+            
+            // Random position within its assigned slot
+            this.x = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
+
             this.length = height + (EXTENSION * 2); 
             this.depth = Math.random();
             this.drawnDepth = this.depth + layerCfg.zOffset;
             this.alphaMult = layerCfg.alphaMult;
             this.parallaxFactor = layerCfg.parallaxFactor;
-
-            // Set initial Position
-            this.setNewTarget();
-            this.x = this.targetBaseX; // Start exactly at target initially
 
             const baseThickness = (0.5 + (this.depth * 4)) * 10;
             this.thickness = baseThickness * layerCfg.thickMult;
@@ -160,21 +169,8 @@
             this.highlight = 0;
         }
 
-        // New: Calculate a random position within the assigned slot
-        setNewTarget() {
-            const effectiveWidth = width * 1.2; 
-            const slotWidth = effectiveWidth / this.totalInLayer;
-            const slotStart = this.index * slotWidth;
-            
-            this.targetBaseX = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
-        }
-
         update() {
             this.offset += 0.005;
-
-            // New: Smooth Drift towards Target
-            // 0.02 factor creates a slow, smooth drift to the new spot
-            this.x += (this.targetBaseX - this.x) * 0.02;
 
             const tension = 0.5; 
             const damping = 0.2; 
@@ -284,13 +280,6 @@
 
         requestAnimationFrame(animate);
     }
-
-    // --- 30 Second Refresh Timer ---
-    setInterval(() => {
-        strands.forEach(strand => {
-            strand.setNewTarget();
-        });
-    }, 30000);
 
     window.addEventListener('resize', resize);
     resize();
