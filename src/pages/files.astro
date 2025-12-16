@@ -97,23 +97,27 @@ try {
           }
 
           if (fileName.toLowerCase().endsWith('.stl')) {
+            // FIX: Encode path parts individually to preserve slashes
+            const safePath = item.path.split('/').map(encodeURIComponent).join('/');
+            
             projects[folderName].files.push({
               name: fileName,
               path: item.path,
-              // We use raw.githubusercontent.com for the STL source
-              url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}` 
+              url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}` 
             });
           }
           
           if (fileName.toLowerCase().includes('link')) {
-             const rawLinkRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`);
+             const safePath = item.path.split('/').map(encodeURIComponent).join('/');
+             const rawLinkRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`);
              if (rawLinkRes.ok) {
                 projects[folderName].printablesUrl = (await rawLinkRes.text()).trim();
              }
           }
 
           if (fileName.toLowerCase().startsWith('description')) {
-             const rawDescRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`);
+             const safePath = item.path.split('/').map(encodeURIComponent).join('/');
+             const rawDescRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`);
              if (rawDescRes.ok) {
                  projects[folderName].description = (await rawDescRes.text()).trim();
              }
@@ -243,7 +247,7 @@ try {
 
             /* The Arrow */
             details.file-item summary::after {
-                content: '▼'; /* Standard geometric arrow */
+                content: '▼'; 
                 font-size: 0.8rem;
                 color: #888;
                 margin-left: 10px;
@@ -257,7 +261,6 @@ try {
 
             .file-name {
                 font-weight: 500;
-                /* No icons before the name */
             }
 
             .actions {
@@ -265,8 +268,8 @@ try {
                 gap: 15px;
                 font-size: 0.9rem;
                 align-items: center;
-                margin-left: auto; /* Push actions to the right, next to the arrow */
-                margin-right: 15px; /* Space between actions and the arrow */
+                margin-left: auto; 
+                margin-right: 15px;
             }
 
             .preview-label { color: #aaa; font-size: 0.8rem; margin-right: 5px; }
@@ -310,6 +313,7 @@ try {
                 color: #888;
                 font-size: 0.9rem;
                 pointer-events: none;
+                z-index: 10;
             }
 
 			.back-link {
@@ -378,10 +382,19 @@ try {
              <p>Files hosted on GitHub. Updates every ~10 minutes.</p>
          </div>
 
+         <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+                }
+            }
+         </script>
+
          <script type="module">
-            import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-            import { STLLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/STLLoader.js';
-            import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+            import * as THREE from 'three';
+            import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
             const viewedElements = new WeakSet();
 
