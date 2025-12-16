@@ -89,7 +89,6 @@
         const normX = (e.clientX / window.innerWidth) * 2 - 1;
         const normY = (e.clientY / window.innerHeight) * 2 - 1;
         
-        // REDUCED TO 40% STRENGTH (Was 100 / 30)
         targetX = normX * 40; 
         targetY = normY * 12;  
     });
@@ -99,7 +98,6 @@
         const tiltX = Math.max(-45, Math.min(45, e.gamma));
         const tiltY = Math.max(-45, Math.min(45, e.beta));
         
-        // REDUCED TO 40% STRENGTH
         targetX = (tiltX / 45) * 40;
         targetY = (tiltY / 45) * 12;
     });
@@ -115,6 +113,8 @@
 
     class Strand {
         x: number;
+        targetBaseX: number; // New: The destination for the periodic refresh
+        
         length: number;
         thickness: number;
         offset: number;
@@ -127,23 +127,27 @@
         alphaMult: number; 
         drawnDepth: number;
         parallaxFactor: number;
+        
+        // Metadata for recalculating position
+        index: number;
+        totalInLayer: number;
 
         constructor(index, totalStrands, layerCfg) {
-            this.init(index, totalStrands, layerCfg);
+            this.index = index;
+            this.totalInLayer = totalStrands;
+            this.init(layerCfg);
         }
 
-        init(index, totalStrands, layerCfg) {
-            const effectiveWidth = width * 1.2; 
-            const slotWidth = effectiveWidth / totalStrands;
-            const slotStart = index * slotWidth;
-            
-            this.x = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
+        init(layerCfg) {
             this.length = height + (EXTENSION * 2); 
-            
             this.depth = Math.random();
             this.drawnDepth = this.depth + layerCfg.zOffset;
             this.alphaMult = layerCfg.alphaMult;
             this.parallaxFactor = layerCfg.parallaxFactor;
+
+            // Set initial Position
+            this.setNewTarget();
+            this.x = this.targetBaseX; // Start exactly at target initially
 
             const baseThickness = (0.5 + (this.depth * 4)) * 10;
             this.thickness = baseThickness * layerCfg.thickMult;
@@ -156,8 +160,21 @@
             this.highlight = 0;
         }
 
+        // New: Calculate a random position within the assigned slot
+        setNewTarget() {
+            const effectiveWidth = width * 1.2; 
+            const slotWidth = effectiveWidth / this.totalInLayer;
+            const slotStart = this.index * slotWidth;
+            
+            this.targetBaseX = slotStart + (Math.random() * (slotWidth * 0.8)) + (slotWidth * 0.1);
+        }
+
         update() {
             this.offset += 0.005;
+
+            // New: Smooth Drift towards Target
+            // 0.02 factor creates a slow, smooth drift to the new spot
+            this.x += (this.targetBaseX - this.x) * 0.02;
 
             const tension = 0.5; 
             const damping = 0.2; 
@@ -267,6 +284,13 @@
 
         requestAnimationFrame(animate);
     }
+
+    // --- 30 Second Refresh Timer ---
+    setInterval(() => {
+        strands.forEach(strand => {
+            strand.setNewTarget();
+        });
+    }, 30000);
 
     window.addEventListener('resize', resize);
     resize();
