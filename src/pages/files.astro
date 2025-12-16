@@ -1,13 +1,13 @@
 ---
 // src/pages/files.astro
-export const prerender = false; // Enables Server Side Rendering
+export const prerender = false;
 
 // --- Configuration ---
 const GITHUB_USER = 'pngu-nerf';
 const GITHUB_REPO = 'PNGU-3D-Files';
 const BRANCH = 'main';
 
-// --- Caching Strategy ---
+// --- Caching ---
 Astro.response.headers.set('Cache-Control', 'public, max-age=1000, s-maxage=1000');
 
 // --- Types ---
@@ -30,23 +30,21 @@ let projects: Record<string, ProjectItem> = {};
 let projectList: ProjectItem[] = [];
 
 // --- Helper Functions ---
-
 async function getRepoFiles() {
   const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
-  console.log(`Fetching: ${apiUrl}`); // Debug log
 
   try {
     const response = await fetch(apiUrl, {
       headers: {
-        'User-Agent': 'PNGU-Website', // GitHub requires a User-Agent
+        'User-Agent': 'PNGU-Website',
         'Accept': 'application/vnd.github.v3+json'
       }
     });
 
     if (!response.ok) {
-      if (response.status === 403) throw new Error("GitHub Rate Limit Exceeded. Try again in an hour.");
-      if (response.status === 404) throw new Error("Repository not found. Check repo name/visibility.");
-      throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
+      if (response.status === 403) throw new Error("GitHub Rate Limit Exceeded.");
+      if (response.status === 404) throw new Error("Repository not found.");
+      throw new Error(`GitHub API Error: ${response.status}`);
     }
 
     return await response.json();
@@ -59,10 +57,8 @@ async function getRepoFiles() {
 async function getPrintablesDescription(url: string) {
   if (!url) return "No description available.";
   try {
-    const res = await fetch(url, {
-        headers: { 'User-Agent': 'PNGU-Website' }
-    });
-    if (!res.ok) return "Could not fetch description from Printables.";
+    const res = await fetch(url, { headers: { 'User-Agent': 'PNGU-Website' } });
+    if (!res.ok) return "Could not fetch description.";
     
     const html = await res.text();
     const match = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i) || 
@@ -71,14 +67,13 @@ async function getPrintablesDescription(url: string) {
     if (match && match[1]) {
         return match[1].replace(/&quot;/g, '"').replace(/&#39;/g, "'");
     }
-    return "Could not load description. Click the link to view on Printables.";
+    return "Could not load description.";
   } catch (e) {
     return "Error loading description.";
   }
 }
 
 // --- Main Logic ---
-
 try {
   const data = await getRepoFiles();
 
@@ -88,56 +83,47 @@ try {
       if (item.type === 'blob') { 
         const pathParts = item.path.split('/');
         
-        // Only process if it is inside a subfolder (Folder/File)
         if (pathParts.length > 1) {
           const folderName = pathParts[0];
           const fileName = pathParts[pathParts.length - 1];
 
-          // Initialize Project Object
           if (!projects[folderName]) {
             projects[folderName] = {
               title: folderName,
-              description: "Loading...", // Default state
+              description: "Loading...",
               printablesUrl: null,
               files: []
             };
           }
 
-          // Handle ".stl" files
           if (fileName.toLowerCase().endsWith('.stl')) {
             projects[folderName].files.push({
               name: fileName,
               path: item.path,
-              url: `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/raw/${BRANCH}/${encodeURIComponent(item.path)}` 
+              url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}` 
             });
           }
           
-          // Handle "link" file
           if (fileName.toLowerCase().includes('link')) {
              const rawLinkRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`);
              if (rawLinkRes.ok) {
-                const rawUrl = await rawLinkRes.text();
-                projects[folderName].printablesUrl = rawUrl.trim();
+                projects[folderName].printablesUrl = (await rawLinkRes.text()).trim();
              }
           }
 
-          // NEW: Handle "description" file
-          // Checks for "description", "description.txt", "description.md"
           if (fileName.toLowerCase().startsWith('description')) {
              const rawDescRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`);
              if (rawDescRes.ok) {
-                 const rawDesc = await rawDescRes.text();
-                 projects[folderName].description = rawDesc.trim();
+                 projects[folderName].description = (await rawDescRes.text()).trim();
              }
           }
         }
       }
     }
 
-    // 2. Finalize Descriptions (Parallel)
+    // 2. Finalize Descriptions
     await Promise.all(
       Object.values(projects).map(async (project) => {
-        // Only fetch from Printables if we DID NOT find a local description file
         if (project.description === "Loading...") {
             if (project.printablesUrl) {
                 project.description = await getPrintablesDescription(project.printablesUrl);
@@ -145,13 +131,10 @@ try {
                 project.description = "No description available.";
             }
         }
-        
-        // Sort files alphabetically
         project.files.sort((a, b) => a.name.localeCompare(b.name));
       })
     );
     
-    // Filter out folders that have no STL files
     projectList = Object.values(projects).filter(p => p.files.length > 0);
 
   } else {
@@ -168,17 +151,21 @@ try {
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<title>3D Files | PNGU</title>
+        
+        <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
 		<style>
 			body {
 				font-family: sans-serif;
 				padding: 2rem;
 				text-align: center;
-				max-width: 800px;
+				max-width: 900px;
 				margin: 0 auto;
 				background-color: #0f0f0f;
 				color: #ffffff;
 			}
 			
+			.header-box { text-align: center; margin-bottom: 3rem; }
 			.content-box {
 				background-color: #272727;
 				border-radius: 12px;
@@ -187,11 +174,6 @@ try {
 				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 				text-align: left;
 			}
-
-            .header-box {
-                text-align: center;
-                margin-bottom: 3rem;
-            }
             
             .error-box {
                 background-color: #3f1a1a;
@@ -199,102 +181,114 @@ try {
                 color: #ffcccc;
                 padding: 1rem;
                 border-radius: 8px;
-                margin-bottom: 2rem;
             }
 			
-			h1 {
-				margin-top: 0;
-				color: #ffffff;
-				font-size: 2.5rem;
-				margin-bottom: 0.5rem;
-			}
-            
-            h2 {
-                margin-top: 0;
-                font-size: 1.8rem;
-                color: #ffffff;
-                border-bottom: 1px solid #444;
-                padding-bottom: 10px;
-                margin-bottom: 15px;
-            }
-			
-			.subtitle {
-				color: #a0a0a0;
-				font-size: 1.2rem;
-			}
+			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
+            h2 { color: #ffffff; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; }
+			.subtitle { color: #a0a0a0; font-size: 1.2rem; }
 
-            details {
+            /* Main Project Description Toggle */
+            details.project-desc {
                 background-color: #1f1f1f;
                 border-radius: 8px;
                 margin-bottom: 1.5rem;
                 overflow: hidden;
             }
-
-            summary {
+            
+            details.project-desc summary {
                 padding: 1rem;
-                cursor: pointer;
                 font-weight: bold;
-                color: #e0e0e0;
                 background-color: #333;
-                list-style: none;
                 display: flex;
                 justify-content: space-between;
-                align-items: center;
+                cursor: pointer;
             }
-            
-            summary::after { content: '+'; font-size: 1.2rem; font-weight: bold; }
-            details[open] summary::after { content: '-'; }
-            summary::-webkit-details-marker { display: none; }
+
+            details.project-desc summary::after { content: '+'; font-size: 1.2rem; }
+            details.project-desc[open] summary::after { content: '-'; }
 
             .description-content {
                 padding: 1rem;
                 line-height: 1.6;
                 color: #ccc;
-                font-size: 0.95rem;
+                white-space: pre-wrap;
                 border-top: 1px solid #444;
-                white-space: pre-wrap; /* Preserves newlines from your text file */
             }
 
-            /* --- Updated File List Styling --- */
-            .file-list {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-            
-            .file-list li {
-                margin-bottom: 8px;
+            /* --- File List Styling (Matches Data Page) --- */
+            .file-list { list-style: none; padding: 0; margin: 0; }
+
+            /* Each file is a details element */
+            details.file-item {
+                background-color: #1a1a1a;
+                margin-bottom: 10px;
+                border-radius: 6px;
+                overflow: hidden;
+                border: 1px solid transparent;
+                transition: border-color 0.2s;
             }
 
-            /* The Anchor Tag is now the container */
-            a.file-link {
+            details.file-item[open] { border-color: #444; }
+
+            /* Summary is the Clickable Row */
+            details.file-item summary {
+                padding: 12px 16px;
+                cursor: pointer;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                list-style: none;
                 background-color: #1a1a1a;
-                padding: 12px 16px;
-                border-radius: 6px;
-                transition: background-color 0.2s;
-                text-decoration: none; /* No underline on the whole box */
-                color: #ffffff; /* Default text color */
             }
 
-            a.file-link:hover {
-                background-color: #333;
-                color: #e0e0e0;
-            }
+            details.file-item summary:hover { background-color: #333; }
+            details.file-item summary::-webkit-details-marker { display: none; }
 
             .file-name {
                 font-weight: 500;
-            }
-
-            .download-label {
-                color: #646cff; /* Accent color */
-                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 10px;
             }
             
-            a.file-link:hover .download-label {
-                color: #8289ff;
+            /* Icon: Cube for 3D file */
+            .file-name::before { content: '🧊'; font-size: 1.2rem; }
+            details.file-item[open] .file-name::before { content: '📂'; }
+
+            .actions {
+                display: flex;
+                gap: 15px;
+                font-size: 0.9rem;
+                align-items: center;
+            }
+
+            .preview-label { color: #aaa; font-size: 0.8rem; margin-right: 5px; }
+
+            a.download-btn {
+                color: #646cff;
+                text-decoration: none;
+                font-weight: bold;
+                padding: 4px 8px;
+                border: 1px solid #646cff;
+                border-radius: 4px;
+                transition: all 0.2s;
+            }
+
+            a.download-btn:hover { background-color: #646cff; color: #fff; }
+
+            /* --- 3D Viewer Container --- */
+            .viewer-container {
+                background-color: #222;
+                height: 400px;
+                width: 100%;
+                border-top: 1px solid #444;
+                position: relative;
+            }
+
+            model-viewer {
+                width: 100%;
+                height: 100%;
+                --poster-color: transparent;
             }
 
 			.back-link {
@@ -303,19 +297,13 @@ try {
 				padding: 0;
 				background-color: #272727;
 				border-radius: 6px;
-                text-align: center;
 			}
-			
 			.back-link:hover { background-color: #333333; }
 			.back-link a {
 				display: block;
 				padding: 0.5rem 1rem;
-				border-radius: 6px;
-                color: #fff;
-                text-decoration: none;
+                color: #fff; text-decoration: none;
 			}
-            
-            .empty-msg { text-align: center; color: #666; padding: 2rem; }
 		</style>
 	</head>
 	<body>
@@ -325,22 +313,18 @@ try {
 			<p class="back-link"><a href="/">← Back to Home</a></p>
 		</div>
 
-         {errorMessage && (
-             <div class="error-box">
-                 <strong>Error:</strong> {errorMessage}
-             </div>
-         )}
+         {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
 
          {projectList.length === 0 && !errorMessage ? (
              <div class="content-box">
-                <p class="empty-msg">No files found in repo matching the criteria.</p>
+                <p style="text-align:center; color:#666;">No files found in repo.</p>
              </div>
          ) : (
              projectList.map((item) => (
                 <div class="content-box">
                     <h2>{item.title}</h2>
                     
-                    <details>
+                    <details class="project-desc">
                         <summary>Description</summary>
                         <div class="description-content">
                             {item.description}
@@ -349,16 +333,31 @@ try {
                         </div>
                     </details>
 
-                    <ul class="file-list">
+                    <div class="file-list">
                         {item.files.map((file) => (
-                            <li>
-                                <a href={file.url} class="file-link" download>
+                            <details class="file-item">
+                                <summary>
                                     <span class="file-name">{file.name}</span>
-                                    <span class="download-label">Download STL</span>
-                                </a>
-                            </li>
+                                    <div class="actions">
+                                        <span class="preview-label">▼ 3D Preview</span>
+                                        <a href={file.url} class="download-btn" download>Download</a>
+                                    </div>
+                                </summary>
+                                <div class="viewer-container">
+                                    <model-viewer
+                                        src={file.url}
+                                        alt={`A 3D model of ${file.name}`}
+                                        auto-rotate
+                                        camera-controls
+                                        loading="lazy"
+                                        shadow-intensity="1"
+                                        style="background-color: #1a1a1a;"
+                                    >
+                                    </model-viewer>
+                                </div>
+                            </details>
                         ))}
-                    </ul>
+                    </div>
                 </div>
              ))
          )}
