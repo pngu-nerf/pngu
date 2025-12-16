@@ -10,17 +10,17 @@
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: -1; /* Behind everything */
-        pointer-events: none; /* Let clicks pass through */
+        z-index: -1;
+        pointer-events: none;
         
-        /* The "Silent Start" Logic */
         opacity: 0;
         animation: subtleFadeIn 3s ease-in-out 3s forwards;
     }
 
     @keyframes subtleFadeIn {
         from { opacity: 0; }
-        to { opacity: 0.15; } /* Max opacity is low (15%) to be minimal */
+        /* 1. BRIGHTER: Increased max opacity from 0.15 to 0.3 */
+        to { opacity: 0.3; } 
     }
 </style>
 
@@ -33,7 +33,7 @@
 
     // Configuration
     const STRAND_COUNT = 15;
-    const STRAND_COLOR = '255, 255, 255'; // White
+    const STRAND_COLOR = '255, 255, 255'; 
 
     class Strand {
         x: number;
@@ -51,28 +51,31 @@
 
         init() {
             this.x = Math.random() * width;
-            this.y = -Math.random() * height; // Start slightly above
-            this.length = height * (0.5 + Math.random() * 0.5); // 50% to 100% screen height
-            this.thickness = Math.random() * 2 + 0.5; // Thin lines
-            this.speed = Math.random() * 0.5 + 0.2; // Vertical speed
+            this.y = -Math.random() * height; 
+            this.length = height * (0.5 + Math.random() * 0.5); 
             
-            // Swaying properties
-            this.offset = Math.random() * 100; // Random starting point in sine wave
-            this.amplitude = Math.random() * 50 + 20; // How wide they sway
-            this.frequency = Math.random() * 0.002 + 0.001; // How fast they sway
+            // 2. BIGGER: Doubled thickness (was * 2 + 0.5)
+            this.thickness = Math.random() * 4 + 1; 
+
+            // 3. SLOWER: Halved vertical speed (was * 0.5 + 0.2)
+            this.speed = Math.random() * 0.25 + 0.1; 
+            
+            this.offset = Math.random() * 100; 
+            this.amplitude = Math.random() * 50 + 20; 
+            this.frequency = Math.random() * 0.002 + 0.001; 
         }
 
         update() {
             // Move down
             this.y += this.speed;
             
-            // Sway time (offset)
-            this.offset += 0.01;
+            // 3. SLOWER: Halved sway speed (was 0.01)
+            this.offset += 0.005;
 
             // Reset if moved past bottom
             if (this.y > height) {
                 this.init();
-                this.y = -200; // Reset above screen
+                this.y = -200; 
             }
         }
 
@@ -81,19 +84,16 @@
             
             ctx.beginPath();
             
-            // Create a gradient for the "Glowing" tail effect
-            // Starts transparent, gets bright, fades out
             const grad = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.length);
             grad.addColorStop(0, `rgba(${STRAND_COLOR}, 0)`);
-            grad.addColorStop(0.2, `rgba(${STRAND_COLOR}, 0.5)`); // Brightest point
+            // 1. BRIGHTER: Increased alpha to 1.0 (was 0.5)
+            grad.addColorStop(0.2, `rgba(${STRAND_COLOR}, 1.0)`); 
             grad.addColorStop(1, `rgba(${STRAND_COLOR}, 0)`);
 
             ctx.strokeStyle = grad;
             ctx.lineWidth = this.thickness;
             ctx.lineCap = 'round';
             
-            // Draw a curved line (sine wave)
-            // We draw multiple segments to make the curve smooth
             let startY = this.y;
             let currentY = startY;
             
@@ -102,23 +102,18 @@
                 startY
             );
 
-            // Draw the strand in segments
             for (let i = 0; i <= 20; i++) {
                 currentY = startY + (this.length / 20) * i;
-                
-                // Calculate sway at this specific height
                 const sway = Math.sin(this.offset + (i * 0.2)) * this.amplitude;
-                
                 ctx.lineTo(this.x + sway, currentY);
             }
 
-            // Simple Glow Effect
+            // 1. BRIGHTER: Stronger glow (alpha 1.0 instead of 0.5)
             ctx.shadowBlur = 15;
-            ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+            ctx.shadowColor = "rgba(255, 255, 255, 1.0)";
 
             ctx.stroke();
             
-            // Reset shadow for next frame to save performance
             ctx.shadowBlur = 0; 
         }
     }
@@ -129,7 +124,6 @@
         canvas.width = width;
         canvas.height = height;
         
-        // Re-init strands on resize to fill width
         strands = [];
         for (let i = 0; i < STRAND_COUNT; i++) {
             strands.push(new Strand());
@@ -148,7 +142,6 @@
         requestAnimationFrame(animate);
     }
 
-    // Initialize
     window.addEventListener('resize', resize);
     resize();
     animate();
