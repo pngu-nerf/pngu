@@ -1,12 +1,12 @@
 ---
-// src/pages/data.astro
+// src/pages/files.astro
 import BackgroundEffects from '../components/BackgroundEffects.astro';
 
 export const prerender = false;
 
 // --- Configuration ---
 const GITHUB_USER = 'pngu-nerf';
-const GITHUB_REPO = 'PNGU-Blaster-Data';
+const GITHUB_REPO = 'PNGU-3D-Files';
 const BRANCH = 'main';
 
 // --- Caching ---
@@ -16,24 +16,25 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=1000, s-maxage=1000
 type FileItem = {
   name: string;
   path: string;
-  downloadUrl: string;
-  previewUrl: string;
+  url: string;
 };
 
 type ProjectItem = {
   title: string;
+  description: string;
+  printablesUrl: string | null;
   files: FileItem[];
 };
 
 // --- Variables ---
 let errorMessage = "";
-let projectList: ProjectItem[] = [];
 let projects: Record<string, ProjectItem> = {};
+let projectList: ProjectItem[] = [];
 
 // --- Helper Functions ---
 async function getRepoFiles() {
   const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
-  
+
   try {
     const response = await fetch(apiUrl, {
       headers: {
@@ -55,56 +56,92 @@ async function getRepoFiles() {
   }
 }
 
+async function getPrintablesDescription(url: string) {
+  if (!url) return "No description available.";
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': 'PNGU-Website' } });
+    if (!res.ok) return "Could not fetch description.";
+    
+    const html = await res.text();
+    const match = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i) || 
+                  html.match(/<meta\s+property="og:description"\s+content="([^"]*)"/i);
+    
+    if (match && match[1]) {
+        return match[1].replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    }
+    return "Could not load description.";
+  } catch (e) {
+    return "Error loading description.";
+  }
+}
+
 // --- Main Logic ---
 try {
   const data = await getRepoFiles();
 
   if (data && data.tree) {
+    // 1. Group files by Folder
     for (const item of data.tree) {
-      if (item.type === 'blob') {
+      if (item.type === 'blob') { 
         const pathParts = item.path.split('/');
         
-        // Ensure it is inside a subfolder
         if (pathParts.length > 1) {
           const folderName = pathParts[0];
           const fileName = pathParts[pathParts.length - 1];
-          const lowerName = fileName.toLowerCase();
 
-          // Initialize Project
           if (!projects[folderName]) {
             projects[folderName] = {
               title: folderName,
+              description: "Loading...",
+              printablesUrl: null,
               files: []
             };
           }
 
-          // Check for Excel or Word files
-          if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls') || 
-              lowerName.endsWith('.docx') || lowerName.endsWith('.doc')) {
+          if (fileName.toLowerCase().endsWith('.stl')) {
+            const safePath = item.path.split('/').map(encodeURIComponent).join('/');
             
-            const rawUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`;
-            
-            // Generate Microsoft Office Viewer URL
-            const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
-
             projects[folderName].files.push({
               name: fileName,
               path: item.path,
-              downloadUrl: rawUrl,
-              previewUrl: officeViewerUrl
+              url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}` 
             });
+          }
+          
+          if (fileName.toLowerCase().includes('link')) {
+             const safePath = item.path.split('/').map(encodeURIComponent).join('/');
+             const rawLinkRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`);
+             if (rawLinkRes.ok) {
+                projects[folderName].printablesUrl = (await rawLinkRes.text()).trim();
+             }
+          }
+
+          if (fileName.toLowerCase().startsWith('description')) {
+             const safePath = item.path.split('/').map(encodeURIComponent).join('/');
+             const rawDescRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`);
+             if (rawDescRes.ok) {
+                 projects[folderName].description = (await rawDescRes.text()).trim();
+             }
           }
         }
       }
     }
 
-    // Sort files and remove empty folders
-    projectList = Object.values(projects)
-        .map(p => {
-            p.files.sort((a, b) => a.name.localeCompare(b.name));
-            return p;
-        })
-        .filter(p => p.files.length > 0);
+    // 2. Finalize Descriptions
+    await Promise.all(
+      Object.values(projects).map(async (project) => {
+        if (project.description === "Loading...") {
+            if (project.printablesUrl) {
+                project.description = await getPrintablesDescription(project.printablesUrl);
+            } else {
+                project.description = "No description available.";
+            }
+        }
+        project.files.sort((a, b) => a.name.localeCompare(b.name));
+      })
+    );
+    
+    projectList = Object.values(projects).filter(p => p.files.length > 0);
 
   } else {
       errorMessage = "Received empty data from GitHub.";
@@ -119,9 +156,9 @@ try {
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
-		<title>Blaster Data | PNGU</title>
+		<title>3D Files | PNGU</title>
+
 		<style>
-            /* Global Reset */
             * { box-sizing: border-box; }
 
 			body {
@@ -133,7 +170,6 @@ try {
 				color: #ffffff;
 			}
             
-            /* Background Layer */
             #bg-layer {
                 position: fixed;
                 top: 0;
@@ -146,25 +182,17 @@ try {
 			
 			.header-box { text-align: center; margin-bottom: 3rem; }
 
-            /* --- Liquid Glass Content Box --- */
 			.content-box {
-                /* Glass Background */
 				background-color: rgba(40, 40, 40, 0.4); 
                 backdrop-filter: blur(20px) saturate(120%);
                 -webkit-backdrop-filter: blur(20px) saturate(120%);
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                
 				border-radius: 16px;
 				padding: 2rem;
-				
-                /* Desktop Width */
 				width: 75%;
 				margin: 2rem auto; 
-				
 				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 				text-align: left;
-
-                /* Hover Transition */
                 transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
                             box-shadow 0.4s ease, 
                             border-color 0.4s ease;
@@ -185,10 +213,10 @@ try {
                 width: 75%;
                 margin: 0 auto 2rem auto;
             }
-
+			
 			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
             
-			h2 { 
+            h2 { 
                 margin-top: 0;
                 color: #ffffff;
                 font-size: 1.5rem;
@@ -200,16 +228,43 @@ try {
             
 			.subtitle { color: #a0a0a0; font-size: 1.2rem; }
 
-            /* --- File List Styling --- */
+            details.project-desc {
+                background-color: rgba(31, 31, 31, 0.6);
+                border-radius: 8px;
+                margin-bottom: 1.5rem;
+                overflow: hidden;
+                border: 1px solid rgba(255,255,255,0.05);
+            }
+            
+            details.project-desc summary {
+                padding: 1rem;
+                font-weight: bold;
+                background-color: rgba(51, 51, 51, 0.8);
+                display: flex;
+                justify-content: space-between;
+                cursor: pointer;
+                color: #e0e0e0;
+            }
+
+            details.project-desc summary::after { content: '+'; font-size: 1.2rem; }
+            details.project-desc[open] summary::after { content: '-'; }
+
+            .description-content {
+                padding: 1rem;
+                line-height: 1.6;
+                color: #ccc;
+                white-space: pre-wrap;
+                border-top: 1px solid rgba(255,255,255,0.05);
+            }
+
             .file-list { list-style: none; padding: 0; margin: 0; }
 
-            /* Opaque Dark Grey File Bubbles */
             details.file-item {
-                background-color: #1a1a1a;
+                background-color: #1a1a1a; 
                 margin-bottom: 10px;
                 border-radius: 12px;
                 overflow: hidden;
-                border: 1px solid rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.05); 
                 transition: border-color 0.2s, transform 0.2s;
             }
 
@@ -233,7 +288,6 @@ try {
             details.file-item summary:hover { background-color: #252525; }
             details.file-item summary::-webkit-details-marker { display: none; }
 
-            /* The Arrow */
             details.file-item summary::after {
                 content: '▼'; 
                 font-size: 0.8rem;
@@ -242,7 +296,6 @@ try {
                 transition: transform 0.2s ease;
             }
 
-            /* Rotate arrow when open */
             details.file-item[open] summary::after {
                 transform: rotate(180deg);
             }
@@ -251,13 +304,13 @@ try {
                 font-weight: 500;
                 color: #fff;
             }
-            
+
             .actions {
                 display: flex;
                 gap: 15px;
                 font-size: 0.9rem;
                 align-items: center;
-                margin-left: auto;
+                margin-left: auto; 
                 margin-right: 15px;
             }
 
@@ -280,36 +333,75 @@ try {
                 box-shadow: 0 0 10px rgba(100, 108, 255, 0.4);
             }
 
-            /* --- Preview Container (Iframe) --- */
-            .preview-container {
-                background-color: #fff;
-                height: 500px;
+            .viewer-container {
+                background-color: #111; 
+                height: 400px;
                 width: 100%;
                 border-top: 1px solid #444;
+                position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
             }
-
-            iframe {
-                width: 100%;
-                height: 100%;
-                border: none;
-            }
-
-			.back-link {
-				display: inline-block;
-				margin-top: 1rem;
-				padding: 0;
-				background-color: #272727;
-				border-radius: 6px;
-			}
-			.back-link:hover { background-color: #333333; }
-			.back-link a {
-				display: block;
-				padding: 0.5rem 1rem;
-				color: #fff;
-				text-decoration: none;
-			}
             
-            /* Responsive */
+            .viewer-container canvas {
+                width: 100% !important;
+                height: 100% !important;
+                outline: none;
+            }
+            
+            .loading-text {
+                position: absolute;
+                color: #888;
+                font-size: 0.9rem;
+                pointer-events: none;
+                z-index: 10;
+            }
+
+            /* --- Updated Back Link (Matches GitHub Button) --- */
+			.back-link {
+				margin-top: 1rem;
+			}
+			.back-link a {
+				display: inline-block;
+				padding: 10px 20px;
+				background-color: #272727;
+                border: 1px solid rgba(255,255,255,0.1);
+				border-radius: 8px;
+                color: #fff;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.2s;
+			}
+            .back-link a:hover {
+                background-color: #333;
+                border-color: rgba(255,255,255,0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+            
+            /* --- Github Button Style --- */
+            .github-direct-btn {
+                display: inline-block;
+                margin-top: 10px;
+                padding: 10px 20px;
+                background-color: #272727;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 8px;
+                color: #fff;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            
+            .github-direct-btn:hover {
+                background-color: #333;
+                border-color: rgba(255,255,255,0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+            
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
                 .content-box { 
@@ -324,47 +416,179 @@ try {
         <div id="bg-layer"></div>
         <BackgroundEffects />
 
-		<div class="header-box">
-			<h1>Blaster Data</h1>
-			<p class="subtitle">Spreadsheets & Docs</p>
+        <div class="header-box">
+			<h1>3D Printing Files</h1>
+			<p class="subtitle">Files synced from GitHub</p>
 			<p class="back-link"><a href="/">← Back to Home</a></p>
 		</div>
 
-        {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
+         {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
 
-        {projectList.length === 0 && !errorMessage ? (
-            <div class="content-box" style="text-align: center;">
-                <p style="color:#ccc;">No spreadsheets or documents found.</p>
-            </div>
-        ) : (
-            projectList.map((item) => (
+         {projectList.length === 0 && !errorMessage ? (
+             <div class="content-box">
+                <p style="text-align:center; color:#ccc;">No files found in repo.</p>
+             </div>
+         ) : (
+             projectList.map((item) => (
                 <div class="content-box">
                     <h2>{item.title}</h2>
+                    
+                    <details class="project-desc">
+                        <summary>Description</summary>
+                        <div class="description-content">
+                            {item.description}
+                            <br/><br/>
+                            {item.printablesUrl && <a href={item.printablesUrl} target="_blank" style="color: #646cff; font-size: 0.9rem;">View original page on Printables &rarr;</a>}
+                        </div>
+                    </details>
+
                     <div class="file-list">
                         {item.files.map((file) => (
                             <details class="file-item">
                                 <summary>
                                     <span class="file-name">{file.name}</span>
                                     <div class="actions">
-                                        <span class="preview-label">Click to Preview</span>
-                                        <a href={file.downloadUrl} class="download-btn" download>Download</a>
+                                        <span class="preview-label">3D Preview</span>
+                                        <a href={file.url} class="download-btn" download>Download</a>
                                     </div>
                                 </summary>
-                                <div class="preview-container">
-                                    <iframe 
-                                        src={file.previewUrl} 
-                                        title={`Preview of ${file.name}`}>
-                                    </iframe>
+                                <div class="viewer-container" data-stl-url={file.url}>
+                                    <span class="loading-text">Click to load 3D view...</span>
                                 </div>
                             </details>
                         ))}
                     </div>
                 </div>
-            ))
-        )}
-        
-        <div style="margin-top: 3rem; opacity: 0.5; font-size: 0.8rem;">
-             <p>Files hosted on GitHub. Updates every ~10 minutes.</p>
-        </div>
+             ))
+         )}
+         
+         <div style="margin-top: 3rem; text-align: center;">
+             <p style="opacity: 0.5; font-size: 0.8rem; margin-bottom: 0.5rem;">Files hosted on GitHub. Updates every ~10 minutes.</p>
+             <a href={`https://github.com/${GITHUB_USER}/${GITHUB_REPO}`} target="_blank" class="github-direct-btn">
+                 Access GitHub Directly &rarr;
+             </a>
+         </div>
+         
+         <div style="height: 40px;"></div>
+
+         <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+                }
+            }
+         </script>
+
+         <script type="module">
+            import * as THREE from 'three';
+            import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+            const viewedElements = new WeakSet();
+
+            function initViewer(container, url) {
+                if (viewedElements.has(container)) return;
+                viewedElements.add(container);
+
+                const loadingText = container.querySelector('.loading-text');
+                if (loadingText) loadingText.textContent = "Loading Model...";
+
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x111111);
+                
+                const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+                camera.position.set(0, 0, 100);
+
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                container.appendChild(renderer.domElement);
+
+                const controls = new OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+
+                const ambientLight = new THREE.AmbientLight(0x404040, 2);
+                scene.add(ambientLight);
+                
+                const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+                dirLight.position.set(1, 1, 1);
+                scene.add(dirLight);
+                
+                const dirLight2 = new THREE.DirectionalLight(0xffffff, 1);
+                dirLight2.position.set(-1, -1, 1);
+                scene.add(dirLight2);
+
+                const loader = new STLLoader();
+                loader.load(
+                    url,
+                    function (geometry) {
+                        if (loadingText) loadingText.style.display = 'none';
+
+                        geometry.computeBoundingBox();
+                        const center = new THREE.Vector3();
+                        geometry.boundingBox.getCenter(center);
+                        geometry.center(); 
+
+                        const material = new THREE.MeshPhongMaterial({ 
+                            color: 0x646cff, 
+                            specular: 0x111111, 
+                            shininess: 200 
+                        });
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.rotation.x = -Math.PI / 2; 
+                        
+                        scene.add(mesh);
+
+                        const box = geometry.boundingBox;
+                        const size = box.getSize(new THREE.Vector3()).length();
+                        const maxSize = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
+                        
+                        camera.position.z = maxSize * 2;
+                        camera.position.y = maxSize;
+                        camera.lookAt(0,0,0);
+                        
+                        controls.target.set(0, 0, 0);
+                        controls.update();
+
+                        function animate() {
+                            requestAnimationFrame(animate);
+                            controls.update();
+                            renderer.render(scene, camera);
+                        }
+                        animate();
+                    },
+                    (xhr) => {
+                        if (loadingText) loadingText.textContent = `Loading: ${Math.round((xhr.loaded / xhr.total) * 100)}%`;
+                    },
+                    (error) => {
+                        console.error(error);
+                        if (loadingText) {
+                            loadingText.textContent = "Error loading 3D model.";
+                            loadingText.style.color = "#ff4444";
+                        }
+                    }
+                );
+                
+                window.addEventListener('resize', () => {
+                   if (container.clientWidth > 0 && container.clientHeight > 0) {
+                       camera.aspect = container.clientWidth / container.clientHeight;
+                       camera.updateProjectionMatrix();
+                       renderer.setSize(container.clientWidth, container.clientHeight);
+                   }
+                });
+            }
+
+            document.addEventListener('toggle', function(event) {
+                if (event.target.tagName === 'DETAILS' && event.target.classList.contains('file-item')) {
+                    if (event.target.open) {
+                        const container = event.target.querySelector('.viewer-container');
+                        const url = container.getAttribute('data-stl-url');
+                        if (container && url) {
+                            setTimeout(() => initViewer(container, url), 50);
+                        }
+                    }
+                }
+            }, true);
+         </script>
 	</body>
 </html>
