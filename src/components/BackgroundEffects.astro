@@ -19,6 +19,7 @@
         z-index: -1;
         pointer-events: none;
         overflow: hidden; 
+        background-color: #000; /* Ensures black backdrop for dimming */
     }
 
     #tech-canvas {
@@ -26,8 +27,12 @@
         width: 120%; 
         height: 100%;
         left: -10%; 
-        /* Slightly higher base opacity so colors pop through saturation filter */
-        opacity: 0.5;
+        
+        /* 1. Added back the 20px blur on the strands themselves */
+        filter: blur(20px);
+
+        /* Initial Opacity */
+        opacity: 0.2;
         animation: brightenUp 2s ease-out forwards;
         will-change: opacity, transform;
     }
@@ -38,14 +43,14 @@
         inset: 0;
         z-index: 1;
         
-        /* THE KEY: High saturation + deep blur for the "liquid" look */
+        /* High saturation + deep blur for the "liquid" look */
         backdrop-filter: saturate(180%) blur(50px);
         -webkit-backdrop-filter: saturate(180%) blur(50px);
 
-        /* Subtle white tint to give the glass substance */
+        /* Subtle white tint */
         background-color: rgba(255, 255, 255, 0.03);
 
-        /* Ultra-subtle noise texture (opacity reduced to 0.03 in SVG) */
+        /* Noise texture */
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
         
         mix-blend-mode: overlay;
@@ -59,21 +64,21 @@
         /* Top-down light reflection gradient */
         background: linear-gradient(
             to bottom, 
-            rgba(255, 255, 255, 0.12) 0%,  /* Brighter top edge reflection */
-            rgba(255, 255, 255, 0.05) 10%, /* Fades quickly */
+            rgba(255, 255, 255, 0.12) 0%, 
+            rgba(255, 255, 255, 0.05) 10%, 
             transparent 40%
         );
         pointer-events: none;
     }
 
     @keyframes brightenUp {
-        from { opacity: 0.5; }
-        to { opacity: 0.9; } /* Increased final brightness slightly */
+        from { opacity: 0.2; }
+        /* 2. Dimmed max opacity to 0.5 (was 0.9) to achieve ~40% reduction */
+        to { opacity: 0.5; } 
     }
 </style>
 
 <script>
-    // ... (JavaScript remains exactly the same as the previous version) ...
     const canvas = document.getElementById('tech-canvas') as HTMLCanvasElement;
     const ctx = canvas.getContext('2d');
 
