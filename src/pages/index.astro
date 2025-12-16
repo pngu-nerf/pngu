@@ -11,329 +11,212 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 		<meta name="generator" content={Astro.generator} />
 		<title>PNGU</title>
 		<style>
-			* {
-				margin: 0;
-				padding: 0;
-				box-sizing: border-box;
-			}
-			
 			body {
-				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-				line-height: 1.6;
+				font-family: sans-serif;
+				padding: 2rem;
+				text-align: center;
+				max-width: 900px;
+				margin: 0 auto;
 				color: #ffffff;
+			}
+			
+			/* Background Layer */
+			#bg-layer {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
 				background-color: #0f0f0f;
-				min-height: 100vh;
-				display: flex;
-				flex-direction: column;
+				z-index: -2;
 			}
 			
-			/* Main content wrapper */
-			.main-content {
-				flex: 1;
-				display: flex;
-				flex-direction: column;
-			}
-			
-			/* YouTube-style banner container - Shrunk to 90% */
+			/* --- Banner Styling --- */
 			.banner-container {
 				width: 100%;
-				/* Transparent background so lines show through if needed, or keep dark */
-				background-color: transparent; 
+				margin-bottom: 2rem;
 				display: flex;
 				justify-content: center;
-				align-items: center;
-				padding: 20px 0;
-				position: relative;
-				overflow: hidden;
-				border-radius: 12px 12px 0 0;
-				margin-bottom: 2rem;
 			}
 			
-			/* YouTube-style banner image - 90% size */
 			.banner-image {
-				width: 90%;
-				max-width: 2304px;
+				width: 100%;
 				height: auto;
+				border-radius: 12px;
+				box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 				display: block;
-				object-fit: contain;
-				border-radius: 8px;
-                /* Ensure banner stays above background lines if they overlap */
-                z-index: 1; 
 			}
-			
-			/* Links container with content box styling */
-			.links-container {
-				max-width: 600px;
-				margin: 0 auto;
-				padding: 0 20px;
-				flex: 1;
-                z-index: 1; /* Ensure content is above background */
-			}
-			
+
+			/* --- Content Box Styling --- */
 			.content-box {
 				background-color: #272727;
 				border-radius: 12px;
 				padding: 2rem;
+				margin: 2rem 0;
 				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+				text-align: left;
 			}
-			
-			/* Main links list - centered */
-			.links-list {
-				list-style: none;
-				border-radius: 8px;
-				overflow: hidden;
-				margin-bottom: 2rem;
-			}
-			
-			.link-item {
-				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-				transition: background-color 0.2s ease;
-				text-align: center;
-			}
-			
-			.link-item:last-child {
-				border-bottom: none;
-			}
-			
-			.link-item:hover {
-				background-color: rgba(255, 255, 255, 0.05);
-			}
-			
-			.link-item a {
-				display: block;
-				padding: 1.5rem 2rem;
-				text-decoration: none;
+
+			h2 {
+				margin-top: 0;
 				color: #ffffff;
-				font-size: 1.1rem;
-				font-weight: 500;
-				transition: all 0.2s ease;
-				text-align: center;
+				font-size: 1.5rem;
+				border-bottom: 1px solid #444;
+				padding-bottom: 10px;
+				margin-bottom: 20px;
 			}
-			
-			.link-item a:hover {
-				color: #e0e0e0;
-			}
-			
-			/* Link descriptions - centered */
-			.link-description {
-				display: block;
-				color: #a0a0a0;
-				font-size: 0.9rem;
-				margin-top: 0.5rem;
-				font-weight: normal;
-				text-align: center;
-				width: 100%;
-				padding: 0 1rem;
-			}
-			
-			/* Link title - centered */
-			.link-title {
-				display: block;
-				text-align: center;
-				font-size: 1.2rem;
-				margin-bottom: 0.25rem;
-			}
-			
-			/* Social links section */
-			.social-section {
-				padding-top: 1.5rem;
-				position: relative;
-			}
-			
-			.social-section::before {
-				content: '';
-				position: absolute;
-				top: 0;
-				left: 50%;
-				transform: translateX(-50%);
-				width: 33.33%;
-				height: 1px;
-				background-color: rgba(255, 255, 255, 0.1);
-			}
-			
-			.social-heading {
-				text-align: center;
-				color: #e0e0e0;
-				font-size: 1rem;
-				margin-top: 1.5rem;
-				margin-bottom: 1rem;
-				font-weight: normal;
-				opacity: 0.8;
-			}
-			
-			/* Social links list - back button style */
-			.social-links {
-				list-style-type: none;
+
+			/* --- Link Bubbles (Matches File/Contact Buttons) --- */
+			.nav-list {
+				list-style: none;
 				padding: 0;
 				margin: 0;
+			}
+
+			.nav-item {
+				margin-bottom: 12px;
+			}
+
+			a.nav-link {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				background-color: #1a1a1a;
+				padding: 16px 20px;
+				border-radius: 8px;
+				text-decoration: none;
+				transition: all 0.2s ease;
+				border: 1px solid transparent;
+			}
+
+			a.nav-link:hover {
+				background-color: #333;
+				transform: translateY(-2px);
+				box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+				border-color: #444;
+			}
+
+			/* Left side of the link (Title + Desc) */
+			.link-content {
 				display: flex;
 				flex-direction: column;
-				gap: 0.75rem;
+				gap: 4px;
 			}
-			
-			.social-link-item {
-				margin: 0;
-				padding: 0;
-			}
-			
-			/* Style the social links to look like back buttons */
-			.social-link-item a {
-				display: block;
-				padding: 0.75rem 1rem;
-				background-color: rgba(255, 255, 255, 0.05);
-				border-radius: 6px;
-				text-decoration: none;
+
+			.link-title {
 				color: #ffffff;
-				font-weight: 500;
-				text-align: center;
-				transition: background-color 0.2s ease;
-			}
-			
-			.social-link-item a:hover {
-				background-color: rgba(255, 255, 255, 0.1);
-			}
-			
-			/* Social link title */
-			.social-link-title {
-				display: block;
-				text-align: center;
+				font-weight: bold;
 				font-size: 1.1rem;
-				font-weight: 500;
 			}
-			
-			/* Bottom blank space */
-			.bottom-space {
-				height: 40px;
-				width: 100%;
-				flex-shrink: 0;
+
+			.link-desc {
+				color: #a0a0a0;
+				font-size: 0.9rem;
 			}
-			
-			/* Responsive adjustments */
-			@media (max-width: 768px) {
-				.banner-container {
-					border-radius: 10px 10px 0 0;
-					margin-bottom: 1.5rem;
-					padding: 15px 0;
-				}
-				
-				.banner-image {
-					width: 92%;
-				}
-				
-				.links-container {
-					padding: 0 15px;
-				}
-				
-				.content-box {
-					padding: 1.5rem;
-				}
-				
-				.link-item a {
-					padding: 1.25rem 1.5rem;
-					font-size: 1rem;
-				}
-				
-				.bottom-space {
-					height: 30px;
-				}
+
+			/* Right side arrow */
+			.arrow-icon {
+				color: #646cff;
+				font-weight: bold;
+				font-size: 1.2rem;
 			}
-			
-			@media (max-width: 480px) {
-				.banner-container {
-					border-radius: 8px 8px 0 0;
-					margin-bottom: 1rem;
-					padding: 10px 0;
-				}
-				
-				.banner-image {
-					width: 94%;
-					border-radius: 6px;
-				}
-				
-				.links-container {
-					padding: 0 10px;
-				}
-				
-				.content-box {
-					padding: 1.25rem;
-					border-radius: 10px;
-				}
-				
-				.link-item a {
-					padding: 1rem 1.25rem;
-				}
-				
-				.bottom-space {
-					height: 20px;
-				}
+            
+            a.nav-link:hover .arrow-icon {
+                color: #8289ff;
+            }
+
+            /* Social specific tweaks */
+            .social-title {
+                color: #ffffff;
+                font-weight: 500;
+            }
+
+            /* Responsive */
+			@media (max-width: 600px) {
+				body { padding: 1rem; }
+                .content-box { padding: 1.5rem; }
+				.link-desc { display: none; } /* Hide description on very small screens to save space */
 			}
 		</style>
 	</head>
 	<body>
-        <BackgroundEffects />
+		<div id="bg-layer"></div>
+		<BackgroundEffects />
 
-		<div class="main-content">
-			<div class="banner-container">
-				<img 
-					src="/site-assets/Site Banner.jpg" 
-					alt="PNGU Banner"
-					class="banner-image"
-				/>
-			</div>
-
-			<div class="links-container">
-				<div class="content-box">
-					<ul class="links-list">
-						<li class="link-item">
-							<a href="/files">
-								<span class="link-title">3D Files</span>
-								<span class="link-description">All 3D files for printing</span>
-							</a>
-						</li>
-						<li class="link-item">
-							<a href="/data">
-								<span class="link-title">Blaster Data</span>
-								<span class="link-description">All spreadsheets about blaster performance</span>
-							</a>
-						</li>
-						<li class="link-item">
-							<a href="/brand">
-								<span class="link-title">Brand Assets</span>
-								<span class="link-description">Download logos, fonts, and branding materials</span>
-							</a>
-						</li>
-						<li class="link-item">
-							<a href="/contact">
-								<span class="link-title">Contact</span>
-								<span class="link-description">Email & Discord</span>
-							</a>
-						</li>
-					</ul>
-					
-					<div class="social-section">
-						<h2 class="social-heading">External Links</h2>
-						<ul class="social-links">
-							<li class="social-link-item">
-								<a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener">
-									<span class="social-link-title">YouTube</span>
-								</a>
-							</li>
-							<li class="social-link-item">
-								<a href="https://github.com/pngu-nerf" target="_blank" rel="noopener">
-									<span class="social-link-title">GitHub</span>
-								</a>
-							</li>
-							<li class="social-link-item">
-								<a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener">
-									<span class="social-link-title">Printables</span>
-								</a>
-							</li>
-						</ul>
-					</div>
-				</div>
-			</div>
-			
-			<div class="bottom-space"></div>
+		<div class="banner-container">
+			<img 
+				src="/site-assets/Site Banner.jpg" 
+				alt="PNGU Banner"
+				class="banner-image"
+			/>
 		</div>
+
+		<div class="content-box">
+			<h2>Site Navigation</h2>
+			<ul class="nav-list">
+				<li class="nav-item">
+					<a href="/files" class="nav-link">
+						<div class="link-content">
+							<span class="link-title">3D Files</span>
+							<span class="link-desc">STL files for 3D printing</span>
+						</div>
+						<span class="arrow-icon">&rarr;</span>
+					</a>
+				</li>
+				<li class="nav-item">
+					<a href="/data" class="nav-link">
+						<div class="link-content">
+							<span class="link-title">Blaster Data</span>
+							<span class="link-desc">Performance spreadsheets & docs</span>
+						</div>
+						<span class="arrow-icon">&rarr;</span>
+					</a>
+				</li>
+				<li class="nav-item">
+					<a href="/brand" class="nav-link">
+						<div class="link-content">
+							<span class="link-title">Brand Assets</span>
+							<span class="link-desc">Logos, fonts, and branding</span>
+						</div>
+						<span class="arrow-icon">&rarr;</span>
+					</a>
+				</li>
+				<li class="nav-item">
+					<a href="/contact" class="nav-link">
+						<div class="link-content">
+							<span class="link-title">Contact</span>
+							<span class="link-desc">Email & Discord info</span>
+						</div>
+						<span class="arrow-icon">&rarr;</span>
+					</a>
+				</li>
+			</ul>
+		</div>
+
+		<div class="content-box">
+			<h2>External Links</h2>
+			<ul class="nav-list">
+				<li class="nav-item">
+					<a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="nav-link">
+						<span class="social-title">YouTube</span>
+						<span class="arrow-icon" style="color: #ff0000;">&nearr;</span>
+					</a>
+				</li>
+				<li class="nav-item">
+					<a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="nav-link">
+						<span class="social-title">GitHub</span>
+						<span class="arrow-icon" style="color: #ffffff;">&nearr;</span>
+					</a>
+				</li>
+				<li class="nav-item">
+					<a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="nav-link">
+						<span class="social-title">Printables</span>
+						<span class="arrow-icon" style="color: #fa6b25;">&nearr;</span>
+					</a>
+				</li>
+			</ul>
+		</div>
+
+		<div style="height: 40px;"></div>
 	</body>
 </html>
