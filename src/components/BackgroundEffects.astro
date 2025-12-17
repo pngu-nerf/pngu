@@ -16,8 +16,7 @@
         z-index: -1;
         pointer-events: none;
         overflow: hidden; 
-        /* Lighter, colder deep space background */
-        background: radial-gradient(circle at 50% 100%, #0a1520, #000000); 
+        background: radial-gradient(circle at 50% 100%, #111b24, #000000); 
     }
 
     #aurora-canvas {
@@ -26,11 +25,11 @@
         height: 100%;
         left: -10%; 
         
-        /* High blur allows the whites to bloom and colors to blend softly */
-        filter: blur(45px) contrast(1.1);
+        /* Reduced blur slightly to keep the "pillar" definition visible at 50% opacity */
+        filter: blur(40px) contrast(1.1);
 
-        opacity: 0; /* Start hidden for fade in */
-        animation: fadeIn 4s ease-out forwards;
+        opacity: 0; 
+        animation: fadeIn 3s ease-out forwards;
         will-change: opacity, transform;
     }
 
@@ -39,14 +38,13 @@
         inset: 0;
         z-index: 1;
         opacity: 0.05;
-        /* Subtle grain */
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
         mix-blend-mode: overlay;
     }
 
     @keyframes fadeIn {
         from { opacity: 0; }
-        to { opacity: 0.7; } 
+        to { opacity: 1; } 
     }
 </style>
 
@@ -64,18 +62,18 @@
 
     window.addEventListener('mousemove', (e) => {
         const normX = (e.clientX / window.innerWidth) * 2 - 1;
-        targetX = normX * 30; // Reduced parallax movement
+        targetX = normX * 30; 
     });
 
     // --- COLOR PALETTES ---
-    // Base color: Desaturated, ghostly white/blue
-    const BASE_WHITE = [220, 235, 255]; 
+    // Pure White Base
+    const BASE_WHITE = [255, 255, 255]; 
     
-    // Pulse colors: The colors that flash through the ripples
+    // Very light pastel pulses (high values prevent grayness)
     const PULSE_PALETTE = [
-        [100, 255, 180],  // Minty Green
-        [120, 150, 255],  // Soft Blue/Purple
-        [200, 240, 255]   // Bright icy white highlight
+        [180, 255, 220],  // Pale Mint
+        [200, 220, 255],  // Pale Periwinkle
+        [230, 245, 255]   // Ice White
     ];
 
     class Strand {
@@ -96,29 +94,37 @@
             this.alphaMult = layerCfg.alphaMult;
             this.parallaxFactor = layerCfg.parallaxFactor;
 
-            // Slightly thinner base than before to emphasize the pulses
             const baseThickness = 60 + (this.depth * 100); 
             this.thickness = baseThickness * layerCfg.thickMult;
             
-            // Physical movement properties
+            // Movement properties
             this.offset = Math.random() * 100; 
-            this.amplitude = Math.random() * 80 + 30; 
+            
+            // --- SETTLE ANIMATION PROPS ---
+            // restAmplitude: The "calm" state waviness (30-110)
+            this.restAmplitude = Math.random() * 80 + 30; 
+            // settleAmplitude: The "wild" initial waviness (extra 150-300px sway)
+            this.settleAmplitude = Math.random() * 150 + 150; 
+            this.settleTime = 0;
+            // Takes between 4 to 8 seconds to settle completely
+            this.settleDuration = 240 + Math.random() * 240; // 60fps * 4s = 240 frames
+
             this.speed = (Math.random() * 0.0015) + 0.0005;
 
-            // --- PULSE PROPERTIES ---
-            // Tracks the location of the color pulse along the strand
+            // Pulse props
             this.pulsePhase = Math.random() * Math.PI * 2;
-            // How fast the pulse travels down the strand
             this.pulseSpeed = (Math.random() * 0.01) + 0.005;
-            // Which color from the palette this strand pulses with
             this.pulseColorIdx = Math.floor(Math.random() * PULSE_PALETTE.length);
         }
 
         update() {
-            // Physical wave movement
             this.offset += this.speed;
-            // Traveling pulse movement
             this.pulsePhase += this.pulseSpeed;
+
+            // Progress the settle timer
+            if (this.settleTime < this.settleDuration) {
+                this.settleTime++;
+            }
         }
 
         draw() {
@@ -127,70 +133,77 @@
             const finalX = this.x + (currentX * this.parallaxFactor);
             const startY = -EXTENSION;
 
-            // Use lighter blending for the glowing effect
+            // --- CALCULATE DYNAMIC AMPLITUDE ---
+            // Easing function (easeOutCubic) for smooth relaxation
+            // t goes from 0 to 1
+            const t = this.settleTime / this.settleDuration;
+            const easeOut = 1 - Math.pow(1 - t, 3); 
+            
+            // Start at (Rest + Settle), gradually drop 'Settle' as easeOut approaches 1
+            const currentAmp = this.restAmplitude + (this.settleAmplitude * (1 - easeOut));
+
+
+            // Use lighter blending
             ctx.globalCompositeOperation = 'lighter';
             
-            const segments = 40; // More segments for smoother pulses
+            const segments = 40; 
             const segmentHeight = this.length / segments;
 
             ctx.beginPath();
 
-            // Calculate the intensity of the pulse at the center of the screen right now
-            // We use this to set the overall color of the gradient for this frame.
-            const centerPulseIntensity = Math.max(0, Math.sin(this.pulsePhase - Math.PI)); // Simple 0 to 1 wave
+            const centerPulseIntensity = Math.max(0, Math.sin(this.pulsePhase - Math.PI)); 
 
             const [wr, wg, wb] = BASE_WHITE;
             const [pr, pg, pb] = PULSE_PALETTE[this.pulseColorIdx];
 
-            // Interpolate between white base and pulse color based on intensity
-            // If intensity is 0, it's white. If 1, it's colored.
+            // Color Interpolation
             const r = wr + (pr - wr) * centerPulseIntensity;
             const g = wg + (pg - wg) * centerPulseIntensity;
             const b = wb + (pb - wb) * centerPulseIntensity;
             
-            // Base alpha calculation
-            const maxAlpha = (0.1 + (this.depth * 0.15)) * this.alphaMult;
-            // The pulse makes the alpha much higher when active
-            const dynamicAlpha = maxAlpha * (0.5 + centerPulseIntensity * 1.5);
+            // Alpha Interpolation
+            // 0.4 is the new minimum opacity (approx 50% visual weight)
+            const minAlpha = 0.4 * this.alphaMult;
+            const pulseBoost = centerPulseIntensity * 0.6; // Pulse adds another 60% opacity
+            const currentAlpha = Math.min(1, minAlpha + pulseBoost);
 
-            // Create gradient using the calculated interpolated color and dynamic alpha
+            // Gradient:
+            // Starts at 50% opacity, peaks in middle, ends at 50% opacity.
+            // Never fades to 0.
             const grad = ctx.createLinearGradient(finalX, startY, finalX, height + EXTENSION);
-            grad.addColorStop(0, `rgba(${r},${g},${b}, 0)`);
-            // The middle stops are where the brightness lives
-            grad.addColorStop(0.3, `rgba(${r},${g},${b}, ${dynamicAlpha * 0.7})`);
-            grad.addColorStop(0.6, `rgba(${r},${g},${b}, ${dynamicAlpha})`); 
-            grad.addColorStop(1, `rgba(${r},${g},${b}, 0)`);
+            grad.addColorStop(0, `rgba(${r},${g},${b}, ${minAlpha})`); 
+            grad.addColorStop(0.3, `rgba(${r},${g},${b}, ${currentAlpha * 0.8})`);
+            grad.addColorStop(0.5, `rgba(${r},${g},${b}, ${currentAlpha})`); 
+            grad.addColorStop(0.7, `rgba(${r},${g},${b}, ${currentAlpha * 0.8})`);
+            grad.addColorStop(1, `rgba(${r},${g},${b}, ${minAlpha})`);
 
             ctx.strokeStyle = grad;
-            // The pulse also slightly increases thickness
             ctx.lineWidth = this.thickness * (1 + centerPulseIntensity * 0.3);
             ctx.lineCap = 'butt'; 
             
-
-            // --- DRAWING THE PATH SEGMETNS ---
             ctx.moveTo(
-                finalX + Math.sin(this.offset) * this.amplitude, 
+                finalX + Math.sin(this.offset) * currentAmp, 
                 startY
             );
 
             for (let i = 0; i <= segments; i++) {
                 let currentSegY = startY + (segmentHeight * i);
                 
-                // Physical movement waves
-                const wave1 = Math.sin(this.offset + (i * 0.08)) * this.amplitude;
-                const wave2 = Math.cos(this.offset * 2.3 + (i * 0.2)) * (this.amplitude * 0.4);
-                const taper = Math.sin((i / segments) * Math.PI); 
+                const wave1 = Math.sin(this.offset + (i * 0.08)) * currentAmp;
+                const wave2 = Math.cos(this.offset * 2.3 + (i * 0.2)) * (currentAmp * 0.4);
                 
-                // --- ADDING THE RIPPLE "BULGE" ---
-                // Calculate pulse wave based on segment index 'i' vs the current pulsePhase
-                // This creates a wave that travels down the strand over time.
+                // Taper makes the edges stick closer to center,
+                // but we reduce taper effect during 'settle' so they fling wilder
+                const taperBase = Math.sin((i / segments) * Math.PI); 
+                // As it settles (easeOut -> 1), taper becomes strict. 
+                // When wild (easeOut -> 0), taper is looser (0.5 minimum).
+                const dynamicTaper = (taperBase * easeOut) + (0.5 * (1 - easeOut));
+
                 const pulseWave = Math.sin(this.pulsePhase - (i * 0.3));
-                // Only care about the peak of the wave (positives)
-                const rippleIntensity = Math.pow(Math.max(0, pulseWave), 4); // pow(4) makes the peak sharper
-                const rippleEffect = rippleIntensity * (this.amplitude * 0.4);
+                const rippleIntensity = Math.pow(Math.max(0, pulseWave), 4); 
+                const rippleEffect = rippleIntensity * (currentAmp * 0.4);
 
-
-                ctx.lineTo(finalX + (wave1 + wave2 + rippleEffect) * taper, currentSegY);
+                ctx.lineTo(finalX + (wave1 + wave2 + rippleEffect) * dynamicTaper, currentSegY);
             }
 
             ctx.stroke();
@@ -226,7 +239,6 @@
         
         currentX += (targetX - currentX) * 0.02; 
 
-        // Clear with a slight fade for trail effect (optional, can use clearRect)
         ctx.clearRect(0, 0, width * 1.2, height);
 
         strands.sort((a, b) => a.drawnDepth - b.drawnDepth);
