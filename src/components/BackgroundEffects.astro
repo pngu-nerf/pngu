@@ -1,9 +1,8 @@
 ---
-// src/components/AuroraBackground.astro
+// src/components/AuroraPulses.astro
 ---
 <div id="bg-container">
     <canvas id="aurora-canvas"></canvas>
-    
     <div id="atmosphere-overlay"></div>
 </div>
 
@@ -17,8 +16,8 @@
         z-index: -1;
         pointer-events: none;
         overflow: hidden; 
-        /* Deep space background gradient */
-        background: radial-gradient(circle at 50% 100%, #1a2a3a, #000000); 
+        /* Lighter, colder deep space background */
+        background: radial-gradient(circle at 50% 100%, #0a1520, #000000); 
     }
 
     #aurora-canvas {
@@ -27,11 +26,11 @@
         height: 100%;
         left: -10%; 
         
-        /* High blur is essential for the gaseous look */
-        filter: blur(40px) contrast(1.2);
+        /* High blur allows the whites to bloom and colors to blend softly */
+        filter: blur(45px) contrast(1.1);
 
-        opacity: 0.6;
-        animation: fadeIn 3s ease-out forwards;
+        opacity: 0; /* Start hidden for fade in */
+        animation: fadeIn 4s ease-out forwards;
         will-change: opacity, transform;
     }
 
@@ -39,14 +38,15 @@
         position: absolute;
         inset: 0;
         z-index: 1;
-        opacity: 0.07;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+        opacity: 0.05;
+        /* Subtle grain */
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
         mix-blend-mode: overlay;
     }
 
     @keyframes fadeIn {
         from { opacity: 0; }
-        to { opacity: 0.8; } 
+        to { opacity: 0.7; } 
     }
 </style>
 
@@ -56,8 +56,6 @@
 
     let width, height;
     let strands = [];
-    
-    // Auroras extend high up, so we need a large extension buffer
     const EXTENSION = 400; 
 
     // --- PARALLAX STATE ---
@@ -65,17 +63,19 @@
     let currentX = 0;
 
     window.addEventListener('mousemove', (e) => {
-        // Subtle movement for parallax
         const normX = (e.clientX / window.innerWidth) * 2 - 1;
-        targetX = normX * 50; 
+        targetX = normX * 30; // Reduced parallax movement
     });
 
-    // Auroras usually have these specific colors
-    // [R, G, B]
-    const PALETTE = [
-        [0, 255, 128],  // Teal/Green (Low altitude)
-        [100, 0, 255],  // Purple (Mid altitude)
-        [0, 200, 255]   // Cyan (High brightness)
+    // --- COLOR PALETTES ---
+    // Base color: Desaturated, ghostly white/blue
+    const BASE_WHITE = [220, 235, 255]; 
+    
+    // Pulse colors: The colors that flash through the ripples
+    const PULSE_PALETTE = [
+        [100, 255, 180],  // Minty Green
+        [120, 150, 255],  // Soft Blue/Purple
+        [200, 240, 255]   // Bright icy white highlight
     ];
 
     class Strand {
@@ -84,38 +84,41 @@
         }
 
         init(index, totalStrands, layerCfg) {
-            // Spread across the screen
-            const effectiveWidth = width * 1.4; // Wide spread
+            const effectiveWidth = width * 1.4; 
             const startX = -width * 0.2; 
             const slotWidth = effectiveWidth / totalStrands;
             
-            // Position
             this.x = startX + (index * slotWidth) + (Math.random() * slotWidth);
             this.length = height + (EXTENSION * 2); 
             
-            // Layers
             this.depth = Math.random(); 
             this.drawnDepth = this.depth + layerCfg.zOffset;
             this.alphaMult = layerCfg.alphaMult;
             this.parallaxFactor = layerCfg.parallaxFactor;
 
-            // Aurora ribbons are THICK
-            const baseThickness = 80 + (this.depth * 150); 
+            // Slightly thinner base than before to emphasize the pulses
+            const baseThickness = 60 + (this.depth * 100); 
             this.thickness = baseThickness * layerCfg.thickMult;
             
-            // Movement properties
+            // Physical movement properties
             this.offset = Math.random() * 100; 
-            // Large sweeping waves
-            this.amplitude = Math.random() * 100 + 50; 
-            this.speed = (Math.random() * 0.002) + 0.001;
-            
-            // Color selection (Green dominant, occasional purple)
-            this.colorType = Math.random() > 0.7 ? 1 : 0; 
+            this.amplitude = Math.random() * 80 + 30; 
+            this.speed = (Math.random() * 0.0015) + 0.0005;
+
+            // --- PULSE PROPERTIES ---
+            // Tracks the location of the color pulse along the strand
+            this.pulsePhase = Math.random() * Math.PI * 2;
+            // How fast the pulse travels down the strand
+            this.pulseSpeed = (Math.random() * 0.01) + 0.005;
+            // Which color from the palette this strand pulses with
+            this.pulseColorIdx = Math.floor(Math.random() * PULSE_PALETTE.length);
         }
 
         update() {
-            // Constant slow drift
+            // Physical wave movement
             this.offset += this.speed;
+            // Traveling pulse movement
+            this.pulsePhase += this.pulseSpeed;
         }
 
         draw() {
@@ -124,33 +127,47 @@
             const finalX = this.x + (currentX * this.parallaxFactor);
             const startY = -EXTENSION;
 
-            // Use 'lighter' (additive) blending to make overlapping strands glow
+            // Use lighter blending for the glowing effect
             ctx.globalCompositeOperation = 'lighter';
             
-            ctx.beginPath();
-            
-            // Dynamic Gradient based on strand color type
-            const grad = ctx.createLinearGradient(finalX, startY, finalX, height + EXTENSION);
-            
-            const [r, g, b] = PALETTE[this.colorType];
-            const [r2, g2, b2] = PALETTE[2]; // Cyan highlights
-
-            // Alpha logic: Fades in, stays bright, fades out
-            const maxAlpha = (0.15 + (this.depth * 0.2)) * this.alphaMult;
-
-            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
-            grad.addColorStop(0.2, `rgba(${r}, ${g}, ${b}, ${maxAlpha})`); 
-            grad.addColorStop(0.5, `rgba(${r2}, ${g2}, ${b2}, ${maxAlpha * 0.8})`); 
-            grad.addColorStop(0.8, `rgba(${r}, ${g}, ${b}, ${maxAlpha})`);
-            grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = this.thickness;
-            ctx.lineCap = 'butt'; // Soft ends handled by gradient, not shape
-            
-            const segments = 30;
+            const segments = 40; // More segments for smoother pulses
             const segmentHeight = this.length / segments;
 
+            ctx.beginPath();
+
+            // Calculate the intensity of the pulse at the center of the screen right now
+            // We use this to set the overall color of the gradient for this frame.
+            const centerPulseIntensity = Math.max(0, Math.sin(this.pulsePhase - Math.PI)); // Simple 0 to 1 wave
+
+            const [wr, wg, wb] = BASE_WHITE;
+            const [pr, pg, pb] = PULSE_PALETTE[this.pulseColorIdx];
+
+            // Interpolate between white base and pulse color based on intensity
+            // If intensity is 0, it's white. If 1, it's colored.
+            const r = wr + (pr - wr) * centerPulseIntensity;
+            const g = wg + (pg - wg) * centerPulseIntensity;
+            const b = wb + (pb - wb) * centerPulseIntensity;
+            
+            // Base alpha calculation
+            const maxAlpha = (0.1 + (this.depth * 0.15)) * this.alphaMult;
+            // The pulse makes the alpha much higher when active
+            const dynamicAlpha = maxAlpha * (0.5 + centerPulseIntensity * 1.5);
+
+            // Create gradient using the calculated interpolated color and dynamic alpha
+            const grad = ctx.createLinearGradient(finalX, startY, finalX, height + EXTENSION);
+            grad.addColorStop(0, `rgba(${r},${g},${b}, 0)`);
+            // The middle stops are where the brightness lives
+            grad.addColorStop(0.3, `rgba(${r},${g},${b}, ${dynamicAlpha * 0.7})`);
+            grad.addColorStop(0.6, `rgba(${r},${g},${b}, ${dynamicAlpha})`); 
+            grad.addColorStop(1, `rgba(${r},${g},${b}, 0)`);
+
+            ctx.strokeStyle = grad;
+            // The pulse also slightly increases thickness
+            ctx.lineWidth = this.thickness * (1 + centerPulseIntensity * 0.3);
+            ctx.lineCap = 'butt'; 
+            
+
+            // --- DRAWING THE PATH SEGMETNS ---
             ctx.moveTo(
                 finalX + Math.sin(this.offset) * this.amplitude, 
                 startY
@@ -159,21 +176,24 @@
             for (let i = 0; i <= segments; i++) {
                 let currentSegY = startY + (segmentHeight * i);
                 
-                // Double Sine Wave for more "organic" gas fluid movement
-                // Wave 1: Large slow sweep
-                const wave1 = Math.sin(this.offset + (i * 0.1)) * this.amplitude;
-                // Wave 2: Smaller ripples
-                const wave2 = Math.cos(this.offset * 2 + (i * 0.3)) * (this.amplitude * 0.3);
-                
-                // Taper the movement at top and bottom so they don't wiggle off screen too much
+                // Physical movement waves
+                const wave1 = Math.sin(this.offset + (i * 0.08)) * this.amplitude;
+                const wave2 = Math.cos(this.offset * 2.3 + (i * 0.2)) * (this.amplitude * 0.4);
                 const taper = Math.sin((i / segments) * Math.PI); 
+                
+                // --- ADDING THE RIPPLE "BULGE" ---
+                // Calculate pulse wave based on segment index 'i' vs the current pulsePhase
+                // This creates a wave that travels down the strand over time.
+                const pulseWave = Math.sin(this.pulsePhase - (i * 0.3));
+                // Only care about the peak of the wave (positives)
+                const rippleIntensity = Math.pow(Math.max(0, pulseWave), 4); // pow(4) makes the peak sharper
+                const rippleEffect = rippleIntensity * (this.amplitude * 0.4);
 
-                ctx.lineTo(finalX + (wave1 + wave2) * taper, currentSegY);
+
+                ctx.lineTo(finalX + (wave1 + wave2 + rippleEffect) * taper, currentSegY);
             }
 
             ctx.stroke();
-            
-            // Reset blend mode for safety (though we clear rect every frame)
             ctx.globalCompositeOperation = 'source-over';
         }
     }
@@ -185,13 +205,12 @@
         canvas.height = height;
         
         strands = [];
-        // Fewer strands, but wider, creates the "curtain" look
-        const BASE_COUNT = 7; 
+        const BASE_COUNT = 6; 
 
         const layers = [
-            { countMult: 0.5, thickMult: 0.8, alphaMult: 0.5, zOffset: -2, parallaxFactor: 0.1 },
-            { countMult: 1.0, thickMult: 1.0, alphaMult: 0.8, zOffset: 0,  parallaxFactor: 0.3 },
-            { countMult: 0.8, thickMult: 1.5, alphaMult: 1.0, zOffset: 2,  parallaxFactor: 0.6 }
+            { countMult: 0.6, thickMult: 0.8, alphaMult: 0.6, zOffset: -2, parallaxFactor: 0.1 },
+            { countMult: 1.0, thickMult: 1.0, alphaMult: 0.9, zOffset: 0,  parallaxFactor: 0.2 },
+            { countMult: 0.8, thickMult: 1.4, alphaMult: 1.0, zOffset: 2,  parallaxFactor: 0.4 }
         ];
 
         layers.forEach(layerCfg => {
@@ -205,11 +224,11 @@
     function animate() {
         if (!ctx) return;
         
-        currentX += (targetX - currentX) * 0.02; // Slower parallax
+        currentX += (targetX - currentX) * 0.02; 
 
+        // Clear with a slight fade for trail effect (optional, can use clearRect)
         ctx.clearRect(0, 0, width * 1.2, height);
 
-        // Sort by depth preserves transparency logic
         strands.sort((a, b) => a.drawnDepth - b.drawnDepth);
 
         strands.forEach(strand => {
