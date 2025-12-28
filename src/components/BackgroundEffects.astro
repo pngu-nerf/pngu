@@ -52,32 +52,22 @@
     let width, height;
     let strands = [];
     
-    // Huge extension to ensure ends are never seen
     const EXTENSION = 1200; 
 
-    // --- PARALLAX STATE ---
     let targetX = 0;
     let currentX = 0;
 
-    // Mouse Parallax (Desktop)
     window.addEventListener('mousemove', (e) => {
         const normX = (e.clientX / window.innerWidth) * 2 - 1;
-        targetX = normX * 60; // 2x sensitivity (was 30)
+        targetX = normX * 60; 
     });
 
-    // Device Orientation Parallax (Mobile)
     window.addEventListener('deviceorientation', (e) => {
-        // e.gamma is left/right tilt in degrees (-90 to 90)
         if (e.gamma === null) return;
-        
-        // Clamp tilt to roughly +/- 25 degrees so you don't have to flip phone entirely
         const tilt = Math.min(Math.max(e.gamma, -25), 25);
-        
-        // Map tilt range to parallax range (-60 to 60)
         targetX = (tilt / 25) * 60;
     });
 
-    // --- COLOR PALETTES ---
     const BASE_WHITE = [255, 255, 255]; 
     const PULSE_PALETTE = [
         [180, 255, 220],
@@ -103,14 +93,21 @@
             this.alphaMult = layerCfg.alphaMult;
             this.parallaxFactor = layerCfg.parallaxFactor;
 
-            const baseThickness = 60 + (this.depth * 100); 
-            this.thickness = baseThickness * layerCfg.thickMult;
+            // --- DYNAMIC THICKNESS CALCULATION ---
+            // Calculate a base thickness that is 15% of the viewport width
+            const responsiveBase = width * 0.15;
+            // Clamp it: Never thinner than 60px (mobile), never wider than 300px (ultrawide)
+            const clampedBase = Math.min(Math.max(responsiveBase, 60), 300);
+            
+            // Apply depth scaling and the layer multiplier
+            this.thickness = (clampedBase + (this.depth * (clampedBase * 1.5))) * layerCfg.thickMult;
             
             this.offset = Math.random() * 100; 
             
-            // Settle Animation Props
-            this.restAmplitude = Math.random() * 80 + 30; 
-            this.settleAmplitude = Math.random() * 150 + 150; 
+            // Scale movement amplitude based on thickness/width so they don't look static on desktop
+            this.restAmplitude = (clampedBase * 0.5) + (Math.random() * 50); 
+            this.settleAmplitude = (clampedBase * 1.5) + (Math.random() * 100); 
+            
             this.settleTime = 0;
             this.settleDuration = 240 + Math.random() * 240;
 
@@ -134,7 +131,7 @@
             if (!ctx) return;
             
             const finalX = this.x + (currentX * this.parallaxFactor);
-            const startY = -EXTENSION; // Starts way above screen
+            const startY = -EXTENSION;
 
             const t = this.settleTime / this.settleDuration;
             const easeOut = 1 - Math.pow(1 - t, 3); 
@@ -156,15 +153,9 @@
             const g = wg + (pg - wg) * centerPulseIntensity;
             const b = wb + (pb - wb) * centerPulseIntensity;
             
-            // --- BRIGHTNESS REDUCTION ---
-            // We multiply all alpha values by 0.5 to cut brightness in half
             const GLOBAL_DIMMER = 0.5;
-
-            // Was 0.4 min, now 0.2
             const minAlpha = (0.4 * this.alphaMult) * GLOBAL_DIMMER;
-            // Pulse boost was 0.6, now 0.3
             const pulseBoost = (centerPulseIntensity * 0.6) * GLOBAL_DIMMER;
-            
             const currentAlpha = Math.min(1, minAlpha + pulseBoost);
 
             const grad = ctx.createLinearGradient(finalX, startY, finalX, height + EXTENSION);
@@ -185,7 +176,6 @@
 
             for (let i = 0; i <= segments; i++) {
                 let currentSegY = startY + (segmentHeight * i);
-                
                 const wave1 = Math.sin(this.offset + (i * 0.08)) * currentAmp;
                 const wave2 = Math.cos(this.offset * 2.3 + (i * 0.2)) * (currentAmp * 0.4);
                 
@@ -229,18 +219,13 @@
 
     function animate() {
         if (!ctx) return;
-        
-        currentX += (targetX - currentX) * 0.05; // Slightly snappier follow for mobile feel
-
+        currentX += (targetX - currentX) * 0.05;
         ctx.clearRect(0, 0, width * 1.2, height);
-
         strands.sort((a, b) => a.drawnDepth - b.drawnDepth);
-
         strands.forEach(strand => {
             strand.update();
             strand.draw();
         });
-        
         requestAnimationFrame(animate);
     }
 
