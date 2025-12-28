@@ -18,7 +18,7 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
                     const labelSpan = button.querySelector('.download-label');
                     const originalText = labelSpan.innerText;
 					
-                    // Change text and color
+                    // Change text and color (Green for success is still helpful feedback)
 					labelSpan.innerText = successMessage;
                     labelSpan.style.color = '#10b981'; // Green
 					
@@ -191,7 +191,7 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 
             button.file-link:hover {
                 background-color: #252525;
-                color: #e0e0e0;
+                color: #ffffff;
                 transform: translateY(-2px);
                 border-color: rgba(255,255,255,0.2);
             }
@@ -205,18 +205,21 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
                 font-family: 'Courier New', monospace; 
             }
 
+            /* --- Updated Labels to White/Gray --- */
             .download-label {
-                color: #646cff; /* Accent color */
+                color: #888; /* Muted Gray initially */
                 font-weight: 500;
                 font-family: sans-serif;
+                transition: color 0.2s;
             }
             
             button.file-link:hover .download-label {
-                color: #8289ff;
+                color: #ffffff; /* Becomes white on hover */
             }
             
+            /* Removed blue Discord color for white */
             .discord-text {
-                color: #7289da;
+                color: #ffffff;
             }
 
             /* Responsive */
