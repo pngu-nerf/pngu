@@ -91,7 +91,6 @@ const assets = [
 			/* --- List & Dropdown Styling --- */
 			.file-list { list-style: none; padding: 0; margin: 0; }
 
-            /* Opaque Dark Grey File Bubbles */
 			details.file-item {
 				background-color: #1a1a1a;
 				margin-bottom: 10px;
@@ -121,7 +120,6 @@ const assets = [
 			details.file-item summary:hover { background-color: #252525; }
 			details.file-item summary::-webkit-details-marker { display: none; }
 
-			/* The Arrow */
 			details.file-item summary::after {
 				content: '▼'; 
 				font-size: 0.8rem;
@@ -145,38 +143,39 @@ const assets = [
 
 			.preview-label { color: #aaa; font-size: 0.8rem; margin-right: 5px; }
 
+			/* --- Updated Download Button to Monochrome --- */
 			a.download-btn {
-				color: #646cff;
+				color: #ffffff;
 				text-decoration: none;
 				font-weight: bold;
 				padding: 6px 12px;
-				border: 1px solid #646cff;
+				border: 1px solid #ffffff;
 				border-radius: 6px;
 				transition: all 0.2s;
-                background-color: rgba(0,0,0,0.2);
+                background-color: rgba(255,255,255,0.05);
 			}
 
 			a.download-btn:hover { 
-                background-color: #646cff; 
-                color: #fff; 
-                box-shadow: 0 0 10px rgba(100, 108, 255, 0.4);
+                background-color: #ffffff; 
+                color: #000; 
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
             }
 
 			/* --- Preview Container --- */
 			.preview-container {
-				/* Checkerboard Pattern for transparent SVGs */
-				background-color: #222;
+				/* Darker Checkerboard for better contrast with white logos */
+				background-color: #111;
                 background-image: 
-                    linear-gradient(45deg, #333 25%, transparent 25%), 
-                    linear-gradient(-45deg, #333 25%, transparent 25%), 
-                    linear-gradient(45deg, transparent 75%, #333 75%), 
-                    linear-gradient(-45deg, transparent 75%, #333 75%);
+                    linear-gradient(45deg, #181818 25%, transparent 25%), 
+                    linear-gradient(-45deg, #181818 25%, transparent 25%), 
+                    linear-gradient(45deg, transparent 75%, #181818 75%), 
+                    linear-gradient(-45deg, transparent 75%, #181818 75%);
                 background-size: 20px 20px;
                 background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 
 				min-height: 200px;
 				width: 100%;
-				border-top: 1px solid #444;
+				border-top: 1px solid #333;
 				display: flex;
 				justify-content: center;
 				align-items: center;
@@ -188,18 +187,18 @@ const assets = [
 				max-width: 100%;
 				max-height: 300px;
 				object-fit: contain;
-				box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+				box-shadow: 0 4px 15px rgba(0,0,0,0.6);
 			}
 
 			.no-preview {
-				color: #ccc;
+				color: #888;
 				font-style: italic;
                 background-color: rgba(0,0,0,0.5);
                 padding: 8px 16px;
                 border-radius: 8px;
+                font-size: 0.9rem;
 			}
             
-			/* --- Updated Back Link Style --- */
             .back-link {
                 margin-top: 1rem;
             }
@@ -207,8 +206,8 @@ const assets = [
             .back-link a {
                 display: inline-block;
                 padding: 10px 20px;
-                background-color: #272727; /* Dark Grey Background */
-                border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle Border */
+                background-color: #272727;
+                border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 8px;
                 color: #ffffff;
                 text-decoration: none;
@@ -217,13 +216,12 @@ const assets = [
             }
 
             .back-link a:hover {
-                background-color: #333333; /* Slightly Lighter on Hover */
-                border-color: rgba(255, 255, 255, 0.3); /* Brighter Border */
-                transform: translateY(-2px); /* Lift Effect */
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Shadow Drop */
+                background-color: #333333;
+                border-color: rgba(255, 255, 255, 0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             }
 
-            /* Responsive */
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
                 .content-box { 
