@@ -80,7 +80,6 @@ try {
   const data = await getRepoFiles();
 
   if (data && data.tree) {
-    // 1. Group files by Folder
     for (const item of data.tree) {
       if (item.type === 'blob') { 
         const pathParts = item.path.split('/');
@@ -127,7 +126,6 @@ try {
       }
     }
 
-    // 2. Finalize Descriptions
     await Promise.all(
       Object.values(projects).map(async (project) => {
         if (project.description === "Loading...") {
@@ -316,28 +314,29 @@ try {
 
             .preview-label { color: #aaa; font-size: 0.8rem; margin-right: 5px; }
 
+            /* --- Updated Download Button to White/Monochrome --- */
             a.download-btn {
-                color: #646cff;
+                color: #ffffff;
                 text-decoration: none;
                 font-weight: bold;
                 padding: 6px 12px;
-                border: 1px solid #646cff;
+                border: 1px solid #ffffff;
                 border-radius: 6px;
                 transition: all 0.2s;
-                background-color: rgba(0,0,0,0.2);
+                background-color: rgba(255,255,255,0.05);
             }
 
             a.download-btn:hover { 
-                background-color: #646cff; 
-                color: #fff; 
-                box-shadow: 0 0 10px rgba(100, 108, 255, 0.4);
+                background-color: #ffffff; 
+                color: #000; 
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
             }
 
             .viewer-container {
                 background-color: #111; 
                 height: 400px;
                 width: 100%;
-                border-top: 1px solid #444;
+                border-top: 1px solid #333;
                 position: relative;
                 display: flex;
                 justify-content: center;
@@ -359,7 +358,6 @@ try {
                 z-index: 10;
             }
 
-            /* --- Updated Back Link (Matches GitHub Button) --- */
 			.back-link {
 				margin-top: 1rem;
 			}
@@ -381,7 +379,6 @@ try {
                 box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             }
             
-            /* --- Github Button Style --- */
             .github-direct-btn {
                 display: inline-block;
                 margin-top: 10px;
@@ -438,7 +435,8 @@ try {
                         <div class="description-content">
                             {item.description}
                             <br/><br/>
-                            {item.printablesUrl && <a href={item.printablesUrl} target="_blank" style="color: #646cff; font-size: 0.9rem;">View original page on Printables &rarr;</a>}
+                            {/* Updated link color to white */}
+                            {item.printablesUrl && <a href={item.printablesUrl} target="_blank" style="color: #ffffff; font-size: 0.9rem; text-decoration: underline;">View original page on Printables &rarr;</a>}
                         </div>
                     </details>
 
@@ -510,11 +508,11 @@ try {
                 const ambientLight = new THREE.AmbientLight(0x404040, 2);
                 scene.add(ambientLight);
                 
-                const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
                 dirLight.position.set(1, 1, 1);
                 scene.add(dirLight);
                 
-                const dirLight2 = new THREE.DirectionalLight(0xffffff, 1);
+                const dirLight2 = new THREE.DirectionalLight(0xffffff, 1.5);
                 dirLight2.position.set(-1, -1, 1);
                 scene.add(dirLight2);
 
@@ -525,14 +523,13 @@ try {
                         if (loadingText) loadingText.style.display = 'none';
 
                         geometry.computeBoundingBox();
-                        const center = new THREE.Vector3();
-                        geometry.boundingBox.getCenter(center);
                         geometry.center(); 
 
+                        // --- UPDATED MODEL COLOR TO WHITE ---
                         const material = new THREE.MeshPhongMaterial({ 
-                            color: 0x646cff, 
-                            specular: 0x111111, 
-                            shininess: 200 
+                            color: 0xffffff, 
+                            specular: 0x444444, 
+                            shininess: 100 
                         });
                         const mesh = new THREE.Mesh(geometry, material);
                         mesh.rotation.x = -Math.PI / 2; 
@@ -540,7 +537,6 @@ try {
                         scene.add(mesh);
 
                         const box = geometry.boundingBox;
-                        const size = box.getSize(new THREE.Vector3()).length();
                         const maxSize = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
                         
                         camera.position.z = maxSize * 2;
