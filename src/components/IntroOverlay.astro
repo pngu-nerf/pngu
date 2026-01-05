@@ -1,5 +1,5 @@
 ---
-/* ScreenOverlay.astro - Precision Nudge Mode */
+/* ScreenOverlay.astro - Precision Nudge Mode (Left Shift) */
 ---
 
 <div id="screen-overlay"></div>
@@ -25,7 +25,6 @@
     mask-composite: exclude;
     -webkit-mask-composite: xor;
 
-    /* Fixed Size for alignment */
     mask-size: 180px auto, 100% 100%;
     -webkit-mask-size: 180px auto, 100% 100%;
 
@@ -33,6 +32,7 @@
     animation: none !important;
   }
 
+  /* Ready for activation */
   #screen-overlay.zoom-active {
     animation: 
       linear-zoom 1.2s linear forwards,
@@ -66,12 +66,12 @@
       const centerX = rect.left + (rect.width / 2);
       const centerY = rect.top + (rect.height / 2);
       
-      /* --- PRECISION TUNING --- */
-      const baseShiftX = 60; // Your 1/3 right-shift
+      const baseShiftX = 60; 
       
-      // ADJUST THESE NUMBERS:
-      const xNudge = -10;    // Negative moves LEFT, Positive moves RIGHT
-      const yNudge = -15;    // Negative moves UP, Positive moves DOWN
+      /* --- PRECISION TUNING --- */
+      // Moving left further based on previous feedback
+      const xNudge = -30;    // Increased negative value for more LEFT movement
+      const yNudge = -15;    // Keeping height the same as it was "good"
       /* ------------------------ */
 
       const finalX = centerX + baseShiftX + xNudge;
@@ -85,8 +85,7 @@
     overlay.style.maskPosition = posString;
     overlay.style.webkitMaskPosition = posString;
 
-    /* UNCOMMENT THE LINES BELOW TO TEST THE ZOOM ONCE CENTERED */
-    /*
+    /* UNCOMMENT THE BLOCK BELOW TO ACTIVATE THE ZOOM 
     requestAnimationFrame(() => {
         overlay.classList.add('zoom-active');
         setTimeout(() => overlay.classList.add('finished'), 1300);
