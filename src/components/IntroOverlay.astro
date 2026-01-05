@@ -1,5 +1,5 @@
 ---
-/* ScreenOverlay.astro - Linear Direct-Action Zoom */
+/* ScreenOverlay.astro - Static Debug Mode */
 ---
 
 <div id="screen-overlay"></div>
@@ -26,39 +26,19 @@
     mask-composite: exclude;
     -webkit-mask-composite: xor;
 
-    /* Start at full reveal size immediately */
+    /* STATIC POSITION SIZE */
     mask-size: 180px auto, 100% 100%;
     -webkit-mask-size: 180px auto, 100% 100%;
 
     filter: url(#fuzz);
+
+    /* ANIMATION IS DISABLED FOR DEBUGGING */
+    animation: none !important;
   }
 
-  /* LINEAR ZOOM: Constant velocity from 0 to finish */
-  #screen-overlay.zoom-active {
-    animation: 
-      linear-zoom 1.2s linear forwards,
-      bg-fade 1.2s linear forwards;
-  }
-
-  @keyframes linear-zoom {
-    from {
-      mask-size: 180px auto, 100% 100%;
-      -webkit-mask-size: 180px auto, 100% 100%;
-    }
-    to {
-      mask-size: 60000px auto, 100% 100%;
-      -webkit-mask-size: 60000px auto, 100% 100%;
-    }
-  }
-
-  @keyframes bg-fade {
-    from { background-color: #000; }
-    to { background-color: rgba(20, 20, 20, 0.4); }
-  }
-
-  #screen-overlay.finished {
-     display: none;
-  }
+  /* @keyframes linear-zoom { ... }
+  @keyframes bg-fade { ... } 
+  */
 </style>
 
 <script>
@@ -67,7 +47,7 @@
     const banner = document.querySelector('.banner-image');
     if (!overlay) return;
 
-    // 1. Calculations
+    // 1. BASE CALCULATIONS
     let startX = window.innerWidth / 2;
     let startY = window.innerHeight / 2;
 
@@ -77,27 +57,23 @@
       startY = rect.top + rect.height / 2;
     }
 
-    /* SVG FIX: Shifting the center point 
-       Since the SVG is off-center in its own design, we move the 
-       mask position to the right by 1/3 of the initial logo width (180px).
-       180 / 3 = 60px shift.
-    */
-    const xShift = 60; 
-    const finalX = startX + xShift;
+    /* --- ADJUST THESE VALUES TO CENTER THE LOGO --- */
+    const xShift = 60;  // Positive moves RIGHT, negative moves LEFT
+    const yShift = 0;   // Positive moves DOWN, negative moves UP
+    /* ---------------------------------------------- */
 
-    // Set positions (fixed pixels are more reliable for a linear zoom)
-    const posString = `${finalX}px ${startY}px, center`;
+    const finalX = startX + xShift;
+    const finalY = startY + yShift;
+
+    // Apply the static position
+    const posString = `${finalX}px ${finalY}px, center`;
     overlay.style.maskPosition = posString;
     overlay.style.webkitMaskPosition = posString;
 
-    // 2. Immediate Action
-    // Using requestAnimationFrame to ensure it triggers the moment the browser is ready
+    /* ANIMATION TRIGGER COMMENTED OUT FOR DEBUGGING
     requestAnimationFrame(() => {
         overlay.classList.add('zoom-active');
-        
-        setTimeout(() => {
-            overlay.classList.add('finished');
-        }, 1250);
     });
+    */
   });
 </script>
