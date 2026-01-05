@@ -1,118 +1,113 @@
 ---
-/* No props needed */
+/* ScreenOverlay.astro - Cinematic Zoom Sequence */
 ---
 
-<div id="intro-overlay">
-  </div>
+<div id="screen-overlay"></div>
 
 <style>
-  #intro-overlay {
+  #screen-overlay {
     position: fixed;
     inset: 0;
     z-index: 9999;
     
-    /* --- THE LIQUID GLASS AESTHETIC --- */
-    background-color: rgba(40, 40, 40, 0.6); /* Slightly darker for initial impact */
-    backdrop-filter: blur(20px) saturate(120%);
-    -webkit-backdrop-filter: blur(20px) saturate(120%);
-
-    /* --- THE CUTOUT MAGIC --- */
-    /* We define two mask layers:
-       1. The logo URL (starts small in center)
-       2. A solid gradient covering everything
-    */
+    /* 1. START FULL BLACK */
+    background-color: #000;
+    
+    /* 2. PREPARE THE CUTOUT MASK */
     mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
     -webkit-mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
-
-    mask-position: center, center;
-    -webkit-mask-position: center, center;
-
-    mask-repeat: no-repeat, no-repeat;
-    -webkit-mask-repeat: no-repeat, no-repeat;
-
-    /* Initial Size: Logo is small, solid layer fills screen */
-    mask-size: 150px auto, 100% 100%;
-    -webkit-mask-size: 150px auto, 100% 100%;
-
-    /* IMPORTANT: Composite 'exclude'. 
-       This subtracts the logo shape from the solid layer, creating the hole.
-    */
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
     mask-composite: exclude;
-    -webkit-mask-composite: xor; /* WebKit uses 'xor' for this specific inversion effect */
+    -webkit-mask-composite: xor;
+
+    /* Start with the logo effectively invisible (0 size) */
+    mask-size: 0px auto, 100% 100%;
+    -webkit-mask-size: 0px auto, 100% 100%;
+
+    /* SLIGHTLY BLURRY EDGES ALWAYS */
+    filter: blur(4px);
     
-    /* Ensure it doesn't capture clicks once animation starts */
+    /* Transition for the fade-in of the cutout */
+    transition: mask-size 0.8s ease-out, -webkit-mask-size 0.8s ease-out, opacity 0.5s;
     pointer-events: none;
-    
-    /* Prepare for animation */
-    opacity: 1;
-    transition: opacity 0.5s ease-out; /* Smooth fade out at the very end */
   }
 
-  /* --- THE ANIMATION --- */
-  #intro-overlay.zoom-active {
-    /* Animate the mask size. 
-       We only animate the first value (the logo size).
-       The second value (100% 100%) stays constant.
-    */
-    animation: zoom-through 2s cubic-bezier(0.7, 0, 0.3, 1) forwards;
-  }
-  
-  /* The final state to ensure it's gone */
-  #intro-overlay.finished {
-     opacity: 0;
-     visibility: hidden;
+  /* STAGE 1: Logo Cutout Fades In */
+  #screen-overlay.logo-visible {
+    mask-size: 180px auto, 100% 100%;
+    -webkit-mask-size: 180px auto, 100% 100%;
   }
 
-  @keyframes zoom-through {
+  /* STAGE 2: Zoom + Background Shift */
+  #screen-overlay.zoom-active {
+    animation: 
+      zoom-sequence 2s cubic-bezier(0.7, 0, 0.3, 1) forwards,
+      bg-shift 2s ease-in-out forwards;
+  }
+
+  /* ZOOM ANIMATION */
+  @keyframes zoom-sequence {
     0% {
-      /* Start small */
-      -webkit-mask-size: 150px auto, 100% 100%;
-      mask-size: 150px auto, 100% 100%;
+      -webkit-mask-size: 180px auto, 100% 100%;
+      mask-size: 180px auto, 100% 100%;
     }
     100% {
-      /* End ENORMOUS - enough to move the edges off even huge 4K screens */
-      -webkit-mask-size: 15000px auto, 100% 100%;
-      mask-size: 15000px auto, 100% 100%;
-      /* Fade opacity slightly at the very end of the zoom for smoothness */
-      opacity: 0; 
+      -webkit-mask-size: 25000px auto, 100% 100%;
+      mask-size: 25000px auto, 100% 100%;
     }
   }
-  
-  /* Mobile adjustment: start with a smaller logo */
+
+  /* BACKGROUND TRANSITION (Fades from Black to partial Liquid Glass) */
+  @keyframes bg-shift {
+    0% {
+      background-color: #000;
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+    }
+    100% {
+      /* We stop before reaching the full transparent glass look */
+      background-color: rgba(25, 25, 25, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  }
+
+  #screen-overlay.finished {
+     display: none;
+  }
+
   @media (max-width: 600px) {
-      #intro-overlay {
-         mask-size: 100px auto, 100% 100%;
-         -webkit-mask-size: 100px auto, 100% 100%;
-      }
-       @keyframes zoom-through {
-        0% {
-          -webkit-mask-size: 100px auto, 100% 100%;
-          mask-size: 100px auto, 100% 100%;
-        }
-        100% {
-          /* Mobile doesn't need to zoom quite as far */
-          -webkit-mask-size: 8000px auto, 100% 100%;
-          mask-size: 8000px auto, 100% 100%;
-          opacity: 0;
-        }
-      }
+    #screen-overlay.logo-visible {
+      mask-size: 120px auto, 100% 100%;
+      -webkit-mask-size: 120px auto, 100% 100%;
+    }
   }
 </style>
 
 <script>
-  // Wait for the page content to load so the "reveal" looks good
   window.addEventListener('load', () => {
-    const overlay = document.getElementById('intro-overlay');
+    const overlay = document.getElementById('screen-overlay');
     if (!overlay) return;
 
-    // Small delay before starting zoom so user registers the logo
+    // 1. Brief pause on full black, then fade in the cutout
     setTimeout(() => {
-        overlay.classList.add('zoom-active');
+        overlay.classList.add('logo-visible');
         
-        // After animation completes (2s + small buffer), hide it entirely
+        // 2. Wait for the logo to be seen, then start the zoom/bg-shift
         setTimeout(() => {
-            overlay.classList.add('finished');
-        }, 2100);
-    }, 500); // 0.5s initial hold time
+            overlay.classList.add('zoom-active');
+            
+            // 3. Remove entirely once the "zoom through" is done
+            setTimeout(() => {
+                overlay.style.opacity = "0";
+                setTimeout(() => {
+                    overlay.classList.add('finished');
+                }, 500);
+            }, 1800);
+        }, 1000); 
+    }, 300); 
   });
 </script>
