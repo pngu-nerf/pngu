@@ -1,275 +1,40 @@
 ---
-// src/pages/contact.astro
-import BackgroundEffects from '../components/BackgroundEffects.astro';
+import MainLayout from '../layouts/MainLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import ContactItem from '../components/ContactItem.astro';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<title>Contact | PNGU</title>
-		<script>
-			// Generic copy to clipboard function
-			function copyToClipboard(text, buttonId, successMessage, originalLabel) {
-				navigator.clipboard.writeText(text).then(() => {
-					// Show success message
-					const button = document.getElementById(buttonId);
-                    const labelSpan = button.querySelector('.download-label');
-                    const originalText = labelSpan.innerText;
-					
-                    // Change text and color (Green for success is still helpful feedback)
-					labelSpan.innerText = successMessage;
-                    labelSpan.style.color = '#10b981'; // Green
-					
-					// Reset button after 2 seconds
-					setTimeout(() => {
-						labelSpan.innerText = originalText;
-                        labelSpan.style.color = ''; // Reset to CSS default
-					}, 2000);
-				}).catch(err => {
-					console.error('Failed to copy: ', err);
-					alert('Failed to copy. Please copy manually: ' + text);
-				});
-			}
-			
-			// Initialize when page loads
-			document.addEventListener('DOMContentLoaded', function() {
-				// Email button
-				const emailButton = document.getElementById('copy-email-btn');
-				if (emailButton) {
-					emailButton.addEventListener('click', () => {
-                        copyToClipboard('contact@pngu.info', 'copy-email-btn', '✓ Copied!', 'Copy Email');
-                    });
-				}
-				
-				// Discord button
-				const discordButton = document.getElementById('copy-discord-btn');
-				if (discordButton) {
-					discordButton.addEventListener('click', () => {
-                        copyToClipboard('penguinnoly', 'copy-discord-btn', '✓ Copied!', 'Copy Handle');
-                    });
-				}
-			});
-		</script>
-		<style>
-            /* Global Reset */
-            * { box-sizing: border-box; }
+<MainLayout title="Contact">
+  <PageHeader title="Contact" subtitle="Reach out for collaborations or questions" />
 
-			body {
-				font-family: sans-serif;
-				padding: 2rem;
-				text-align: center;
-				max-width: 900px;
-				margin: 0 auto;
-				color: #ffffff;
-			}
-            
-            /* Background Layer */
-            #bg-layer {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: #0f0f0f;
-                z-index: -2;
-            }
-			
-            /* --- Header Section --- */
-            .header-box {
-                text-align: center;
-                margin-bottom: 3rem;
-            }
+  <div class="content-box">
+    <h2>Email Address</h2>
+    <p class="description">For professional inquiries and partnerships.</p>
+    <ContactItem 
+      buttonId="copy-email-btn" 
+      value="contact@pngu.info" 
+      label="Copy Email" 
+    />
+  </div>
 
-            .subtitle {
-				color: #a0a0a0;
-				font-size: 1.2rem;
-			}
+  <div class="content-box">
+    <h2>Discord</h2>
+    <p class="description">For casual chats and community contact.</p>
+    <ContactItem 
+      buttonId="copy-discord-btn" 
+      value="penguinnoly" 
+      label="Copy Handle" 
+    />
+  </div>
 
-			h1 {
-				margin-top: 0;
-				color: #ffffff;
-				font-size: 2.5rem;
-				margin-bottom: 0.5rem;
-			}
+  <div style="height: 40px;"></div>
+</MainLayout>
 
-            /* --- Liquid Glass Content Box --- */
-			.content-box {
-                /* Glass Background */
-				background-color: rgba(40, 40, 40, 0.4); 
-                backdrop-filter: blur(20px) saturate(120%);
-                -webkit-backdrop-filter: blur(20px) saturate(120%);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                
-				border-radius: 16px;
-				padding: 2rem;
-				
-                /* Desktop Width */
-				width: 75%;
-				margin: 2rem auto; 
-				
-				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-                text-align: left;
-
-                /* Hover Transition */
-                transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                            box-shadow 0.4s ease, 
-                            border-color 0.4s ease;
-			}
-            
-            .content-box:hover {
-                transform: scale(1.015) translateY(-2px);
-                box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
-                border-color: rgba(255, 255, 255, 0.2);
-            }
-			
-            h2 {
-                margin-top: 0;
-                font-size: 1.8rem;
-                color: #ffffff;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                padding-bottom: 10px;
-                margin-bottom: 15px;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            }
-			
-			p.description {
-				color: #e0e0e0;
-				line-height: 1.6;
-				font-size: 1rem;
-				margin-bottom: 1.5rem;
-			}
-			
-			/* --- Updated Back Link Style --- */
-            .back-link {
-                margin-top: 1rem;
-            }
-            
-            .back-link a {
-                display: inline-block;
-                padding: 10px 20px;
-                background-color: #272727; /* Dark Grey Background */
-                border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle Border */
-                border-radius: 8px;
-                color: #ffffff;
-                text-decoration: none;
-                font-weight: 500;
-                transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            }
-
-            .back-link a:hover {
-                background-color: #333333; /* Slightly Lighter on Hover */
-                border-color: rgba(255, 255, 255, 0.3); /* Brighter Border */
-                transform: translateY(-2px); /* Lift Effect */
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Shadow Drop */
-            }
-
-            /* --- Action Buttons (Opaque Dark Grey) --- */
-            .action-list {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            button.file-link {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                background-color: #1a1a1a; /* Opaque */
-                padding: 16px 20px;
-                border-radius: 12px;
-                transition: all 0.2s;
-                text-decoration: none;
-                color: #ffffff;
-                width: 100%;
-                border: 1px solid rgba(255,255,255,0.05);
-                font-family: inherit;
-                font-size: 1rem;
-                cursor: pointer;
-            }
-
-            button.file-link:hover {
-                background-color: #252525;
-                color: #ffffff;
-                transform: translateY(-2px);
-                border-color: rgba(255,255,255,0.2);
-            }
-
-            button.file-link:active {
-                transform: translateY(0);
-            }
-
-            .file-name {
-                font-weight: 500;
-                font-family: 'Courier New', monospace; 
-            }
-
-            /* --- Updated Labels to White/Gray --- */
-            .download-label {
-                color: #888; /* Muted Gray initially */
-                font-weight: 500;
-                font-family: sans-serif;
-                transition: color 0.2s;
-            }
-            
-            button.file-link:hover .download-label {
-                color: #ffffff; /* Becomes white on hover */
-            }
-            
-            /* Removed blue Discord color for white */
-            .discord-text {
-                color: #ffffff;
-            }
-
-            /* Responsive */
-			@media (max-width: 600px) {
-				body { padding: 1rem; }
-                .content-box { 
-					padding: 1.5rem; 
-					width: 100%; 
-				}
-			}
-		</style>
-	</head>
-	<body>
-        <div id="bg-layer"></div>
-        <BackgroundEffects />
-
-        <div class="header-box">
-			<h1>Contact</h1>
-            <p class="subtitle">~</p>
-			<p class="back-link"><a href="/">← Back to Home</a></p>
-		</div>
-
-        <div class="content-box">
-            <h2>Email Address</h2>
-            <p class="description">For collaborations, partnerships, or questions.</p>
-            
-            <ul class="action-list">
-                <li>
-                    <button id="copy-email-btn" class="file-link">
-                        <span class="file-name">contact@pngu.info</span>
-                        <span class="download-label">Copy Email</span>
-                    </button>
-                </li>
-            </ul>
-		</div>
-
-        <div class="content-box">
-            <h2>Discord</h2>
-            <p class="description">For casual contact</p>
-            
-            <ul class="action-list">
-                <li>
-                    <button id="copy-discord-btn" class="file-link">
-                        <span class="file-name discord-text">penguinnoly</span>
-                        <span class="download-label">Copy Handle</span>
-                    </button>
-                </li>
-            </ul>
-        </div>
-        
-        <div style="height: 40px;"></div>
-	</body>
-</html>
+<style>
+  .description {
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+</style>
