@@ -1,26 +1,26 @@
 ---
-/* IndexIntro.astro - Bounce Reveal & Oversized Start */
+/* IndexIntro.astro - Clean Vertical Reveal (No Zoom) */
 ---
 
 <div id="intro-blackout"></div>
 <div id="wipe-layer"></div>
 
 <style is:global>
-  /* 1. INITIAL STATE: Hidden and Scaled Down */
+  /* 1. INITIAL STATE: Hidden and tucked slightly down */
   body.is-intro main, 
   body.is-intro .index-header,
   body.is-intro .content-box,
   body.is-intro .separator {
     visibility: hidden !important;
     opacity: 0 !important;
-    transform: scale(0.92) translateY(20px); /* Tucked away for the bounce */
+    transform: translateY(15px); /* Only vertical offset */
   }
 
   /* 2. OVERSIZED BANNER PROXY */
   #intro-banner-proxy {
     position: fixed;
     z-index: 10001;
-    width: 85vw; /* Start significantly larger */
+    width: 85vw; 
     height: auto;
     top: 50%;
     left: 50%;
@@ -50,12 +50,10 @@
     );
     transform: translateY(0); 
     pointer-events: none;
-    will-change: transform;
   }
 
   /* 3. ANIMATION CURVES */
   .animate-banner {
-    /* Slightly faster, aggressive flight */
     transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
@@ -63,63 +61,61 @@
     transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* The Bounce Class applied by JS */
-  .reveal-bounce {
+  /* THE CLEAN REVEAL: Smooth vertical settle */
+  .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
-    transform: scale(1) translateY(0) !important;
-    /* This bezier creates the 'overshoot' bounce effect */
+    transform: translateY(0) !important;
     transition: 
-      opacity 0.4s ease-out, 
-      transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+      opacity 0.6s ease-out, 
+      transform 0.6s cubic-bezier(0.23, 1, 0.32, 1) !important;
   }
 </style>
 
 <script>
-  window.addEventListener('load', () => {
-    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') return;
-
-    const body = document.body;
+  function runIntro() {
+    const internalReferrer = document.referrer && document.referrer.includes(window.location.hostname);
+    
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
     const actualBanner = document.querySelector('.banner-image') as HTMLImageElement;
-    
+
+    if (internalReferrer) {
+      blackout?.remove();
+      wipe?.remove();
+      document.body.classList.remove('is-intro');
+      return; 
+    }
+
     if (!actualBanner || !blackout || !wipe) return;
 
-    // A. Initial Setup
-    body.classList.add('is-intro');
+    document.body.classList.add('is-intro');
     const proxy = actualBanner.cloneNode(true) as HTMLImageElement;
     proxy.id = 'intro-banner-proxy';
-    body.appendChild(proxy);
+    document.body.appendChild(proxy);
 
-    // B. The Movement (The Flight)
     setTimeout(() => {
       const targetRect = actualBanner.getBoundingClientRect();
-      
       proxy.classList.add('animate-banner');
       proxy.style.top = `${targetRect.top + (targetRect.height / 2)}px`;
       proxy.style.left = `${targetRect.left + (targetRect.width / 2)}px`;
       proxy.style.width = `${targetRect.width}px`;
 
-      // C. The Wipe & Triggering the Bounce
       setTimeout(() => {
         blackout.style.display = 'none';
         wipe.classList.add('animate-wipe');
         wipe.style.transform = 'translateY(-100%)';
 
-        // D. STAGGERED REVEAL BOUNCE
-        // We trigger the bounce-in just as the wipe's gradient clears the middle of the screen
         setTimeout(() => {
-          body.classList.remove('is-intro');
+          document.body.classList.remove('is-intro');
           
           const uiElements = document.querySelectorAll('.index-header, .content-box, .separator');
           uiElements.forEach((el, index) => {
             setTimeout(() => {
-              el.classList.add('reveal-bounce');
-            }, index * 80); // Stagger the bounce for each box
+              el.classList.add('reveal-active');
+            }, index * 100); 
           });
 
-          // Final Cleanup
           setTimeout(() => {
             proxy.remove();
             wipe.remove();
@@ -127,5 +123,7 @@
         }, 1000); 
       }, 400);
     }, 600);
-  });
+  }
+
+  window.addEventListener('DOMContentLoaded', runIntro);
 </script>
