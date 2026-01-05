@@ -7,11 +7,11 @@ import NavLink from '../components/NavLink.astro';
   <header class="index-header">
     <div class="banner-wrapper">
       <img 
-        src="/site-assets/Site-Banner.png" 
+        src="/site-assets/banner.png" 
         alt="PNGU Banner"
         class="banner-image"
         loading="eager"
-        onerror="this.src='/favicon.svg'; console.error('Image failed to load at /site-assets/Site-Banner.png');"
+        decoding="async"
       />
     </div>
     <div class="separator">~</div>
@@ -47,19 +47,20 @@ import NavLink from '../components/NavLink.astro';
     width: 100%;
     display: flex;
     justify-content: center;
-    padding: 0 10px;
-    /* This ensures we see the area even if image is invisible */
-    min-height: 100px; 
+    /* Removed padding so the 50% width is accurate */
   }
   
   .banner-image {
-    width: 100%;
-    max-width: 100%;
+    /* Set to half width */
+    width: 50%;
     height: auto;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     display: block;
-    /* Helps prevent layout shift while loading */
+    
+    /* Removed glass/floating effects: */
+    /* border-radius: 12px;  <- Removed */
+    /* box-shadow: ...;      <- Removed */
+    /* background-color: ...; <- Removed */
+    
     aspect-ratio: 3 / 1; 
     object-fit: cover;
     pointer-events: none;
@@ -79,7 +80,8 @@ import NavLink from '../components/NavLink.astro';
   .spacer-bottom { height: 80px; }
 
   @media (max-width: 600px) {
-    .banner-wrapper { padding: 0; }
+    /* On mobile, 50% is too small, so we make it 90% */
+    .banner-image { width: 90%; }
     .separator { margin: 1.5rem 0; font-size: 1.5rem; }
   }
 </style>
