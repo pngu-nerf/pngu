@@ -4,9 +4,10 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 
 interface Props {
 	title: string;
+	description?: string;
 }
 
-const { title } = Astro.props;
+const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" } = Astro.props;
 ---
 
 <!doctype html>
@@ -15,35 +16,50 @@ const { title } = Astro.props;
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content={description} />
 		<title>{title} | PNGU</title>
 
 		<style is:global>
-			/* 1. THE "NUCLEAR OPTION" MOBILE FIX */
-			/* This kills the blue highlight box site-wide on all clickable elements */
-			a, button, summary, [role="button"], .banner-image {
-				-webkit-tap-highlight-color: transparent;
-				outline: none; /* Also removes the default browser focus ring */
+			/* 1. GLOBAL DESIGN TOKENS (CSS Variables) */
+			:root {
+				--bg-dark: #0f0f0f;
+				--accent-white: #ffffff;
+				--text-muted: #a0a0a0;
+				
+				/* Glassmorphism Settings */
+				--glass-bg: rgba(40, 40, 40, 0.4);
+				--glass-border: rgba(255, 255, 255, 0.1);
+				--glass-blur: blur(20px) saturate(120%);
+				
+				/* Animations */
+				--transition-base: 0.2s ease;
+				--transition-bounce: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 			}
 
-			/* 2. GLOBAL RESET & BOX MODEL */
+			/* 2. THE NUCLEAR MOBILE FIX */
+			/* Removes blue highlight and default browser outlines site-wide */
+			a, button, summary, [role="button"], .banner-image, details {
+				-webkit-tap-highlight-color: transparent;
+				outline: none;
+			}
+
+			/* 3. HARDWARE ACCELERATION & RESET */
 			*, *::before, *::after {
 				box-sizing: border-box;
 				margin: 0;
 				padding: 0;
 			}
 
-			/* 3. PERFORMANCE & FONT RENDERING */
 			html {
-				background-color: #0f0f0f;
+				background-color: var(--bg-dark);
 				scroll-behavior: smooth;
-				/* Makes text look sharper on high-res displays */
 				-webkit-font-smoothing: antialiased;
-				-moz-osx-font-smoothing: grayscale;
+				overflow-x: hidden;
 			}
 
 			body {
 				font-family: sans-serif;
-				color: #ffffff;
+				color: var(--accent-white);
 				line-height: 1.5;
 				min-height: 100vh;
 				padding: 2rem;
@@ -51,21 +67,52 @@ const { title } = Astro.props;
 				margin: 0 auto;
 			}
 
-			/* 4. REUSABLE BACKGROUND LAYER */
+			/* 4. REUSABLE UI COMPONENTS (Blanket Rules) */
+			
+			/* Background Layer */
 			#bg-layer {
 				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background-color: #0f0f0f;
+				inset: 0;
+				background-color: var(--bg-dark);
 				z-index: -2;
 			}
 
-			/* 5. MOBILE TEXT OPTIMIZATION */
+			/* Performance Optimized Glass Box */
+			.content-box {
+				background-color: var(--glass-bg);
+				backdrop-filter: var(--glass-blur);
+				-webkit-backdrop-filter: var(--glass-blur);
+				border: 1px solid var(--glass-border);
+				border-radius: 16px;
+				padding: 2rem;
+				width: 75%;
+				margin: 2rem auto;
+				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+				/* GPU Acceleration for smooth blur rendering */
+				transform: translateZ(0); 
+				will-change: transform;
+				transition: transform var(--transition-bounce), box-shadow var(--transition-bounce), border-color var(--transition-bounce);
+			}
+
+			.content-box:hover {
+				transform: scale(1.015) translateY(-2px);
+				box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+				border-color: rgba(255, 255, 255, 0.2);
+			}
+
+			/* Pre-allocate space to prevent jumping (CLS) */
+			.preview-container, .viewer-container {
+				aspect-ratio: 16 / 9;
+				background: #111;
+				border-radius: 8px;
+				overflow: hidden;
+			}
+
+			/* 5. RESPONSIVE OPTIMIZATION */
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
-				h1 { font-size: 2rem !important; } /* Keeps headers from overflowing */
+				.content-box { width: 100%; padding: 1.5rem; }
+				h1 { font-size: 2rem !important; }
 			}
 		</style>
 	</head>
@@ -73,6 +120,5 @@ const { title } = Astro.props;
 		<div id="bg-layer"></div>
 		<BackgroundEffects />
 		
-		<slot />
-	</body>
+		<slot /> </body>
 </html>
