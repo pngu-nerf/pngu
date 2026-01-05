@@ -1,12 +1,11 @@
 ---
-/* IndexIntro.astro - Cinematic Banner Choreography */
+/* IndexIntro.astro - Cinematic Banner Choreography V2 */
 ---
 
 <div id="intro-blackout"></div>
 <div id="wipe-layer"></div>
 
 <style is:global>
-  /* We hide the standard layout elements initially to prevent flickering */
   body.is-intro .content-box,
   body.is-intro .separator,
   body.is-intro .index-header {
@@ -17,18 +16,17 @@
   #intro-banner-proxy {
     position: fixed;
     z-index: 10000;
-    width: 40%; /* Matches your desired desktop width */
+    /* Start at 50% of screen width */
+    width: 50vw; 
     height: auto;
     pointer-events: none;
-    /* Centered start position */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    /* Silhouette Shadow */
-    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
+    filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.8));
+    will-change: transform, width, top, left;
   }
 
-  /* Blackout layer */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -36,72 +34,90 @@
     z-index: 9998;
   }
 
-  /* The Wipe Effect */
+  /* THE FEATHERED WIPE */
   #wipe-layer {
     position: fixed;
-    inset: 0;
-    background: #000;
+    left: 0;
+    right: 0;
+    /* Make it taller than the screen so the gradient doesn't show the bg early */
+    height: 120vh; 
+    bottom: 0;
     z-index: 9997;
-    transform: translateY(100%); /* Start at the bottom */
+    /* Black top, transparent bottom with a gradient transition */
+    background: linear-gradient(
+      to bottom, 
+      #000 0%, 
+      #000 80%, 
+      transparent 100%
+    );
+    transform: translateY(100%); /* Hidden at start */
+    will-change: transform;
   }
 
-  /* Animation Classes */
   .animate-banner {
-    transition: all 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+    /* Smooth ramped curve for scaling and moving */
+    transition: 
+      top 1.4s cubic-bezier(0.65, 0, 0.35, 1),
+      left 1.4s cubic-bezier(0.65, 0, 0.35, 1),
+      width 1.4s cubic-bezier(0.65, 0, 0.35, 1),
+      transform 1.4s cubic-bezier(0.65, 0, 0.35, 1);
   }
 
   .animate-wipe {
-    transition: transform 1s linear;
+    /* Slightly slower wipe to show off the gradient bleed */
+    transition: transform 1.2s cubic-bezier(0.2, 0, 0.2, 1);
   }
 </style>
 
 <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    // Only run on Index
+  window.addEventListener('load', () => {
     if (window.location.pathname !== '/') return;
 
     const body = document.body;
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
-    const actualHeader = document.querySelector('.index-header');
-    const actualBanner = document.querySelector('.banner-image');
+    const actualBanner = document.querySelector('.banner-image') as HTMLImageElement;
     
-    if (!actualBanner || !actualHeader) return;
+    if (!actualBanner) return;
 
-    // 1. Setup Phase
+    // 1. Initial State Setup
     body.classList.add('is-intro');
-    
-    // Create a proxy image so we can move it independently
     const proxy = actualBanner.cloneNode(true) as HTMLImageElement;
     proxy.id = 'intro-banner-proxy';
     body.appendChild(proxy);
 
-    // 2. The Move
+    // 2. Start Movement
     setTimeout(() => {
       const targetRect = actualBanner.getBoundingClientRect();
       
       proxy.classList.add('animate-banner');
+      
+      // Move to final resting place
       proxy.style.top = `${targetRect.top + (targetRect.height / 2)}px`;
       proxy.style.left = `${targetRect.left + (targetRect.width / 2)}px`;
       proxy.style.width = `${targetRect.width}px`;
 
-      // 3. The Wipe Reveal
+      // 3. Trigger Wipe
+      // We start the wipe shortly after the banner moves to coordinate the "reveal"
       setTimeout(() => {
-        blackout.style.display = 'none'; // Background is now handled by wipe layer
+        blackout.style.opacity = '0';
+        blackout.style.transition = 'opacity 0.4s ease';
+        
         wipe.classList.add('animate-wipe');
-        wipe.style.transform = 'translateY(-100%)';
+        // We move the 120vh layer all the way through the viewport
+        wipe.style.transform = 'translateY(-120%)';
 
-        // 4. Final Handover
+        // 4. Cleanup and Handover
         setTimeout(() => {
           body.classList.remove('is-intro');
-          // Fade in the rest of the UI
           const uiElements = document.querySelectorAll('.content-box, .separator, .index-header');
           uiElements.forEach(el => (el as HTMLElement).style.opacity = '1');
           
           proxy.remove();
           wipe.remove();
-        }, 1000);
-      }, 800);
-    }, 500);
+          blackout.remove();
+        }, 1200);
+      }, 400);
+    }, 600);
   });
 </script>
