@@ -1,29 +1,31 @@
 ---
-/* IndexIntro.astro - No-Glitch Choreography */
+/* IndexIntro.astro - Bounce Reveal & Oversized Start */
 ---
 
 <div id="intro-blackout"></div>
 <div id="wipe-layer"></div>
 
 <style is:global>
-  /* 1. Prevent the "Glimpse" - Keep content invisible but present */
+  /* 1. INITIAL STATE: Hidden and Scaled Down */
   body.is-intro main, 
   body.is-intro .index-header,
-  body.is-intro .content-box {
+  body.is-intro .content-box,
+  body.is-intro .separator {
     visibility: hidden !important;
     opacity: 0 !important;
+    transform: scale(0.92) translateY(20px); /* Tucked away for the bounce */
   }
 
-  /* 2. Banner Proxy (The only thing visible) */
+  /* 2. OVERSIZED BANNER PROXY */
   #intro-banner-proxy {
     position: fixed;
     z-index: 10001;
-    width: 50vw; 
+    width: 85vw; /* Start significantly larger */
     height: auto;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8));
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9));
     pointer-events: none;
     will-change: transform, width, top, left;
   }
@@ -38,7 +40,7 @@
   #wipe-layer {
     position: fixed;
     inset: 0;
-    height: 400vh; /* Massive height */
+    height: 400vh;
     z-index: 9999;
     background: linear-gradient(
       to bottom, 
@@ -46,18 +48,30 @@
       #000 75%, 
       transparent 100%
     );
-    /* Start exactly covering the screen */
     transform: translateY(0); 
     pointer-events: none;
     will-change: transform;
   }
 
+  /* 3. ANIMATION CURVES */
   .animate-banner {
-    transition: all 1.4s cubic-bezier(0.65, 0, 0.35, 1);
+    /* Slightly faster, aggressive flight */
+    transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
   .animate-wipe {
-    transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* The Bounce Class applied by JS */
+  .reveal-bounce {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: scale(1) translateY(0) !important;
+    /* This bezier creates the 'overshoot' bounce effect */
+    transition: 
+      opacity 0.4s ease-out, 
+      transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
   }
 </style>
 
@@ -72,13 +86,13 @@
     
     if (!actualBanner || !blackout || !wipe) return;
 
-    // A. Setup
+    // A. Initial Setup
     body.classList.add('is-intro');
     const proxy = actualBanner.cloneNode(true) as HTMLImageElement;
     proxy.id = 'intro-banner-proxy';
     body.appendChild(proxy);
 
-    // B. The Movement
+    // B. The Movement (The Flight)
     setTimeout(() => {
       const targetRect = actualBanner.getBoundingClientRect();
       
@@ -87,25 +101,22 @@
       proxy.style.left = `${targetRect.left + (targetRect.width / 2)}px`;
       proxy.style.width = `${targetRect.width}px`;
 
-      // C. The Wipe (The Hand-off)
+      // C. The Wipe & Triggering the Bounce
       setTimeout(() => {
-        // First, kill the blackout. The WIPE is already at translateY(0), so it takes over.
         blackout.style.display = 'none';
-        
-        // Now move the wipe up
         wipe.classList.add('animate-wipe');
         wipe.style.transform = 'translateY(-100%)';
 
-        // D. Final Reveal (Wait until the wipe is 90% done to prevent the "jump")
+        // D. STAGGERED REVEAL BOUNCE
+        // We trigger the bounce-in just as the wipe's gradient clears the middle of the screen
         setTimeout(() => {
           body.classList.remove('is-intro');
           
-          // Smooth fade-in of the real UI
-          const ui = document.querySelectorAll('main, .index-header, .content-box, .separator');
-          ui.forEach(el => {
-            (el as HTMLElement).style.visibility = 'visible';
-            (el as HTMLElement).style.opacity = '1';
-            (el as HTMLElement).style.transition = 'opacity 0.8s ease';
+          const uiElements = document.querySelectorAll('.index-header, .content-box, .separator');
+          uiElements.forEach((el, index) => {
+            setTimeout(() => {
+              el.classList.add('reveal-bounce');
+            }, index * 80); // Stagger the bounce for each box
           });
 
           // Final Cleanup
@@ -113,7 +124,7 @@
             proxy.remove();
             wipe.remove();
           }, 1000);
-        }, 1400); 
+        }, 1000); 
       }, 400);
     }, 600);
   });
