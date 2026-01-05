@@ -1,0 +1,75 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  description?: string;
+  external?: boolean;
+}
+const { href, title, description, external = false } = Astro.props;
+---
+
+<li class="nav-item">
+  <a 
+    href={href} 
+    target={external ? "_blank" : "_self"} 
+    rel={external ? "noopener noreferrer" : ""} 
+    class="nav-link"
+  >
+    <div class="link-content">
+      <span class="link-title">{title}</span>
+      {description && <span class="link-desc">{description}</span>}
+    </div>
+  </a>
+</li>
+
+<style>
+  .nav-item { 
+    margin-bottom: 12px; 
+    list-style: none; 
+  }
+  
+  .nav-link {
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    background-color: #1a1a1a;
+    border: 1px solid var(--glass-border);
+    padding: 16px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all var(--transition-bounce);
+    /* Mobile tap fix inherited from MainLayout */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-link:hover {
+    background-color: #333;
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  }
+
+  .link-content { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+    align-items: center; 
+  }
+
+  .link-title { 
+    color: #fff; 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+  }
+
+  .link-desc { 
+    color: var(--text-muted); 
+    font-size: 0.9rem; 
+  }
+
+  @media (max-width: 600px) {
+    /* Hiding description on mobile keeps the navigation grid tight */
+    .link-desc { display: none; } 
+  }
+</style>
