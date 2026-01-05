@@ -47,19 +47,23 @@ import NavLink from '../components/NavLink.astro';
     width: 100%;
     display: flex;
     justify-content: center;
-    /* Removed padding so the 50% width is accurate */
+    /* Added a little padding so the shadow doesn't get cut off on mobile edges */
+    padding: 20px 10px;
   }
   
   .banner-image {
-    /* Set to half width */
-    width: 50%;
+    /* Reverted width to fill container appropriately */
+    width: 100%;
+    max-width: 900px;
     height: auto;
     display: block;
     
-    /* Removed glass/floating effects: */
-    /* border-radius: 12px;  <- Removed */
-    /* box-shadow: ...;      <- Removed */
-    /* background-color: ...; <- Removed */
+    /* --- LIQUID GLASS STYLE MATCHING --- */
+    /* Match the rounded corners of the content boxes */
+    border-radius: 16px; 
+    /* Match the exact shadow of the content boxes */
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    /* ----------------------------------- */
     
     aspect-ratio: 3 / 1; 
     object-fit: cover;
@@ -70,7 +74,7 @@ import NavLink from '../components/NavLink.astro';
     text-align: center; 
     font-size: 2rem; 
     color: rgba(255, 255, 255, 0.2); 
-    margin: 2.5rem 0; 
+    margin: 1.5rem 0; 
     font-weight: 300; 
     user-select: none;
   }
@@ -80,8 +84,7 @@ import NavLink from '../components/NavLink.astro';
   .spacer-bottom { height: 80px; }
 
   @media (max-width: 600px) {
-    /* On mobile, 50% is too small, so we make it 90% */
-    .banner-image { width: 90%; }
-    .separator { margin: 1.5rem 0; font-size: 1.5rem; }
+    .banner-wrapper { padding: 10px 0; }
+    .separator { margin: 1rem 0; font-size: 1.5rem; }
   }
 </style>
