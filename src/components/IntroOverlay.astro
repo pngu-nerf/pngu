@@ -1,8 +1,14 @@
 ---
-/* ScreenOverlay.astro - Precision Silhouette Zoom */
+/* ScreenOverlay.astro - Precision Silhouette Zoom V2 */
 ---
 
 <div id="screen-overlay"></div>
+
+<svg style="position: absolute; width: 0; height: 0;">
+  <filter id="fuzz">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
+  </filter>
+</svg>
 
 <style>
   #screen-overlay {
@@ -12,55 +18,53 @@
     background-color: #000;
     pointer-events: none;
     
-    /* THE MASK: Using a gradient layer to "feather" the edges */
+    /* The Mask Setup */
     mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
     -webkit-mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
-    
     mask-repeat: no-repeat;
     -webkit-mask-repeat: no-repeat;
-    
     mask-composite: exclude;
     -webkit-mask-composite: xor;
 
-    /* Start invisible */
+    /* Start the logo at 0 size */
     mask-size: 0px auto, 100% 100%;
     -webkit-mask-size: 0px auto, 100% 100%;
 
-    /* FUZZY EDGES: This softens the silhouette pixels */
-    filter: blur(8px); 
+    /* Apply the SVG Blur to the mask edges */
+    filter: url(#fuzz);
     
-    /* One smooth transition for the initial reveal */
-    transition: mask-size 0.8s ease-out, -webkit-mask-size 0.8s ease-out;
+    /* Smooth transition for Stage 1 only */
+    transition: opacity 0.5s ease-out;
   }
 
-  /* STAGE 1: Logo Cutout Appears */
+  /* STAGE 1: Logo Cutout Appearance */
   #screen-overlay.logo-visible {
     mask-size: 180px auto, 100% 100%;
     -webkit-mask-size: 180px auto, 100% 100%;
   }
 
-  /* STAGE 2: One continuous smooth zoom and BG shift */
+  /* STAGE 2: One continuous, accelerating zoom */
   #screen-overlay.zoom-active {
     animation: 
-      smooth-zoom 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
-      bg-shift 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      one-shot-zoom 1.5s cubic-bezier(0.15, 0, 0.85, 1) forwards,
+      bg-fade 1.5s ease-in-out forwards;
   }
 
-  @keyframes smooth-zoom {
+  @keyframes one-shot-zoom {
     from {
-      -webkit-mask-size: 180px auto, 100% 100%;
       mask-size: 180px auto, 100% 100%;
+      -webkit-mask-size: 180px auto, 100% 100%;
     }
     to {
-      /* Massive expansion to ensure the blurry edges clear the screen */
-      -webkit-mask-size: 40000px auto, 100% 100%;
-      mask-size: 40000px auto, 100% 100%;
+      /* Massive zoom to clear the screen and stay centered */
+      mask-size: 50000px auto, 100% 100%;
+      -webkit-mask-size: 50000px auto, 100% 100%;
     }
   }
 
-  @keyframes bg-shift {
+  @keyframes bg-fade {
     from { background-color: #000; }
-    to { background-color: rgba(25, 25, 25, 0.7); }
+    to { background-color: rgba(20, 20, 20, 0.6); }
   }
 
   #screen-overlay.finished {
@@ -74,36 +78,35 @@
     const banner = document.querySelector('.banner-image');
     if (!overlay) return;
 
-    // CENTER THE ZOOM ON THE BANNER
+    // Calculate Banner Center
+    let startX = '50%';
+    let startY = '50%';
+
     if (banner) {
       const rect = banner.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      
-      // Update the mask position to match the banner's center
-      overlay.style.maskPosition = `${centerX}px ${centerY}px, center`;
-      overlay.style.webkitMaskPosition = `${centerX}px ${centerY}px, center`;
-    } else {
-      // Fallback to center screen if banner isn't found
-      overlay.style.maskPosition = `center, center`;
-      overlay.style.webkitMaskPosition = `center, center`;
+      // We calculate percentages relative to the viewport to keep the mask stable
+      startX = `${((rect.left + rect.width / 2) / window.innerWidth) * 100}%`;
+      startY = `${((rect.top + rect.height / 2) / window.innerHeight) * 100}%`;
     }
 
-    // SEQUENCE
+    // Set positions for BOTH mask layers to prevent "corner-drifting"
+    // The first coord is the logo, the second is the background (always center)
+    const posString = `${startX} ${startY}, center`;
+    overlay.style.maskPosition = posString;
+    overlay.style.webkitMaskPosition = posString;
+
+    // Trigger the Sequence
     setTimeout(() => {
         overlay.classList.add('logo-visible');
         
         setTimeout(() => {
             overlay.classList.add('zoom-active');
             
+            // Cleanup
             setTimeout(() => {
-                overlay.style.opacity = "0";
-                overlay.style.transition = "opacity 0.6s ease-out";
-                setTimeout(() => {
-                    overlay.classList.add('finished');
-                }, 600);
+              overlay.classList.add('finished');
             }, 1600);
-        }, 800); 
-    }, 200); 
+        }, 900); 
+    }, 100); 
   });
 </script>
