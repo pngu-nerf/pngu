@@ -47,26 +47,22 @@ import NavLink from '../components/NavLink.astro';
     width: 100%;
     display: flex;
     justify-content: center;
-    /* Added a little padding so the shadow doesn't get cut off on mobile edges */
-    padding: 20px 10px;
+    padding: 30px 10px;
   }
   
   .banner-image {
-    /* Reverted width to fill container appropriately */
     width: 100%;
-    max-width: 900px;
+    max-width: 600px; /* Adjusted down slightly for a cleaner header look */
     height: auto;
     display: block;
     
-    /* --- LIQUID GLASS STYLE MATCHING --- */
-    /* Match the rounded corners of the content boxes */
-    border-radius: 16px; 
-    /* Match the exact shadow of the content boxes */
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-    /* ----------------------------------- */
+    /* SILHOUETTE SHADOW */
+    /* This applies the shadow to the opaque pixels of the PNG only */
+    filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.5));
     
-    aspect-ratio: 3 / 1; 
-    object-fit: cover;
+    /* Remove box-style constraints */
+    border-radius: 0;
+    box-shadow: none;
     pointer-events: none;
   }
 
@@ -84,7 +80,8 @@ import NavLink from '../components/NavLink.astro';
   .spacer-bottom { height: 80px; }
 
   @media (max-width: 600px) {
-    .banner-wrapper { padding: 10px 0; }
+    .banner-wrapper { padding: 20px 0; }
+    .banner-image { width: 85%; }
     .separator { margin: 1rem 0; font-size: 1.5rem; }
   }
 </style>
