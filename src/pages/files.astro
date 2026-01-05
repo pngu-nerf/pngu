@@ -1,6 +1,7 @@
 ---
-// src/pages/files.astro
-import BackgroundEffects from '../components/BackgroundEffects.astro';
+import MainLayout from '../layouts/MainLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import FileItem from '../components/FileItem.astro';
 
 export const prerender = false;
 
@@ -9,582 +10,208 @@ const GITHUB_USER = 'pngu-nerf';
 const GITHUB_REPO = 'PNGU-3D-Files';
 const BRANCH = 'main';
 
-// --- Caching ---
 Astro.response.headers.set('Cache-Control', 'public, max-age=1000, s-maxage=1000');
 
-// --- Types ---
-type FileItem = {
-  name: string;
-  path: string;
-  url: string;
-};
-
-type ProjectItem = {
-  title: string;
-  description: string;
-  printablesUrl: string | null;
-  files: FileItem[];
-};
-
-// --- Variables ---
+// --- Types & Variables ---
 let errorMessage = "";
-let projects: Record<string, ProjectItem> = {};
-let projectList: ProjectItem[] = [];
+let projectList: any[] = [];
+let projects: Record<string, any> = {};
 
-// --- Helper Functions ---
 async function getRepoFiles() {
   const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
-
-  try {
-    const response = await fetch(apiUrl, {
-      headers: {
-        'User-Agent': 'PNGU-Website',
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    });
-
-    if (!response.ok) {
-      if (response.status === 403) throw new Error("GitHub Rate Limit Exceeded. Try refreshing the page or waiting a few minutes.");
-      if (response.status === 404) throw new Error("Repository not found.");
-      throw new Error(`GitHub API Error: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (e: any) {
-    console.error("Fetch Error:", e.message);
-    throw e;
-  }
+  const response = await fetch(apiUrl, {
+    headers: { 'User-Agent': 'PNGU-Website', 'Accept': 'application/vnd.github.v3+json' }
+  });
+  if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
+  return await response.json();
 }
 
+// Logic to fetch description from Printables Meta tags
 async function getPrintablesDescription(url: string) {
   if (!url) return "No description available.";
   try {
     const res = await fetch(url, { headers: { 'User-Agent': 'PNGU-Website' } });
-    if (!res.ok) return "Could not fetch description.";
-    
     const html = await res.text();
     const match = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i) || 
                   html.match(/<meta\s+property="og:description"\s+content="([^"]*)"/i);
-    
-    if (match && match[1]) {
-        return match[1].replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-    }
-    return "Could not load description.";
-  } catch (e) {
-    return "Error loading description.";
-  }
+    return match ? match[1].replace(/&quot;/g, '"').replace(/&#39;/g, "'") : "Description found on Printables.";
+  } catch (e) { return "Error loading description."; }
 }
 
-// --- Main Logic ---
 try {
   const data = await getRepoFiles();
-
-  if (data && data.tree) {
+  if (data?.tree) {
     for (const item of data.tree) {
-      if (item.type === 'blob') { 
+      if (item.type === 'blob') {
         const pathParts = item.path.split('/');
-        
         if (pathParts.length > 1) {
           const folderName = pathParts[0];
           const fileName = pathParts[pathParts.length - 1];
 
           if (!projects[folderName]) {
-            projects[folderName] = {
-              title: folderName,
-              description: "Loading...",
-              printablesUrl: null,
-              files: []
-            };
+            projects[folderName] = { title: folderName, description: "Loading...", printablesUrl: null, files: [] };
           }
 
           if (fileName.toLowerCase().endsWith('.stl')) {
             const safePath = item.path.split('/').map(encodeURIComponent).join('/');
-            
             projects[folderName].files.push({
               name: fileName,
-              path: item.path,
-              url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}` 
+              url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`
             });
           }
           
           if (fileName.toLowerCase().includes('link')) {
-             const safePath = item.path.split('/').map(encodeURIComponent).join('/');
-             const rawLinkRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`);
-             if (rawLinkRes.ok) {
-                projects[folderName].printablesUrl = (await rawLinkRes.text()).trim();
-             }
+             const res = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${item.path}`);
+             if (res.ok) projects[folderName].printablesUrl = (await res.text()).trim();
           }
 
           if (fileName.toLowerCase().startsWith('description')) {
-             const safePath = item.path.split('/').map(encodeURIComponent).join('/');
-             const rawDescRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`);
-             if (rawDescRes.ok) {
-                 projects[folderName].description = (await rawDescRes.text()).trim();
-             }
+             const res = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${item.path}`);
+             if (res.ok) projects[folderName].description = (await res.text()).trim();
           }
         }
       }
     }
 
-    await Promise.all(
-      Object.values(projects).map(async (project) => {
+    await Promise.all(Object.values(projects).map(async (project: any) => {
         if (project.description === "Loading...") {
-            if (project.printablesUrl) {
-                project.description = await getPrintablesDescription(project.printablesUrl);
-            } else {
-                project.description = "No description available.";
-            }
+            project.description = project.printablesUrl ? await getPrintablesDescription(project.printablesUrl) : "No description available.";
         }
-        project.files.sort((a, b) => a.name.localeCompare(b.name));
-      })
-    );
-    
-    projectList = Object.values(projects).filter(p => p.files.length > 0);
-
-  } else {
-      errorMessage = "Received empty data from GitHub.";
+        project.files.sort((a: any, b: any) => a.name.localeCompare(b.name));
+    }));
+    projectList = Object.values(projects).filter((p: any) => p.files.length > 0);
   }
-} catch (error: any) {
-  errorMessage = error.message;
-}
+} catch (error: any) { errorMessage = error.message; }
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<title>3D Files | PNGU</title>
+<MainLayout title="3D Files">
+  <PageHeader title="3D Printing Files" subtitle="Files synced from GitHub" />
 
-		<style>
-            * { box-sizing: border-box; }
+  {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
 
-			body {
-				font-family: sans-serif;
-				padding: 2rem;
-				text-align: center;
-				max-width: 900px;
-				margin: 0 auto;
-				color: #ffffff;
-			}
+  {projectList.length === 0 && !errorMessage ? (
+    <div class="content-box center-text">
+      <p>No files found in repo.</p>
+    </div>
+  ) : (
+    projectList.map((project) => (
+      <div class="content-box">
+        <h2>{project.title}</h2>
+        
+        <details class="project-desc">
+          <summary>Project Info</summary>
+          <div class="description-content">
+            {project.description}
+            {project.printablesUrl && (
+              <a href={project.printablesUrl} target="_blank" class="printables-link">
+                View on Printables &rarr;
+              </a>
+            )}
+          </div>
+        </details>
+
+        <div class="file-list">
+          {project.files.map((file: any) => (
+            <FileItem name={file.name} downloadUrl={file.url} previewType="stl">
+              <div class="viewer-container" data-stl-url={file.url}>
+                <span class="loading-text">Click to load 3D view...</span>
+              </div>
+            </FileItem>
+          ))}
+        </div>
+      </div>
+    ))
+  )}
+
+  <div class="footer-actions">
+    <a href={`https://github.com/${GITHUB_USER}/${GITHUB_REPO}`} target="_blank" class="github-direct-btn">
+      Access GitHub Directly &rarr;
+    </a>
+  </div>
+
+  <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const viewedElements = new WeakSet();
+
+    function initViewer(container, url) {
+        if (viewedElements.has(container)) return;
+        viewedElements.add(container);
+
+        const loadingText = container.querySelector('.loading-text');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x111111);
+        
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+        scene.add(ambientLight);
+
+        const loader = new STLLoader();
+        loader.load(url, (geometry) => {
+            if (loadingText) loadingText.style.display = 'none';
+            geometry.center();
+            const material = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x111111, shininess: 100 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.rotation.x = -Math.PI / 2;
+            scene.add(mesh);
+
+            geometry.computeBoundingBox();
+            const size = geometry.boundingBox.getSize(new THREE.Vector3()).length();
+            camera.position.z = size * 1.5;
             
-            #bg-layer {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: #0f0f0f;
-                z-index: -2;
-            }
-			
-			.header-box { text-align: center; margin-bottom: 3rem; }
+            const animate = () => { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
+            animate();
+        });
+    }
 
-			.content-box {
-				background-color: rgba(40, 40, 40, 0.4); 
-                backdrop-filter: blur(20px) saturate(120%);
-                -webkit-backdrop-filter: blur(20px) saturate(120%);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 16px;
-				padding: 2rem;
-				width: 75%;
-				margin: 2rem auto; 
-				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-				text-align: left;
-                transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                            box-shadow 0.4s ease, 
-                            border-color 0.4s ease;
-			}
-            
-            .content-box:hover {
-                transform: scale(1.015) translateY(-2px);
-                box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
-                border-color: rgba(255, 255, 255, 0.2);
-            }
-            
-            .error-box {
-                background-color: rgba(63, 26, 26, 0.8);
-                border: 1px solid #ff4444;
-                color: #ffcccc;
-                padding: 1rem;
-                border-radius: 12px;
-                width: 75%;
-                margin: 0 auto 2rem auto;
-            }
-			
-			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
-            
-            h2 { 
-                margin-top: 0;
-                color: #ffffff;
-                font-size: 1.5rem;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                padding-bottom: 10px;
-                margin-bottom: 20px;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            }
-            
-			.subtitle { color: #a0a0a0; font-size: 1.2rem; }
+    document.addEventListener('toggle', (e) => {
+        if (e.target.open && e.target.classList.contains('file-item')) {
+            const container = e.target.querySelector('.viewer-container');
+            if (container) initViewer(container, container.dataset.stlUrl);
+        }
+    }, true);
+  </script>
+</MainLayout>
 
-            details.project-desc {
-                background-color: rgba(31, 31, 31, 0.6);
-                border-radius: 8px;
-                margin-bottom: 1.5rem;
-                overflow: hidden;
-                border: 1px solid rgba(255,255,255,0.05);
-            }
-            
-            details.project-desc summary {
-                padding: 1rem;
-                font-weight: bold;
-                background-color: rgba(51, 51, 51, 0.8);
-                display: flex;
-                justify-content: space-between;
-                cursor: pointer;
-                color: #e0e0e0;
-            }
+<style>
+  .center-text { text-align: center; }
+  
+  /* Project Description Styling */
+  .project-desc {
+    background-color: rgba(31, 31, 31, 0.6);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--glass-border);
+    overflow: hidden;
+  }
+  .project-desc summary { padding: 1rem; font-weight: bold; cursor: pointer; color: #e0e0e0; }
+  .description-content { padding: 1rem; line-height: 1.6; color: #ccc; white-space: pre-wrap; border-top: 1px solid var(--glass-border); }
+  
+  .printables-link { display: block; margin-top: 15px; color: var(--accent-white); text-decoration: underline; font-size: 0.9rem; }
 
-            details.project-desc summary::after { content: '+'; font-size: 1.2rem; }
-            details.project-desc[open] summary::after { content: '-'; }
+  /* 3D Viewer Placeholder */
+  .viewer-container { height: 400px; display: flex; align-items: center; justify-content: center; }
+  .loading-text { color: #666; font-size: 0.9rem; }
 
-            .description-content {
-                padding: 1rem;
-                line-height: 1.6;
-                color: #ccc;
-                white-space: pre-wrap;
-                border-top: 1px solid rgba(255,255,255,0.05);
-            }
-
-            .file-list { list-style: none; padding: 0; margin: 0; }
-
-            details.file-item {
-                background-color: #1a1a1a; 
-                margin-bottom: 10px;
-                border-radius: 12px;
-                overflow: hidden;
-                border: 1px solid rgba(255,255,255,0.05); 
-                transition: border-color 0.2s, transform 0.2s;
-            }
-
-            details.file-item[open] { border-color: rgba(255,255,255,0.2); }
-            
-            details.file-item:hover {
-                border-color: rgba(255,255,255,0.2);
-                transform: translateY(-1px);
-            }
-
-            details.file-item summary {
-                padding: 16px 20px;
-                cursor: pointer;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                list-style: none;
-                background-color: #1a1a1a;
-            }
-
-            details.file-item summary:hover { background-color: #252525; }
-            details.file-item summary::-webkit-details-marker { display: none; }
-
-            details.file-item summary::after {
-                content: '▼'; 
-                font-size: 0.8rem;
-                color: #888;
-                margin-left: 10px;
-                transition: transform 0.2s ease;
-            }
-
-            details.file-item[open] summary::after {
-                transform: rotate(180deg);
-            }
-
-            .file-name {
-                font-weight: 500;
-                color: #fff;
-            }
-
-            .actions {
-                display: flex;
-                gap: 15px;
-                font-size: 0.9rem;
-                align-items: center;
-                margin-left: auto; 
-                margin-right: 15px;
-            }
-
-            .preview-label { color: #aaa; font-size: 0.8rem; margin-right: 5px; }
-
-            /* --- Updated Download Button to White/Monochrome --- */
-            a.download-btn {
-                color: #ffffff;
-                text-decoration: none;
-                font-weight: bold;
-                padding: 6px 12px;
-                border: 1px solid #ffffff;
-                border-radius: 6px;
-                transition: all 0.2s;
-                background-color: rgba(255,255,255,0.05);
-            }
-
-            a.download-btn:hover { 
-                background-color: #ffffff; 
-                color: #000; 
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-            }
-
-            .viewer-container {
-                background-color: #111; 
-                height: 400px;
-                width: 100%;
-                border-top: 1px solid #333;
-                position: relative;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                overflow: hidden;
-            }
-            
-            .viewer-container canvas {
-                width: 100% !important;
-                height: 100% !important;
-                outline: none;
-            }
-            
-            .loading-text {
-                position: absolute;
-                color: #888;
-                font-size: 0.9rem;
-                pointer-events: none;
-                z-index: 10;
-            }
-
-			.back-link {
-				margin-top: 1rem;
-			}
-			.back-link a {
-				display: inline-block;
-				padding: 10px 20px;
-				background-color: #272727;
-                border: 1px solid rgba(255,255,255,0.1);
-				border-radius: 8px;
-                color: #fff;
-                text-decoration: none;
-                font-weight: 500;
-                transition: all 0.2s;
-			}
-            .back-link a:hover {
-                background-color: #333;
-                border-color: rgba(255,255,255,0.3);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            }
-            
-            .github-direct-btn {
-                display: inline-block;
-                margin-top: 10px;
-                padding: 10px 20px;
-                background-color: #272727;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 8px;
-                color: #fff;
-                text-decoration: none;
-                font-weight: 500;
-                transition: all 0.2s;
-            }
-            
-            .github-direct-btn:hover {
-                background-color: #333;
-                border-color: rgba(255,255,255,0.3);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            }
-            
-			@media (max-width: 600px) {
-				body { padding: 1rem; }
-                .content-box { 
-					padding: 1.5rem; 
-					width: 100%; 
-				}
-				.preview-label { display: none; }
-			}
-		</style>
-	</head>
-	<body>
-        <div id="bg-layer"></div>
-        <BackgroundEffects />
-
-        <div class="header-box">
-			<h1>3D Printing Files</h1>
-			<p class="subtitle">Files synced from GitHub</p>
-			<p class="back-link"><a href="/">← Back to Home</a></p>
-		</div>
-
-         {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
-
-         {projectList.length === 0 && !errorMessage ? (
-             <div class="content-box">
-                <p style="text-align:center; color:#ccc;">No files found in repo.</p>
-             </div>
-         ) : (
-             projectList.map((item) => (
-                <div class="content-box">
-                    <h2>{item.title}</h2>
-                    
-                    <details class="project-desc">
-                        <summary>Description</summary>
-                        <div class="description-content">
-                            {item.description}
-                            <br/><br/>
-                            {/* Updated link color to white */}
-                            {item.printablesUrl && <a href={item.printablesUrl} target="_blank" style="color: #ffffff; font-size: 0.9rem; text-decoration: underline;">View original page on Printables &rarr;</a>}
-                        </div>
-                    </details>
-
-                    <div class="file-list">
-                        {item.files.map((file) => (
-                            <details class="file-item">
-                                <summary>
-                                    <span class="file-name">{file.name}</span>
-                                    <div class="actions">
-                                        <span class="preview-label">3D Preview</span>
-                                        <a href={file.url} class="download-btn" download>Download</a>
-                                    </div>
-                                </summary>
-                                <div class="viewer-container" data-stl-url={file.url}>
-                                    <span class="loading-text">Click to load 3D view...</span>
-                                </div>
-                            </details>
-                        ))}
-                    </div>
-                </div>
-             ))
-         )}
-         
-         <div style="margin-top: 3rem; text-align: center;">
-             <p style="opacity: 0.5; font-size: 0.8rem; margin-bottom: 0.5rem;">Files hosted on GitHub. Updates every ~10 minutes.</p>
-             <a href={`https://github.com/${GITHUB_USER}/${GITHUB_REPO}`} target="_blank" class="github-direct-btn">
-                 Access GitHub Directly &rarr;
-             </a>
-         </div>
-         
-         <div style="height: 40px;"></div>
-
-         <script type="importmap">
-            {
-                "imports": {
-                    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-                }
-            }
-         </script>
-
-         <script type="module">
-            import * as THREE from 'three';
-            import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-            const viewedElements = new WeakSet();
-
-            function initViewer(container, url) {
-                if (viewedElements.has(container)) return;
-                viewedElements.add(container);
-
-                const loadingText = container.querySelector('.loading-text');
-                if (loadingText) loadingText.textContent = "Loading Model...";
-
-                const scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x111111);
-                
-                const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-                camera.position.set(0, 0, 100);
-
-                const renderer = new THREE.WebGLRenderer({ antialias: true });
-                renderer.setSize(container.clientWidth, container.clientHeight);
-                container.appendChild(renderer.domElement);
-
-                const controls = new OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-
-                const ambientLight = new THREE.AmbientLight(0x404040, 2);
-                scene.add(ambientLight);
-                
-                const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
-                dirLight.position.set(1, 1, 1);
-                scene.add(dirLight);
-                
-                const dirLight2 = new THREE.DirectionalLight(0xffffff, 1.5);
-                dirLight2.position.set(-1, -1, 1);
-                scene.add(dirLight2);
-
-                const loader = new STLLoader();
-                loader.load(
-                    url,
-                    function (geometry) {
-                        if (loadingText) loadingText.style.display = 'none';
-
-                        geometry.computeBoundingBox();
-                        geometry.center(); 
-
-                        // --- UPDATED MODEL COLOR TO WHITE ---
-                        const material = new THREE.MeshPhongMaterial({ 
-                            color: 0xffffff, 
-                            specular: 0x444444, 
-                            shininess: 100 
-                        });
-                        const mesh = new THREE.Mesh(geometry, material);
-                        mesh.rotation.x = -Math.PI / 2; 
-                        
-                        scene.add(mesh);
-
-                        const box = geometry.boundingBox;
-                        const maxSize = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
-                        
-                        camera.position.z = maxSize * 2;
-                        camera.position.y = maxSize;
-                        camera.lookAt(0,0,0);
-                        
-                        controls.target.set(0, 0, 0);
-                        controls.update();
-
-                        function animate() {
-                            requestAnimationFrame(animate);
-                            controls.update();
-                            renderer.render(scene, camera);
-                        }
-                        animate();
-                    },
-                    (xhr) => {
-                        if (loadingText) loadingText.textContent = `Loading: ${Math.round((xhr.loaded / xhr.total) * 100)}%`;
-                    },
-                    (error) => {
-                        console.error(error);
-                        if (loadingText) {
-                            loadingText.textContent = "Error loading 3D model.";
-                            loadingText.style.color = "#ff4444";
-                        }
-                    }
-                );
-                
-                window.addEventListener('resize', () => {
-                   if (container.clientWidth > 0 && container.clientHeight > 0) {
-                       camera.aspect = container.clientWidth / container.clientHeight;
-                       camera.updateProjectionMatrix();
-                       renderer.setSize(container.clientWidth, container.clientHeight);
-                   }
-                });
-            }
-
-            document.addEventListener('toggle', function(event) {
-                if (event.target.tagName === 'DETAILS' && event.target.classList.contains('file-item')) {
-                    if (event.target.open) {
-                        const container = event.target.querySelector('.viewer-container');
-                        const url = container.getAttribute('data-stl-url');
-                        if (container && url) {
-                            setTimeout(() => initViewer(container, url), 50);
-                        }
-                    }
-                }
-            }, true);
-         </script>
-	</body>
-</html>
+  .footer-actions { margin-top: 3rem; text-align: center; padding-bottom: 60px; }
+  .github-direct-btn {
+    display: inline-block; padding: 12px 24px; background: #272727; border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; text-decoration: none; transition: 0.2s;
+  }
+  .github-direct-btn:hover { background: #333; transform: translateY(-2px); }
+</style>
