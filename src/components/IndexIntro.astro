@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Cinematic Banner Choreography V2 */
+/* IndexIntro.astro - Ultra-Tall Feathered Wipe */
 ---
 
 <div id="intro-blackout"></div>
@@ -12,11 +12,10 @@
     opacity: 0;
   }
 
-  /* The actual banner image during the intro */
+  /* Banner Proxy */
   #intro-banner-proxy {
     position: fixed;
     z-index: 10000;
-    /* Start at 50% of screen width */
     width: 50vw; 
     height: auto;
     pointer-events: none;
@@ -27,35 +26,44 @@
     will-change: transform, width, top, left;
   }
 
+  /* Initial Solid Blackout */
   #intro-blackout {
     position: fixed;
     inset: 0;
     background: #000;
-    z-index: 9998;
+    z-index: 9999; /* Highest layer initially */
+    transition: opacity 0.6s ease;
   }
 
-  /* THE FEATHERED WIPE */
+  /* THE ULTRA-TALL WIPE */
   #wipe-layer {
     position: fixed;
     left: 0;
     right: 0;
-    /* Make it taller than the screen so the gradient doesn't show the bg early */
-    height: 120vh; 
+    /* 3x Screen Height to ensure it never looks like a 'bar' */
+    height: 300vh; 
     bottom: 0;
-    z-index: 9997;
-    /* Black top, transparent bottom with a gradient transition */
+    z-index: 9998;
+    
+    /* Gradient breakdown:
+       Top 66% is solid black (keeps the screen covered)
+       Bottom 33% is the fade-out (the 'feather')
+    */
     background: linear-gradient(
       to bottom, 
       #000 0%, 
-      #000 80%, 
+      #000 66%, 
       transparent 100%
     );
-    transform: translateY(100%); /* Hidden at start */
+    
+    /* Start completely below the viewport */
+    transform: translateY(100%); 
     will-change: transform;
+    /* Ensure the wipe doesn't trigger background blurs prematurely */
+    pointer-events: none;
   }
 
   .animate-banner {
-    /* Smooth ramped curve for scaling and moving */
     transition: 
       top 1.4s cubic-bezier(0.65, 0, 0.35, 1),
       left 1.4s cubic-bezier(0.65, 0, 0.35, 1),
@@ -64,50 +72,50 @@
   }
 
   .animate-wipe {
-    /* Slightly slower wipe to show off the gradient bleed */
-    transition: transform 1.2s cubic-bezier(0.2, 0, 0.2, 1);
+    /* Using a very smooth linear-to-ease transition */
+    transition: transform 1.6s cubic-bezier(0.2, 0, 0.1, 1);
   }
 </style>
 
 <script>
   window.addEventListener('load', () => {
-    if (window.location.pathname !== '/') return;
+    // Safety check for index page
+    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') return;
 
     const body = document.body;
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
     const actualBanner = document.querySelector('.banner-image') as HTMLImageElement;
     
-    if (!actualBanner) return;
+    if (!actualBanner || !blackout || !wipe) return;
 
-    // 1. Initial State Setup
+    // 1. Lock UI and Create Proxy
     body.classList.add('is-intro');
     const proxy = actualBanner.cloneNode(true) as HTMLImageElement;
     proxy.id = 'intro-banner-proxy';
     body.appendChild(proxy);
 
-    // 2. Start Movement
+    // 2. Begin Sequence
     setTimeout(() => {
       const targetRect = actualBanner.getBoundingClientRect();
       
+      // Move Banner to Header position
       proxy.classList.add('animate-banner');
-      
-      // Move to final resting place
       proxy.style.top = `${targetRect.top + (targetRect.height / 2)}px`;
       proxy.style.left = `${targetRect.left + (targetRect.width / 2)}px`;
       proxy.style.width = `${targetRect.width}px`;
 
-      // 3. Trigger Wipe
-      // We start the wipe shortly after the banner moves to coordinate the "reveal"
+      // 3. Coordinate the Wipe
       setTimeout(() => {
+        // Drop the solid blackout so the wipe layer takes over
         blackout.style.opacity = '0';
-        blackout.style.transition = 'opacity 0.4s ease';
         
         wipe.classList.add('animate-wipe');
-        // We move the 120vh layer all the way through the viewport
-        wipe.style.transform = 'translateY(-120%)';
+        // Translate the 300vh layer all the way up
+        // -100% moves the bottom (the gradient) past the top of the screen
+        wipe.style.transform = 'translateY(-100%)';
 
-        // 4. Cleanup and Handover
+        // 4. Reveal UI and Cleanup
         setTimeout(() => {
           body.classList.remove('is-intro');
           const uiElements = document.querySelectorAll('.content-box, .separator, .index-header');
@@ -116,8 +124,8 @@
           proxy.remove();
           wipe.remove();
           blackout.remove();
-        }, 1200);
-      }, 400);
-    }, 600);
+        }, 1600); // Wait for the full wipe duration
+      }, 300);
+    }, 500);
   });
 </script>
