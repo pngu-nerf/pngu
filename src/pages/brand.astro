@@ -1,9 +1,17 @@
 ---
+// src/pages/brand.astro
 import MainLayout from '../layouts/MainLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import FileItem from '../components/FileItem.astro';
 
-const assets = [...];
+const assets = [
+  { name: "Logo White (SVG)", path: "/brand-assets/PNGU logo white.svg", type: "image" },
+  { name: "Logo Black (SVG)", path: "/brand-assets/PNGU logo black.svg", type: "image" },
+  { name: "Profile Image", path: "/brand-assets/Youtube Profile.png", type: "image" },
+  { name: "Brand Youtube Banner", path: "/brand-assets/Youtube Banner.jpg", type: "image" },
+  { name: "Brand Font (OTF)", path: "/brand-assets/Jump Winter.otf", type: "font" },
+  { name: "Brand Font (TTF)", path: "/brand-assets/Jump Winter.ttf", type: "font" } // Make sure this last bracket is here
+];
 ---
 
 <MainLayout title="Brand">
@@ -13,13 +21,19 @@ const assets = [...];
     <h2>Downloads</h2>
     <div class="file-list">
       {assets.map((asset) => (
-        <FileItem name={asset.name} downloadUrl={asset.path} previewType={asset.type === 'image' ? 'image' : 'none'}>
+        <FileItem 
+          name={asset.name} 
+          downloadUrl={asset.path} 
+          previewType={asset.type === 'image' ? 'image' : 'none'}
+        >
           {asset.type === 'image' ? (
             <div class="preview-container">
-               <img src={asset.path} alt="" loading="lazy" />
+               <img src={asset.path} alt={asset.name} loading="lazy" />
             </div>
           ) : (
-            <p class="no-preview">Preview not available.</p>
+            <div class="no-preview-box">
+               <p class="no-preview">Preview not available for font files.</p>
+            </div>
           )}
         </FileItem>
       ))}
@@ -28,5 +42,22 @@ const assets = [...];
 </MainLayout>
 
 <style>
-  /* Only put the "Checkerboard background" CSS for the preview-container here */
+  /* Keep your checkerboard background for images */
+  .preview-container {
+    background-color: #111;
+    background-image: 
+      linear-gradient(45deg, #181818 25%, transparent 25%), 
+      linear-gradient(-45deg, #181818 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #181818 75%), 
+      linear-gradient(-45deg, transparent 75%, #181818 75%);
+    background-size: 20px 20px;
+    min-height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+  }
+  .preview-container img { max-width: 100%; max-height: 300px; object-fit: contain; }
+  .no-preview-box { padding: 2rem; text-align: center; }
+  .no-preview { color: var(--text-muted); font-style: italic; font-size: 0.9rem; }
 </style>
