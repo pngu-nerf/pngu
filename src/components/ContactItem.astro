@@ -1,0 +1,83 @@
+---
+interface Props {
+  label: string;
+  value: string;
+  buttonId: string;
+  copyMessage?: string;
+}
+const { label, value, buttonId, copyMessage = "✓ Copied!" } = Astro.props;
+---
+
+<div class="contact-item-wrapper">
+  <button id={buttonId} class="contact-btn" data-value={value} data-original={label} data-success={copyMessage}>
+    <span class="contact-value">{value}</span>
+    <span class="status-label">{label}</span>
+  </button>
+</div>
+
+<style>
+  .contact-item-wrapper { margin-bottom: 12px; }
+  
+  .contact-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1a1a1a;
+    padding: 16px 20px;
+    border-radius: 12px;
+    width: 100%;
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    transition: all var(--transition-bounce);
+    /* Mobile tap fix inherited from Layout, but added here for safety */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .contact-btn:hover {
+    background-color: #252525;
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .contact-value { 
+    font-weight: 500; 
+    color: #fff; 
+    font-family: 'Courier New', monospace; 
+  }
+
+  .status-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .contact-btn:hover .status-label { color: #fff; }
+</style>
+
+<script>
+  function setupCopy(btnId: string) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+      const val = btn.getAttribute('data-value') || "";
+      const successMsg = btn.getAttribute('data-success') || "";
+      const originalMsg = btn.getAttribute('data-original') || "";
+      const labelSpan = btn.querySelector('.status-label') as HTMLElement;
+
+      navigator.clipboard.writeText(val).then(() => {
+        labelSpan.innerText = successMsg;
+        labelSpan.style.color = '#10b981'; // Green success feedback
+
+        setTimeout(() => {
+          labelSpan.innerText = originalMsg;
+          labelSpan.style.color = '';
+        }, 2000);
+      });
+    });
+  }
+
+  // Initialize for all buttons
+  document.querySelectorAll('.contact-btn').forEach(btn => setupCopy(btn.id));
+</script>
