@@ -10,7 +10,8 @@ import NavLink from '../components/NavLink.astro';
         src="/site-assets/Site-Banner.png" 
         alt="PNGU Banner"
         class="banner-image"
-        loading="eager" 
+        loading="eager"
+        onerror="this.src='/favicon.svg'; console.error('Image failed to load at /site-assets/Site-Banner.png');"
       />
     </div>
     <div class="separator">~</div>
@@ -36,35 +37,34 @@ import NavLink from '../components/NavLink.astro';
     </ul>
   </section>
 
-  <footer class="spacer-bottom"></footer>
+  <div class="spacer-bottom"></div>
 </MainLayout>
 
 <style>
-  /* Header & Banner Styling */
-  .index-header {
-    width: 100%;
-    margin-bottom: 1rem;
-  }
+  .index-header { width: 100%; margin-bottom: 1rem; }
 
   .banner-wrapper {
     width: 100%;
     display: flex;
     justify-content: center;
     padding: 0 10px;
+    /* This ensures we see the area even if image is invisible */
+    min-height: 100px; 
   }
   
   .banner-image {
     width: 100%;
+    max-width: 100%;
     height: auto;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     display: block;
-    transition: transform var(--transition-bounce), box-shadow var(--transition-bounce);
-    /* Banner doesn't need pointer events anymore since surprise is gone */
-    pointer-events: none; 
+    /* Helps prevent layout shift while loading */
+    aspect-ratio: 3 / 1; 
+    object-fit: cover;
+    pointer-events: none;
   }
 
-  /* Decorative Spacing */
   .separator { 
     text-align: center; 
     font-size: 2rem; 
@@ -74,20 +74,9 @@ import NavLink from '../components/NavLink.astro';
     user-select: none;
   }
 
-  .separator-small { 
-    margin: 2rem 0; 
-    height: 1px; 
-  }
-
-  .nav-list { 
-    list-style: none; 
-    padding: 0; 
-    margin: 0; 
-  }
-
-  .spacer-bottom { 
-    height: 80px; 
-  }
+  .separator-small { margin: 2rem 0; height: 1px; }
+  .nav-list { list-style: none; padding: 0; margin: 0; }
+  .spacer-bottom { height: 80px; }
 
   @media (max-width: 600px) {
     .banner-wrapper { padding: 0; }
