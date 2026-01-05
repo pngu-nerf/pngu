@@ -17,15 +17,71 @@ const { name, downloadUrl, previewType = 'none' } = Astro.props;
   </summary>
   
   <div class="preview-slot">
-    <slot /> </div>
+    <slot /> 
+  </div>
 </details>
 
 <style>
-  /* All your .file-item, .summary, and .download-btn CSS goes here once */
-  .file-item { background: #1a1a1a; margin-bottom: 10px; border-radius: 12px; border: 1px solid var(--glass-border); overflow: hidden; }
-  summary { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; }
+  .file-item { 
+    background: #1a1a1a; 
+    margin-bottom: 10px; 
+    border-radius: 12px; 
+    border: 1px solid var(--glass-border); 
+    overflow: hidden; 
+  }
+
+  summary { 
+    padding: 16px 20px; 
+    cursor: pointer; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; /* Vertically centers buttons if text goes to 2 lines */
+    list-style: none; 
+    gap: 20px; /* Ensures a minimum gap between text and buttons */
+  }
+
   summary:hover { background: #252525; }
-  .download-btn { border: 1px solid #fff; padding: 6px 12px; border-radius: 6px; color: #fff; text-decoration: none; font-size: 0.9rem; }
-  .download-btn:hover { background: #fff; color: #000; }
+  summary::-webkit-details-marker { display: none; } /* Standard cleanup for details arrow */
+
+  .file-name {
+    flex: 1; /* Allows text to take up remaining space and wrap if needed */
+    color: #fff;
+    word-break: break-word;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    white-space: nowrap; /* Prevents internal wrapping of label and button */
+    flex-shrink: 0; /* Prevents the buttons from being squished by long text */
+  }
+
+  .preview-label {
+    color: var(--text-muted, #888);
+    font-size: 0.8rem;
+  }
+
+  .download-btn { 
+    border: 1px solid #fff; 
+    padding: 6px 12px; 
+    border-radius: 6px; 
+    color: #fff; 
+    text-decoration: none; 
+    font-size: 0.9rem; 
+    transition: all var(--transition-base, 0.2s);
+  }
+
+  .download-btn:hover { 
+    background: #fff; 
+    color: #000; 
+  }
+
   .preview-slot { border-top: 1px solid #333; }
+
+  /* Mobile adjustment */
+  @media (max-width: 600px) {
+    .preview-label { display: none; } /* Usually cleaner to hide the extra label on small phones */
+    summary { gap: 10px; }
+  }
 </style>
