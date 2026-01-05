@@ -1,0 +1,107 @@
+---
+/* IndexIntro.astro - Cinematic Banner Choreography */
+---
+
+<div id="intro-blackout"></div>
+<div id="wipe-layer"></div>
+
+<style is:global>
+  /* We hide the standard layout elements initially to prevent flickering */
+  body.is-intro .content-box,
+  body.is-intro .separator,
+  body.is-intro .index-header {
+    opacity: 0;
+  }
+
+  /* The actual banner image during the intro */
+  #intro-banner-proxy {
+    position: fixed;
+    z-index: 10000;
+    width: 40%; /* Matches your desired desktop width */
+    height: auto;
+    pointer-events: none;
+    /* Centered start position */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Silhouette Shadow */
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
+  }
+
+  /* Blackout layer */
+  #intro-blackout {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9998;
+  }
+
+  /* The Wipe Effect */
+  #wipe-layer {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9997;
+    transform: translateY(100%); /* Start at the bottom */
+  }
+
+  /* Animation Classes */
+  .animate-banner {
+    transition: all 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  .animate-wipe {
+    transition: transform 1s linear;
+  }
+</style>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    // Only run on Index
+    if (window.location.pathname !== '/') return;
+
+    const body = document.body;
+    const blackout = document.getElementById('intro-blackout');
+    const wipe = document.getElementById('wipe-layer');
+    const actualHeader = document.querySelector('.index-header');
+    const actualBanner = document.querySelector('.banner-image');
+    
+    if (!actualBanner || !actualHeader) return;
+
+    // 1. Setup Phase
+    body.classList.add('is-intro');
+    
+    // Create a proxy image so we can move it independently
+    const proxy = actualBanner.cloneNode(true) as HTMLImageElement;
+    proxy.id = 'intro-banner-proxy';
+    body.appendChild(proxy);
+
+    // 2. The Move
+    setTimeout(() => {
+      const targetRect = actualBanner.getBoundingClientRect();
+      
+      proxy.classList.add('animate-banner');
+      proxy.style.top = `${targetRect.top + (targetRect.height / 2)}px`;
+      proxy.style.left = `${targetRect.left + (targetRect.width / 2)}px`;
+      proxy.style.width = `${targetRect.width}px`;
+
+      // 3. The Wipe Reveal
+      setTimeout(() => {
+        blackout.style.display = 'none'; // Background is now handled by wipe layer
+        wipe.classList.add('animate-wipe');
+        wipe.style.transform = 'translateY(-100%)';
+
+        // 4. Final Handover
+        setTimeout(() => {
+          body.classList.remove('is-intro');
+          // Fade in the rest of the UI
+          const uiElements = document.querySelectorAll('.content-box, .separator, .index-header');
+          uiElements.forEach(el => (el as HTMLElement).style.opacity = '1');
+          
+          proxy.remove();
+          wipe.remove();
+        }, 1000);
+      }, 800);
+    }, 500);
+  });
+</script>
