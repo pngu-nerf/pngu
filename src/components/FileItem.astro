@@ -1,0 +1,31 @@
+---
+interface Props {
+  name: string;
+  downloadUrl: string;
+  previewType?: 'image' | 'iframe' | 'stl' | 'none';
+}
+const { name, downloadUrl, previewType = 'none' } = Astro.props;
+---
+
+<details class="file-item">
+  <summary>
+    <span class="file-name">{name}</span>
+    <div class="actions">
+      {previewType !== 'none' && <span class="preview-label">Click to Preview</span>}
+      <a href={downloadUrl} class="download-btn" download>Download</a>
+    </div>
+  </summary>
+  
+  <div class="preview-slot">
+    <slot /> </div>
+</details>
+
+<style>
+  /* All your .file-item, .summary, and .download-btn CSS goes here once */
+  .file-item { background: #1a1a1a; margin-bottom: 10px; border-radius: 12px; border: 1px solid var(--glass-border); overflow: hidden; }
+  summary { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; }
+  summary:hover { background: #252525; }
+  .download-btn { border: 1px solid #fff; padding: 6px 12px; border-radius: 6px; color: #fff; text-decoration: none; font-size: 0.9rem; }
+  .download-btn:hover { background: #fff; color: #000; }
+  .preview-slot { border-top: 1px solid #333; }
+</style>
