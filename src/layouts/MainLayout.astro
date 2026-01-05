@@ -1,11 +1,9 @@
 ---
-// src/layouts/MainLayout.astro
 import BackgroundEffects from '../components/BackgroundEffects.astro';
-import IntroOverlay from '../components/IntroOverlay.astro';
 
 interface Props {
-	title: string;
-	description?: string;
+  title: string;
+  description?: string;
 }
 
 const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" } = Astro.props;
@@ -13,105 +11,105 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content={description} />
-		<title>{title} | PNGU</title>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title} | PNGU</title>
 
-		<style is:global>
-			/* 1. THE ULTIMATE MOBILE FIX */
-			* {
-				-webkit-tap-highlight-color: transparent !important;
-				-webkit-touch-callout: none;
-			}
+    <style is:global>
+      /* 1. CORE RESET & THEMES */
+      :root {
+        --bg-dark: #0f0f0f;
+        --accent-white: #ffffff;
+        --text-muted: #a0a0a0;
+        --glass-bg: rgba(40, 40, 40, 0.4);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --glass-blur: blur(20px) saturate(120%);
+        --transition-bounce: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        --transition-base: 0.2s ease;
+      }
 
-			:focus:not(:focus-visible) {
-				outline: none !important;
-			}
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        /* Mobile tap fix */
+        -webkit-tap-highlight-color: transparent;
+      }
 
-			/* 2. GLOBAL DESIGN TOKENS */
-			:root {
-				--bg-dark: #0f0f0f;
-				--accent-white: #ffffff;
-				--text-muted: #a0a0a0;
-				--glass-bg: rgba(40, 40, 40, 0.4);
-				--glass-border: rgba(255, 255, 255, 0.1);
-				--glass-blur: blur(20px) saturate(120%);
-				--transition-bounce: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-				--transition-base: 0.2s ease;
-			}
+      html {
+        background-color: var(--bg-dark);
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+      }
 
-			/* 3. GLOBAL RESET */
-			*, *::before, *::after {
-				box-sizing: border-box;
-				margin: 0;
-				padding: 0;
-			}
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        color: var(--accent-white);
+        line-height: 1.5;
+        min-height: 100vh;
+        padding: 2rem;
+        max-width: 900px;
+        margin: 0 auto;
+      }
 
-			html {
-				background-color: var(--bg-dark);
-				scroll-behavior: smooth;
-				-webkit-font-smoothing: antialiased;
-			}
+      /* Accessibility improvement: only show focus rings for keyboard users */
+      :focus:not(:focus-visible) {
+        outline: none !important;
+      }
 
-			body {
-				font-family: sans-serif;
-				color: var(--accent-white);
-				line-height: 1.5;
-				min-height: 100vh;
-				padding: 2rem;
-				max-width: 900px;
-				margin: 0 auto;
-			}
+      /* 2. REUSABLE UI ELEMENTS */
+      #bg-layer {
+        position: fixed;
+        inset: 0;
+        background-color: var(--bg-dark);
+        z-index: -2;
+      }
 
-			/* 4. REUSABLE CLASSES */
-			#bg-layer {
-				position: fixed;
-				inset: 0;
-				background-color: var(--bg-dark);
-				z-index: -2;
-			}
+      .content-box {
+        background-color: var(--glass-bg);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 2rem;
+        width: 100%; /* Default to full width of container */
+        max-width: 750px;
+        margin: 2rem auto;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        /* Performance optimization for glass filters */
+        transform: translateZ(0);
+        will-change: transform, box-shadow;
+        transition: transform var(--transition-bounce), 
+                    box-shadow var(--transition-bounce), 
+                    border-color var(--transition-bounce);
+      }
 
-			.content-box {
-				background-color: var(--glass-bg);
-				backdrop-filter: var(--glass-blur);
-				-webkit-backdrop-filter: var(--glass-blur);
-				border: 1px solid var(--glass-border);
-				border-radius: 16px;
-				padding: 2rem;
-				width: 75%;
-				margin: 2rem auto;
-				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-				transform: translateZ(0); 
-				will-change: transform;
-				transition: transform var(--transition-bounce), box-shadow var(--transition-bounce), border-color var(--transition-bounce);
-			}
+      .content-box:hover {
+        transform: translateY(-3px) scale(1.01);
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
 
-			.content-box:hover {
-				transform: scale(1.015) translateY(-2px);
-				box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
-				border-color: rgba(255, 255, 255, 0.2);
-			}
+      /* Typography */
+      h1 { font-size: 2.5rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+      h2 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--accent-white); }
+      p { color: var(--text-muted); margin-bottom: 1rem; }
 
-			/* Typography */
-			h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--accent-white); }
-			h2 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--accent-white); }
+      /* Mobile Overrides */
+      @media (max-width: 600px) {
+        body { padding: 1rem; }
+        .content-box { padding: 1.5rem; }
+        h1 { font-size: 2rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bg-layer"></div>
+    <BackgroundEffects />
 
-			@media (max-width: 600px) {
-				body { padding: 1rem; }
-				.content-box { width: 100%; padding: 1.5rem; }
-				h1 { font-size: 2rem !important; }
-			}
-		</style>
-	</head>
-	<body>
-		<IntroOverlay />
-
-		<div id="bg-layer"></div>
-		<BackgroundEffects />
-
-		<slot />
-	</body>
+    <slot />
+  </body>
 </html>
