@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout.astro';
 import NavLink from '../components/NavLink.astro';
 
 // --- Joke Image Logic (Build Time) ---
+// Note: Ensure this folder only contains the "Surprise" images
 const jokeFiles = import.meta.glob('/public/site-assets/Joke Images/*.{jpg,jpeg,png,webp,gif}');
 const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public', ''));
 ---
@@ -10,10 +11,11 @@ const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public',
 <MainLayout title="Home">
   <div class="banner-container" id="banner-trigger">
     <img 
-      src="/site-assets/Site Banner.png" 
+      src="/site-assets/Site-Banner.png" 
       alt="PNGU Banner"
       class="banner-image"
       loading="eager" 
+      onerror="this.style.display='none'; console.error('Banner failed to load. Check filename case and spaces.');"
     />
     <img src="" id="joke-overlay" alt="Surprise" />
   </div>
@@ -59,7 +61,7 @@ const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public',
 
     function getNextImage() {
       if (imageQueue.length === 0) {
-        if (jokeImageUrls.length === 0) return null; 
+        if (!jokeImageUrls || jokeImageUrls.length === 0) return null; 
         imageQueue = shuffle([...jokeImageUrls]);
       }
       return imageQueue.pop();
@@ -87,49 +89,3 @@ const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public',
     }
   </script>
 </MainLayout>
-
-<style>
-  .banner-container {
-    width: 100%;
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: center;
-    padding: 0 10px;
-    position: relative; 
-  }
-  
-  .banner-image {
-    width: 100%;
-    height: auto;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    display: block;
-    transition: transform var(--transition-bounce), box-shadow 0.4s ease;
-    cursor: pointer; 
-  }
-
-  .banner-image:hover {
-    transform: scale(1.015) translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-  }
-
-  #joke-overlay {
-    position: absolute;
-    top: 0; left: 50%;
-    transform: translateX(-50%); 
-    height: 100%; width: auto;
-    border-radius: 12px;
-    pointer-events: none; 
-    opacity: 0;
-    z-index: 10;
-  }
-
-  .separator { text-align: center; font-size: 2rem; color: rgba(255, 255, 255, 0.3); margin: 3rem 0; font-weight: 300; }
-  .separator-small { margin: 2rem 0; height: 20px; }
-  .nav-list { list-style: none; padding: 0; margin: 0; }
-
-  @media (max-width: 600px) {
-    .banner-container { margin-bottom: 1rem; padding: 0; }
-    .separator { margin: 2rem 0; font-size: 1.5rem; }
-  }
-</style>
