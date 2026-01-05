@@ -1,91 +1,96 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import NavLink from '../components/NavLink.astro';
-
-// --- Joke Image Logic (Build Time) ---
-// Note: Ensure this folder only contains the "Surprise" images
-const jokeFiles = import.meta.glob('/public/site-assets/Joke Images/*.{jpg,jpeg,png,webp,gif}');
-const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public', ''));
 ---
 
 <MainLayout title="Home">
-  <div class="banner-container" id="banner-trigger">
-    <img 
-      src="/site-assets/Site-Banner.png" 
-      alt="PNGU Banner"
-      class="banner-image"
-      loading="eager" 
-      onerror="this.style.display='none'; console.error('Banner failed to load. Check filename case and spaces.');"
-    />
-    <img src="" id="joke-overlay" alt="Surprise" />
-  </div>
+  <header class="index-header">
+    <div class="banner-wrapper">
+      <img 
+        src="/site-assets/Site-Banner.png" 
+        alt="PNGU Banner"
+        class="banner-image"
+        loading="eager" 
+      />
+    </div>
+    <div class="separator">~</div>
+  </header>
 
-  <div class="separator">~</div>
-
-  <div class="content-box">
+  <section class="content-box">
     <ul class="nav-list">
       <NavLink href="/files" title="3D Files" description="STL files for 3D printing" />
       <NavLink href="/data" title="Blaster Data" description="Performance spreadsheets & docs" />
       <NavLink href="/brand" title="Brand Assets" description="Logos, fonts, and branding" />
       <NavLink href="/contact" title="Contact" description="Email & Discord info" />
     </ul>
-  </div>
+  </section>
 
   <div class="separator-small"></div>
 
-  <div class="content-box">
+  <section class="content-box">
     <h2>External Links</h2>
     <ul class="nav-list">
       <NavLink href="https://www.youtube.com/@PnguNerf" title="YouTube" external />
       <NavLink href="https://github.com/pngu-nerf" title="GitHub" external />
       <NavLink href="https://www.printables.com/@PnguNerf_3188348" title="Printables" external />
     </ul>
-  </div>
+  </section>
 
-  <div style="height: 40px;"></div>
-
-  <script define:vars={{ jokeImageUrls }}>
-    const bannerTrigger = document.getElementById('banner-trigger');
-    const jokeOverlay = document.getElementById('joke-overlay');
-    let imageQueue = [];
-    let isAnimating = false;
-    let fadeOutTimeout = null;
-
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    function getNextImage() {
-      if (imageQueue.length === 0) {
-        if (!jokeImageUrls || jokeImageUrls.length === 0) return null; 
-        imageQueue = shuffle([...jokeImageUrls]);
-      }
-      return imageQueue.pop();
-    }
-
-    if (bannerTrigger && jokeOverlay && jokeImageUrls.length > 0) {
-      bannerTrigger.addEventListener('click', () => {
-        if (isAnimating) clearTimeout(fadeOutTimeout);
-
-        const nextImg = getNextImage();
-        if (!nextImg) return;
-
-        jokeOverlay.src = nextImg;
-        isAnimating = true;
-        jokeOverlay.style.transition = 'opacity 0.1s ease-in';
-        void jokeOverlay.offsetWidth; 
-        jokeOverlay.style.opacity = '1';
-
-        fadeOutTimeout = setTimeout(() => {
-          jokeOverlay.style.transition = 'opacity 3s ease-out';
-          jokeOverlay.style.opacity = '0';
-          setTimeout(() => { isAnimating = false; }, 3000);
-        }, 2000); 
-      });
-    }
-  </script>
+  <footer class="spacer-bottom"></footer>
 </MainLayout>
+
+<style>
+  /* Header & Banner Styling */
+  .index-header {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .banner-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 0 10px;
+  }
+  
+  .banner-image {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: block;
+    transition: transform var(--transition-bounce), box-shadow var(--transition-bounce);
+    /* Banner doesn't need pointer events anymore since surprise is gone */
+    pointer-events: none; 
+  }
+
+  /* Decorative Spacing */
+  .separator { 
+    text-align: center; 
+    font-size: 2rem; 
+    color: rgba(255, 255, 255, 0.2); 
+    margin: 2.5rem 0; 
+    font-weight: 300; 
+    user-select: none;
+  }
+
+  .separator-small { 
+    margin: 2rem 0; 
+    height: 1px; 
+  }
+
+  .nav-list { 
+    list-style: none; 
+    padding: 0; 
+    margin: 0; 
+  }
+
+  .spacer-bottom { 
+    height: 80px; 
+  }
+
+  @media (max-width: 600px) {
+    .banner-wrapper { padding: 0; }
+    .separator { margin: 1.5rem 0; font-size: 1.5rem; }
+  }
+</style>
