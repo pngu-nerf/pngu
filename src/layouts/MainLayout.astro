@@ -1,6 +1,7 @@
 ---
 // src/layouts/MainLayout.astro
 import BackgroundEffects from '../components/BackgroundEffects.astro';
+import IntroOverlay from '../components/IntroOverlay.astro';
 
 interface Props {
 	title: string;
@@ -21,15 +22,11 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 
 		<style is:global>
 			/* 1. THE ULTIMATE MOBILE FIX */
-			/* We apply this to '*' (everything) to ensure that even divs and spans 
-			   behaving as buttons (like your banner or custom links) don't flicker blue.
-			*/
 			* {
 				-webkit-tap-highlight-color: transparent !important;
-				-webkit-touch-callout: none; /* Prevents long-press menu on images/links if desired */
+				-webkit-touch-callout: none;
 			}
 
-			/* Removes the focus ring for mouse users, but keeps it for keyboard accessibility */
 			:focus:not(:focus-visible) {
 				outline: none !important;
 			}
@@ -43,6 +40,7 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 				--glass-border: rgba(255, 255, 255, 0.1);
 				--glass-blur: blur(20px) saturate(120%);
 				--transition-bounce: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+				--transition-base: 0.2s ease;
 			}
 
 			/* 3. GLOBAL RESET */
@@ -97,6 +95,10 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 				border-color: rgba(255, 255, 255, 0.2);
 			}
 
+			/* Typography */
+			h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--accent-white); }
+			h2 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--accent-white); }
+
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
 				.content-box { width: 100%; padding: 1.5rem; }
@@ -105,8 +107,11 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 		</style>
 	</head>
 	<body>
+		<IntroOverlay />
+
 		<div id="bg-layer"></div>
 		<BackgroundEffects />
+
 		<slot />
 	</body>
 </html>
