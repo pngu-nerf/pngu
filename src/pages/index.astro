@@ -1,339 +1,135 @@
 ---
-// src/pages/index.astro
-import BackgroundEffects from '../components/BackgroundEffects.astro';
+import MainLayout from '../layouts/MainLayout.astro';
+import NavLink from '../components/NavLink.astro';
 
 // --- Joke Image Logic (Build Time) ---
 const jokeFiles = import.meta.glob('/public/site-assets/Joke Images/*.{jpg,jpeg,png,webp,gif}');
 const jokeImageUrls = Object.keys(jokeFiles).map(path => path.replace('/public', ''));
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>PNGU</title>
-		<style>
-            /* 1. CRITICAL FIX: Global Reset */
-            * {
-                box-sizing: border-box;
-            }
+<MainLayout title="Home">
+  <div class="banner-container" id="banner-trigger">
+    <img 
+      src="/site-assets/Site Banner.jpg" 
+      alt="PNGU Banner"
+      class="banner-image"
+      loading="eager" 
+    />
+    <img src="" id="joke-overlay" alt="Surprise" />
+  </div>
 
-			body {
-				font-family: sans-serif;
-				padding: 2rem;
-				text-align: center;
-				max-width: 900px;
-				margin: 0 auto;
-				color: #ffffff;
-			}
-			
-			#bg-layer {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background-color: #0f0f0f;
-				z-index: -2;
-			}
-			
-			.banner-container {
-				width: 100%;
-				margin-bottom: 2rem;
-				display: flex;
-				justify-content: center;
-                padding: 0 10px;
-                position: relative; 
-			}
-			
-			.banner-image {
-				width: 100%;
-				height: auto;
-				border-radius: 12px;
-				box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-				display: block;
-                transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
-                cursor: pointer; 
-			}
+  <div class="separator">~</div>
 
-            .banner-image:hover {
-                transform: scale(1.015) translateY(-2px);
-                box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-            }
-            
-            /* --- Joke Image Styling --- */
-            #joke-overlay {
-                position: absolute;
-                top: 0;
-                left: 50%;
-                transform: translateX(-50%); 
-                height: 100%; 
-                width: auto;
-                border-radius: 12px;
-                pointer-events: none; 
-                opacity: 0;
-                z-index: 10;
-                transition: opacity 3s ease-out;
-            }
+  <div class="content-box">
+    <ul class="nav-list">
+      <NavLink href="/files" title="3D Files" description="STL files for 3D printing" />
+      <NavLink href="/data" title="Blaster Data" description="Performance spreadsheets & docs" />
+      <NavLink href="/brand" title="Brand Assets" description="Logos, fonts, and branding" />
+      <NavLink href="/contact" title="Contact" description="Email & Discord info" />
+    </ul>
+  </div>
 
-            /* --- The Separators --- */
-            .separator {
-                text-align: center;
-                font-size: 2rem;
-                color: rgba(255, 255, 255, 0.3); 
-                margin: 3rem 0; 
-                font-weight: 300;
-                user-select: none;
-            }
+  <div class="separator-small"></div>
 
-            .separator-small {
-                /* Removed text/font settings, purely spacing now */
-                margin: 2rem 0; 
-                height: 20px; /* Preserve vertical space */
-            }
+  <div class="content-box">
+    <h2>External Links</h2>
+    <ul class="nav-list">
+      <NavLink href="https://www.youtube.com/@PnguNerf" title="YouTube" external />
+      <NavLink href="https://github.com/pngu-nerf" title="GitHub" external />
+      <NavLink href="https://www.printables.com/@PnguNerf_3188348" title="Printables" external />
+    </ul>
+  </div>
 
-			.content-box {
-				background-color: rgba(40, 40, 40, 0.4); 
-                backdrop-filter: blur(20px) saturate(120%);
-                -webkit-backdrop-filter: blur(20px) saturate(120%);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                
-				border-radius: 16px;
-				padding: 2rem;
-				
-				width: 75%;
-				margin: 2rem auto; 
-				
-                text-align: center;
-				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  <div style="height: 40px;"></div>
 
-                transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                            box-shadow 0.4s ease, 
-                            border-color 0.4s ease;
-			}
+  <script define:vars={{ jokeImageUrls }}>
+    const bannerTrigger = document.getElementById('banner-trigger');
+    const jokeOverlay = document.getElementById('joke-overlay');
+    let imageQueue = [];
+    let isAnimating = false;
+    let fadeOutTimeout = null;
 
-            .content-box:hover {
-                transform: scale(1.015) translateY(-2px);
-                box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
-                border-color: rgba(255, 255, 255, 0.2); 
-            }
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
 
-			h2 {
-				margin-top: 0;
-				color: #ffffff;
-				font-size: 1.5rem;
-				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-				padding-bottom: 10px;
-				margin-bottom: 20px;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-			}
+    function getNextImage() {
+      if (imageQueue.length === 0) {
+        if (jokeImageUrls.length === 0) return null; 
+        imageQueue = shuffle([...jokeImageUrls]);
+      }
+      return imageQueue.pop();
+    }
 
-			.nav-list { list-style: none; padding: 0; margin: 0; }
-			.nav-item { margin-bottom: 12px; }
+    if (bannerTrigger && jokeOverlay && jokeImageUrls.length > 0) {
+      bannerTrigger.addEventListener('click', () => {
+        if (isAnimating) clearTimeout(fadeOutTimeout);
 
-			a.nav-link {
-				display: flex;
-				justify-content: center; 
-				align-items: center;
-                
-                /* Updated: Opaque Dark Grey to match other pages */
-				background-color: #1a1a1a;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                
-				padding: 16px 20px;
-				border-radius: 12px;
-				text-decoration: none;
-				transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-			}
+        const nextImg = getNextImage();
+        if (!nextImg) return;
 
-			a.nav-link:hover {
-                /* Updated: Brighter grey on hover */
-				background-color: #333;
-                border-color: rgba(255, 255, 255, 0.3);
-                
-				transform: translateY(-3px) scale(1.02);
-				box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-			}
+        jokeOverlay.src = nextImg;
+        isAnimating = true;
+        jokeOverlay.style.transition = 'opacity 0.1s ease-in';
+        void jokeOverlay.offsetWidth; 
+        jokeOverlay.style.opacity = '1';
 
-			.link-content {
-				display: flex;
-				flex-direction: column;
-				gap: 4px;
-				align-items: center; 
-			}
+        fadeOutTimeout = setTimeout(() => {
+          jokeOverlay.style.transition = 'opacity 3s ease-out';
+          jokeOverlay.style.opacity = '0';
+          setTimeout(() => { isAnimating = false; }, 3000);
+        }, 2000); 
+      });
+    }
+  </script>
+</MainLayout>
 
-			.link-title {
-				color: #ffffff;
-				font-weight: bold;
-				font-size: 1.1rem;
-                letter-spacing: 0.5px;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-			}
+<style>
+  .banner-container {
+    width: 100%;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    padding: 0 10px;
+    position: relative; 
+  }
+  
+  .banner-image {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: block;
+    transition: transform var(--transition-bounce), box-shadow 0.4s ease;
+    cursor: pointer; 
+  }
 
-			.link-desc {
-				color: rgba(255, 255, 255, 0.7);
-				font-size: 0.9rem;
-			}
+  .banner-image:hover {
+    transform: scale(1.015) translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
 
-            .social-title {
-                color: #ffffff;
-                font-weight: 500;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            }
+  #joke-overlay {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%); 
+    height: 100%; width: auto;
+    border-radius: 12px;
+    pointer-events: none; 
+    opacity: 0;
+    z-index: 10;
+  }
 
-            /* --- Mobile Specific Fixes --- */
-			@media (max-width: 600px) {
-				body { 
-                    padding: 1rem; 
-                }
-                
-                .content-box { 
-					padding: 1.5rem; 
-                    
-                    /* Updated: Keep 75% width on mobile */
-                    width: 75%; 
-                    margin: 1.5rem auto;
-				}
-				
-                .banner-container {
-                    margin-bottom: 1rem;
-                    padding: 0;
-                }
-                
-				.link-desc { display: none; }
-                
-                .separator { margin: 2rem 0; font-size: 1.5rem; }
-			}
-		</style>
-	</head>
-	<body>
-		<div id="bg-layer"></div>
-		<BackgroundEffects />
+  .separator { text-align: center; font-size: 2rem; color: rgba(255, 255, 255, 0.3); margin: 3rem 0; font-weight: 300; }
+  .separator-small { margin: 2rem 0; height: 20px; }
+  .nav-list { list-style: none; padding: 0; margin: 0; }
 
-		<div class="banner-container" id="banner-trigger">
-			<img 
-				src="/site-assets/Site Banner.jpg" 
-				alt="PNGU Banner"
-				class="banner-image"
-			/>
-            <img src="" id="joke-overlay" alt="Surprise" />
-		</div>
-
-        <div class="separator">~</div>
-
-		<div class="content-box">
-			<ul class="nav-list">
-				<li class="nav-item">
-					<a href="/files" class="nav-link">
-						<div class="link-content">
-							<span class="link-title">3D Files</span>
-							<span class="link-desc">STL files for 3D printing</span>
-						</div>
-					</a>
-				</li>
-				<li class="nav-item">
-					<a href="/data" class="nav-link">
-						<div class="link-content">
-							<span class="link-title">Blaster Data</span>
-							<span class="link-desc">Performance spreadsheets & docs</span>
-						</div>
-					</a>
-				</li>
-				<li class="nav-item">
-					<a href="/brand" class="nav-link">
-						<div class="link-content">
-							<span class="link-title">Brand Assets</span>
-							<span class="link-desc">Logos, fonts, and branding</span>
-						</div>
-					</a>
-				</li>
-				<li class="nav-item">
-					<a href="/contact" class="nav-link">
-						<div class="link-content">
-							<span class="link-title">Contact</span>
-							<span class="link-desc">Email & Discord info</span>
-						</div>
-					</a>
-				</li>
-			</ul>
-		</div>
-
-        <div class="separator-small"></div>
-
-		<div class="content-box">
-			<h2>External Links</h2>
-			<ul class="nav-list">
-				<li class="nav-item">
-					<a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="nav-link">
-						<span class="social-title">YouTube</span>
-					</a>
-				</li>
-				<li class="nav-item">
-					<a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="nav-link">
-						<span class="social-title">GitHub</span>
-					</a>
-				</li>
-				<li class="nav-item">
-					<a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="nav-link">
-						<span class="social-title">Printables</span>
-					</a>
-				</li>
-			</ul>
-		</div>
-
-		<div style="height: 40px;"></div>
-
-        <script define:vars={{ jokeImageUrls }}>
-            const bannerTrigger = document.getElementById('banner-trigger');
-            const jokeOverlay = document.getElementById('joke-overlay');
-            let imageQueue = [];
-            let isAnimating = false;
-            let fadeOutTimeout = null;
-
-            function shuffle(array) {
-                let currentIndex = array.length, randomIndex;
-                while (currentIndex > 0) {
-                    randomIndex = Math.floor(Math.random() * currentIndex);
-                    currentIndex--;
-                    [array[currentIndex], array[randomIndex]] = [
-                        array[randomIndex], array[currentIndex]];
-                }
-                return array;
-            }
-
-            function getNextImage() {
-                if (imageQueue.length === 0) {
-                    if (jokeImageUrls.length === 0) return null; 
-                    imageQueue = shuffle([...jokeImageUrls]);
-                }
-                return imageQueue.pop();
-            }
-
-            if (bannerTrigger && jokeOverlay && jokeImageUrls.length > 0) {
-                bannerTrigger.addEventListener('click', () => {
-                    if (isAnimating) {
-                        clearTimeout(fadeOutTimeout);
-                    }
-
-                    const nextImg = getNextImage();
-                    if (!nextImg) return;
-
-                    jokeOverlay.src = nextImg;
-                    isAnimating = true;
-
-                    jokeOverlay.style.transition = 'opacity 0.1s ease-in';
-                    void jokeOverlay.offsetWidth; 
-                    jokeOverlay.style.opacity = '1';
-
-                    fadeOutTimeout = setTimeout(() => {
-                        jokeOverlay.style.transition = 'opacity 3s ease-out';
-                        jokeOverlay.style.opacity = '0';
-                        setTimeout(() => { isAnimating = false; }, 3000);
-                    }, 2000); 
-                });
-            }
-        </script>
-	</body>
-</html>
+  @media (max-width: 600px) {
+    .banner-container { margin-bottom: 1rem; padding: 0; }
+    .separator { margin: 2rem 0; font-size: 1.5rem; }
+  }
+</style>
