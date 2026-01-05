@@ -1,0 +1,118 @@
+---
+/* No props needed */
+---
+
+<div id="intro-overlay">
+  </div>
+
+<style>
+  #intro-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    
+    /* --- THE LIQUID GLASS AESTHETIC --- */
+    background-color: rgba(40, 40, 40, 0.6); /* Slightly darker for initial impact */
+    backdrop-filter: blur(20px) saturate(120%);
+    -webkit-backdrop-filter: blur(20px) saturate(120%);
+
+    /* --- THE CUTOUT MAGIC --- */
+    /* We define two mask layers:
+       1. The logo URL (starts small in center)
+       2. A solid gradient covering everything
+    */
+    mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
+    -webkit-mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
+
+    mask-position: center, center;
+    -webkit-mask-position: center, center;
+
+    mask-repeat: no-repeat, no-repeat;
+    -webkit-mask-repeat: no-repeat, no-repeat;
+
+    /* Initial Size: Logo is small, solid layer fills screen */
+    mask-size: 150px auto, 100% 100%;
+    -webkit-mask-size: 150px auto, 100% 100%;
+
+    /* IMPORTANT: Composite 'exclude'. 
+       This subtracts the logo shape from the solid layer, creating the hole.
+    */
+    mask-composite: exclude;
+    -webkit-mask-composite: xor; /* WebKit uses 'xor' for this specific inversion effect */
+    
+    /* Ensure it doesn't capture clicks once animation starts */
+    pointer-events: none;
+    
+    /* Prepare for animation */
+    opacity: 1;
+    transition: opacity 0.5s ease-out; /* Smooth fade out at the very end */
+  }
+
+  /* --- THE ANIMATION --- */
+  #intro-overlay.zoom-active {
+    /* Animate the mask size. 
+       We only animate the first value (the logo size).
+       The second value (100% 100%) stays constant.
+    */
+    animation: zoom-through 2s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+  }
+  
+  /* The final state to ensure it's gone */
+  #intro-overlay.finished {
+     opacity: 0;
+     visibility: hidden;
+  }
+
+  @keyframes zoom-through {
+    0% {
+      /* Start small */
+      -webkit-mask-size: 150px auto, 100% 100%;
+      mask-size: 150px auto, 100% 100%;
+    }
+    100% {
+      /* End ENORMOUS - enough to move the edges off even huge 4K screens */
+      -webkit-mask-size: 15000px auto, 100% 100%;
+      mask-size: 15000px auto, 100% 100%;
+      /* Fade opacity slightly at the very end of the zoom for smoothness */
+      opacity: 0; 
+    }
+  }
+  
+  /* Mobile adjustment: start with a smaller logo */
+  @media (max-width: 600px) {
+      #intro-overlay {
+         mask-size: 100px auto, 100% 100%;
+         -webkit-mask-size: 100px auto, 100% 100%;
+      }
+       @keyframes zoom-through {
+        0% {
+          -webkit-mask-size: 100px auto, 100% 100%;
+          mask-size: 100px auto, 100% 100%;
+        }
+        100% {
+          /* Mobile doesn't need to zoom quite as far */
+          -webkit-mask-size: 8000px auto, 100% 100%;
+          mask-size: 8000px auto, 100% 100%;
+          opacity: 0;
+        }
+      }
+  }
+</style>
+
+<script>
+  // Wait for the page content to load so the "reveal" looks good
+  window.addEventListener('load', () => {
+    const overlay = document.getElementById('intro-overlay');
+    if (!overlay) return;
+
+    // Small delay before starting zoom so user registers the logo
+    setTimeout(() => {
+        overlay.classList.add('zoom-active');
+        
+        // After animation completes (2s + small buffer), hide it entirely
+        setTimeout(() => {
+            overlay.classList.add('finished');
+        }, 2100);
+    }, 500); // 0.5s initial hold time
+  });
+</script>
