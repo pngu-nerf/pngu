@@ -20,30 +20,32 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 		<title>{title} | PNGU</title>
 
 		<style is:global>
-			/* 1. GLOBAL DESIGN TOKENS (CSS Variables) */
+			/* 1. THE ULTIMATE MOBILE FIX */
+			/* We apply this to '*' (everything) to ensure that even divs and spans 
+			   behaving as buttons (like your banner or custom links) don't flicker blue.
+			*/
+			* {
+				-webkit-tap-highlight-color: transparent !important;
+				-webkit-touch-callout: none; /* Prevents long-press menu on images/links if desired */
+			}
+
+			/* Removes the focus ring for mouse users, but keeps it for keyboard accessibility */
+			:focus:not(:focus-visible) {
+				outline: none !important;
+			}
+
+			/* 2. GLOBAL DESIGN TOKENS */
 			:root {
 				--bg-dark: #0f0f0f;
 				--accent-white: #ffffff;
 				--text-muted: #a0a0a0;
-				
-				/* Glassmorphism Settings */
 				--glass-bg: rgba(40, 40, 40, 0.4);
 				--glass-border: rgba(255, 255, 255, 0.1);
 				--glass-blur: blur(20px) saturate(120%);
-				
-				/* Animations */
-				--transition-base: 0.2s ease;
 				--transition-bounce: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 			}
 
-			/* 2. THE NUCLEAR MOBILE FIX */
-			/* Removes blue highlight and default browser outlines site-wide */
-			a, button, summary, [role="button"], .banner-image, details {
-				-webkit-tap-highlight-color: transparent;
-				outline: none;
-			}
-
-			/* 3. HARDWARE ACCELERATION & RESET */
+			/* 3. GLOBAL RESET */
 			*, *::before, *::after {
 				box-sizing: border-box;
 				margin: 0;
@@ -54,7 +56,6 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 				background-color: var(--bg-dark);
 				scroll-behavior: smooth;
 				-webkit-font-smoothing: antialiased;
-				overflow-x: hidden;
 			}
 
 			body {
@@ -67,9 +68,7 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 				margin: 0 auto;
 			}
 
-			/* 4. REUSABLE UI COMPONENTS (Blanket Rules) */
-			
-			/* Background Layer */
+			/* 4. REUSABLE CLASSES */
 			#bg-layer {
 				position: fixed;
 				inset: 0;
@@ -77,7 +76,6 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 				z-index: -2;
 			}
 
-			/* Performance Optimized Glass Box */
 			.content-box {
 				background-color: var(--glass-bg);
 				backdrop-filter: var(--glass-blur);
@@ -88,7 +86,6 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 				width: 75%;
 				margin: 2rem auto;
 				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-				/* GPU Acceleration for smooth blur rendering */
 				transform: translateZ(0); 
 				will-change: transform;
 				transition: transform var(--transition-bounce), box-shadow var(--transition-bounce), border-color var(--transition-bounce);
@@ -100,15 +97,6 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 				border-color: rgba(255, 255, 255, 0.2);
 			}
 
-			/* Pre-allocate space to prevent jumping (CLS) */
-			.preview-container, .viewer-container {
-				aspect-ratio: 16 / 9;
-				background: #111;
-				border-radius: 8px;
-				overflow: hidden;
-			}
-
-			/* 5. RESPONSIVE OPTIMIZATION */
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
 				.content-box { width: 100%; padding: 1.5rem; }
@@ -119,6 +107,6 @@ const { title, description = "PNGU - 3D Files, Blaster Data, and Brand Assets" }
 	<body>
 		<div id="bg-layer"></div>
 		<BackgroundEffects />
-		
-		<slot /> </body>
+		<slot />
+	</body>
 </html>
