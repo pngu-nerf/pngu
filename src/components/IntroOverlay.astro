@@ -1,5 +1,5 @@
 ---
-/* ScreenOverlay.astro - Cinematic Zoom Sequence */
+/* ScreenOverlay.astro - Precision Silhouette Zoom */
 ---
 
 <div id="screen-overlay"></div>
@@ -9,105 +9,101 @@
     position: fixed;
     inset: 0;
     z-index: 9999;
-    
-    /* 1. START FULL BLACK */
     background-color: #000;
+    pointer-events: none;
     
-    /* 2. PREPARE THE CUTOUT MASK */
+    /* THE MASK: Using a gradient layer to "feather" the edges */
     mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
     -webkit-mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
-    mask-position: center;
-    -webkit-mask-position: center;
+    
     mask-repeat: no-repeat;
     -webkit-mask-repeat: no-repeat;
+    
     mask-composite: exclude;
     -webkit-mask-composite: xor;
 
-    /* Start with the logo effectively invisible (0 size) */
+    /* Start invisible */
     mask-size: 0px auto, 100% 100%;
     -webkit-mask-size: 0px auto, 100% 100%;
 
-    /* SLIGHTLY BLURRY EDGES ALWAYS */
-    filter: blur(4px);
+    /* FUZZY EDGES: This softens the silhouette pixels */
+    filter: blur(8px); 
     
-    /* Transition for the fade-in of the cutout */
-    transition: mask-size 0.8s ease-out, -webkit-mask-size 0.8s ease-out, opacity 0.5s;
-    pointer-events: none;
+    /* One smooth transition for the initial reveal */
+    transition: mask-size 0.8s ease-out, -webkit-mask-size 0.8s ease-out;
   }
 
-  /* STAGE 1: Logo Cutout Fades In */
+  /* STAGE 1: Logo Cutout Appears */
   #screen-overlay.logo-visible {
     mask-size: 180px auto, 100% 100%;
     -webkit-mask-size: 180px auto, 100% 100%;
   }
 
-  /* STAGE 2: Zoom + Background Shift */
+  /* STAGE 2: One continuous smooth zoom and BG shift */
   #screen-overlay.zoom-active {
     animation: 
-      zoom-sequence 2s cubic-bezier(0.7, 0, 0.3, 1) forwards,
-      bg-shift 2s ease-in-out forwards;
+      smooth-zoom 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+      bg-shift 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
-  /* ZOOM ANIMATION */
-  @keyframes zoom-sequence {
-    0% {
+  @keyframes smooth-zoom {
+    from {
       -webkit-mask-size: 180px auto, 100% 100%;
       mask-size: 180px auto, 100% 100%;
     }
-    100% {
-      -webkit-mask-size: 25000px auto, 100% 100%;
-      mask-size: 25000px auto, 100% 100%;
+    to {
+      /* Massive expansion to ensure the blurry edges clear the screen */
+      -webkit-mask-size: 40000px auto, 100% 100%;
+      mask-size: 40000px auto, 100% 100%;
     }
   }
 
-  /* BACKGROUND TRANSITION (Fades from Black to partial Liquid Glass) */
   @keyframes bg-shift {
-    0% {
-      background-color: #000;
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-    }
-    100% {
-      /* We stop before reaching the full transparent glass look */
-      background-color: rgba(25, 25, 25, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
+    from { background-color: #000; }
+    to { background-color: rgba(25, 25, 25, 0.7); }
   }
 
   #screen-overlay.finished {
      display: none;
-  }
-
-  @media (max-width: 600px) {
-    #screen-overlay.logo-visible {
-      mask-size: 120px auto, 100% 100%;
-      -webkit-mask-size: 120px auto, 100% 100%;
-    }
   }
 </style>
 
 <script>
   window.addEventListener('load', () => {
     const overlay = document.getElementById('screen-overlay');
+    const banner = document.querySelector('.banner-image');
     if (!overlay) return;
 
-    // 1. Brief pause on full black, then fade in the cutout
+    // CENTER THE ZOOM ON THE BANNER
+    if (banner) {
+      const rect = banner.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      // Update the mask position to match the banner's center
+      overlay.style.maskPosition = `${centerX}px ${centerY}px, center`;
+      overlay.style.webkitMaskPosition = `${centerX}px ${centerY}px, center`;
+    } else {
+      // Fallback to center screen if banner isn't found
+      overlay.style.maskPosition = `center, center`;
+      overlay.style.webkitMaskPosition = `center, center`;
+    }
+
+    // SEQUENCE
     setTimeout(() => {
         overlay.classList.add('logo-visible');
         
-        // 2. Wait for the logo to be seen, then start the zoom/bg-shift
         setTimeout(() => {
             overlay.classList.add('zoom-active');
             
-            // 3. Remove entirely once the "zoom through" is done
             setTimeout(() => {
                 overlay.style.opacity = "0";
+                overlay.style.transition = "opacity 0.6s ease-out";
                 setTimeout(() => {
                     overlay.classList.add('finished');
-                }, 500);
-            }, 1800);
-        }, 1000); 
-    }, 300); 
+                }, 600);
+            }, 1600);
+        }, 800); 
+    }, 200); 
   });
 </script>
