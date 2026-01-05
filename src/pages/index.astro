@@ -52,18 +52,19 @@ import NavLink from '../components/NavLink.astro';
   
   .banner-image {
     width: 100%;
-    max-width: 600px; /* Adjusted down slightly for a cleaner header look */
+    /* DOUBLED SIZE: Increased from 600px to 1200px */
+    max-width: 1200px; 
     height: auto;
     display: block;
     
     /* SILHOUETTE SHADOW */
-    /* This applies the shadow to the opaque pixels of the PNG only */
-    filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
     
-    /* Remove box-style constraints */
-    border-radius: 0;
-    box-shadow: none;
     pointer-events: none;
+    /* Clean reset of box styles */
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
   }
 
   .separator { 
@@ -81,7 +82,8 @@ import NavLink from '../components/NavLink.astro';
 
   @media (max-width: 600px) {
     .banner-wrapper { padding: 20px 0; }
-    .banner-image { width: 85%; }
+    /* Keeping mobile readable and prominent */
+    .banner-image { width: 90%; }
     .separator { margin: 1rem 0; font-size: 1.5rem; }
   }
 </style>
