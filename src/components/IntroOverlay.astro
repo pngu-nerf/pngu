@@ -1,5 +1,5 @@
 ---
-/* ScreenOverlay.astro - Precision Nudge Mode (Left Shift) */
+/* ScreenOverlay.astro - Final Precision Zoom */
 ---
 
 <div id="screen-overlay"></div>
@@ -25,14 +25,14 @@
     mask-composite: exclude;
     -webkit-mask-composite: xor;
 
-    mask-size: 180px auto, 100% 100%;
-    -webkit-mask-size: 180px auto, 100% 100%;
+    /* Scaled to 110% (180px * 1.1 = 198px) */
+    mask-size: 198px auto, 100% 100%;
+    -webkit-mask-size: 198px auto, 100% 100%;
 
     filter: url(#fuzz);
-    animation: none !important;
   }
 
-  /* Ready for activation */
+  /* Linear High-Speed Zoom */
   #screen-overlay.zoom-active {
     animation: 
       linear-zoom 1.2s linear forwards,
@@ -40,8 +40,14 @@
   }
 
   @keyframes linear-zoom {
-    from { mask-size: 180px auto, 100% 100%; -webkit-mask-size: 180px auto, 100% 100%; }
-    to { mask-size: 60000px auto, 100% 100%; -webkit-mask-size: 60000px auto, 100% 100%; }
+    from { 
+      mask-size: 198px auto, 100% 100%; 
+      -webkit-mask-size: 198px auto, 100% 100%; 
+    }
+    to { 
+      mask-size: 60000px auto, 100% 100%; 
+      -webkit-mask-size: 60000px auto, 100% 100%; 
+    }
   }
 
   @keyframes bg-fade {
@@ -68,11 +74,10 @@
       
       const baseShiftX = 60; 
       
-      /* --- PRECISION TUNING --- */
-      // Moving left further based on previous feedback
-      const xNudge = -30;    // Increased negative value for more LEFT movement
-      const yNudge = -15;    // Keeping height the same as it was "good"
-      /* ------------------------ */
+      /* --- FINAL TUNING --- */
+      const xNudge = -45;    // Moving further LEFT
+      const yNudge = -25;    // Moving further UP
+      /* -------------------- */
 
       const finalX = centerX + baseShiftX + xNudge;
       const finalY = centerY + yNudge;
@@ -85,11 +90,10 @@
     overlay.style.maskPosition = posString;
     overlay.style.webkitMaskPosition = posString;
 
-    /* UNCOMMENT THE BLOCK BELOW TO ACTIVATE THE ZOOM 
+    // ACTIVATE ZOOM IMMEDIATELY
     requestAnimationFrame(() => {
         overlay.classList.add('zoom-active');
         setTimeout(() => overlay.classList.add('finished'), 1300);
     });
-    */
   });
 </script>
