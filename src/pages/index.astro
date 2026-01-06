@@ -17,7 +17,7 @@ import IndexIntro from '../components/IndexIntro.astro';
         decoding="sync"
       />
     </div>
-    <div class="separator">~</div>
+    <a href="https://lite.pngu.info" class="separator" title="Switch to Lite Mode">~</a>
   </header>
 
   <section class="content-box">
@@ -46,7 +46,7 @@ import IndexIntro from '../components/IndexIntro.astro';
 <style>
   /* Base state for intro: hidden until the wipe reveals them */
   .index-header, .content-box, .separator, .separator-small {
-    opacity: 1; /* Script in IndexIntro handles the visibility toggle via .is-intro class */
+    opacity: 1; 
     transition: opacity 0.5s ease;
   }
 
@@ -76,13 +76,22 @@ import IndexIntro from '../components/IndexIntro.astro';
     border-radius: 0;
   }
 
+  /* Modified separator to handle link states */
   .separator { 
+    display: block; /* Required for text-align to work on an <a> tag */
+    text-decoration: none;
     text-align: center; 
     font-size: 2rem; 
     color: rgba(255, 255, 255, 0.2); 
     margin: 1.5rem 0; 
     font-weight: 300; 
     user-select: none;
+    cursor: pointer;
+    transition: color 0.3s ease, opacity 0.5s ease;
+  }
+
+  .separator:hover {
+    color: rgba(255, 255, 255, 0.6);
   }
 
   .separator-small { margin: 2rem 0; height: 1px; }
