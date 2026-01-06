@@ -1,12 +1,11 @@
 ---
-/* IndexIntro.astro - Minimalist Black Wipe Reveal */
+/* IndexIntro.astro - High-Speed Snappy Reveal */
 ---
 
 <div id="intro-blackout"></div>
 <div id="wipe-layer"></div>
 
 <style is:global>
-  /* 1. LOCK VIEWPORT & HIDE CONTENT */
   body.is-intro {
     overflow: hidden !important;
     height: 100vh !important;
@@ -23,10 +22,9 @@
   body.is-intro .separator-small {
     visibility: hidden !important;
     opacity: 0 !important;
-    transform: translateY(20px);
+    transform: translateY(12px); /* Reduced distance for faster-feeling motion */
   }
 
-  /* 2. LAYERS */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -37,7 +35,7 @@
   #wipe-layer {
     position: fixed;
     inset: 0;
-    height: 400vh; /* Extra tall to prevent 'bar' look */
+    height: 400vh;
     z-index: 9999;
     background: linear-gradient(
       to bottom, 
@@ -50,24 +48,26 @@
     will-change: transform;
   }
 
-  /* 3. ANIMATION */
+  /* 1. FASTER WIPE */
   .animate-wipe {
-    transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Reduced to 1.0s for an aggressive pull-back */
+    transition: transform 1.0s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
+  /* 2. SNAPPY REVEAL */
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
     transform: translateY(0) !important;
+    /* Faster 0.3s fade for that 'snap' feel */
     transition: 
-      opacity 0.8s ease-out, 
-      transform 0.8s cubic-bezier(0.23, 1, 0.32, 1) !important;
+      opacity 0.3s ease-out, 
+      transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
   }
 </style>
 
 <script>
   function runIntro() {
-    // Skip if navigating internally
     const internalReferrer = document.referrer && document.referrer.includes(window.location.hostname);
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
@@ -79,13 +79,11 @@
       return; 
     }
 
-    // Initialize Intro State
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
 
-    // Trigger Sequence
+    // Start Sequence
     setTimeout(() => {
-      // Handover from solid blackout to the wipe layer
       if (blackout) blackout.style.display = 'none';
       
       if (wipe) {
@@ -93,7 +91,8 @@
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // Staggered reveal of the actual page content
+      // 3. EARLIER TRIGGER
+      // We trigger the reveal much sooner (400ms) so content arrives while the curtain is still moving
       setTimeout(() => {
         document.body.classList.remove('is-intro');
         
@@ -101,16 +100,15 @@
         uiElements.forEach((el, index) => {
           setTimeout(() => {
             el.classList.add('reveal-active');
-          }, index * 120);
+          }, index * 50); // Tight 50ms stagger
         });
 
-        // Final Cleanup
         setTimeout(() => {
           wipe?.remove();
           blackout?.remove();
-        }, 1500);
-      }, 1200); // Wait for the wipe to clear the middle of the screen
-    }, 500); // Initial hold time on pure black
+        }, 1000);
+      }, 400); 
+    }, 300); // Shorter hold on pure black
   }
 
   window.addEventListener('load', runIntro);
