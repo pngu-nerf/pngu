@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Snappy Wipe with Static Logo Overlay */
+/* IndexIntro.astro - Long Hold & Persistent Logo */
 ---
 
 <div id="intro-blackout"></div>
@@ -16,7 +16,7 @@
     left: 0;
   }
 
-  /* 1. INITIAL STATE: Real UI is hidden */
+  /* Real UI hidden during intro */
   body.is-intro main, 
   body.is-intro .index-header,
   body.is-intro .content-box,
@@ -31,12 +31,12 @@
     transform: translateY(12px);
   }
 
-  /* 2. STATIC BANNER OVERLAY */
+  /* Static Overlay Image */
   #intro-banner-overlay {
     position: fixed;
-    z-index: 10001; /* Sits above the wipe */
+    z-index: 10001; 
     pointer-events: none;
-    display: none; /* Hidden until JS calculates position */
+    display: none;
     opacity: 0;
     will-change: opacity;
     filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
@@ -48,7 +48,6 @@
     display: block;
   }
 
-  /* 3. CURTAIN LAYERS */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -67,14 +66,13 @@
   }
 
   .animate-wipe {
-    transition: transform 1.0s cubic-bezier(0.19, 1, 0.22, 1);
+    transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 4. REVEAL CLASSES */
   .reveal-static {
     visibility: visible !important;
     opacity: 1 !important;
-    transition: opacity 0.3s ease-out !important;
+    transition: opacity 0.4s ease-out !important;
   }
 
   .reveal-active {
@@ -82,8 +80,8 @@
     opacity: 1 !important;
     transform: translateY(0) !important;
     transition: 
-      opacity 0.3s ease-out, 
-      transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+      opacity 0.4s ease-out, 
+      transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
   }
 </style>
 
@@ -105,7 +103,7 @@
 
     if (!actualBanner || !overlay) return;
 
-    // A. SETUP OVERLAY POSITION
+    // Coordinate check
     const rect = actualBanner.getBoundingClientRect();
     overlay.style.width = `${rect.width}px`;
     overlay.style.top = `${rect.top}px`;
@@ -116,11 +114,13 @@
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
 
-    // B. SEQUENCE START
+    // --- TIMING CONTROLS ---
+    
+    // 1. SEQUENCE START: The initial black hold
     setTimeout(() => {
-      // Fade in the overlay and start the wipe
+      // Fade in logo and drop the blackout curtain
       overlay.style.opacity = '1';
-      overlay.style.transition = 'opacity 0.4s ease-out';
+      overlay.style.transition = 'opacity 0.6s ease-out';
       
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -128,36 +128,32 @@
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // C. REVEAL HANDOFF
+      // 2. THE REVEAL HANDOFF: Logo stays for a second longer
       setTimeout(() => {
         document.body.classList.remove('is-intro');
         
-        // 1. Reveal real header
         const header = document.querySelector('.index-header');
         if (header) header.classList.add('reveal-static');
 
-        // 2. Fade OUT the overlay as the real header fades IN
         overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.3s ease-out';
+        overlay.style.transition = 'opacity 0.4s ease-out';
 
-        // 3. Reveal content boxes
         const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
         uiElements.forEach((el, index) => {
           setTimeout(() => {
             el.classList.add('reveal-active');
-          }, index * 50);
+          }, index * 60);
         });
 
-        // D. CLEANUP
         setTimeout(() => {
           wipe?.remove();
           blackout?.remove();
           overlay?.remove();
           document.body.style.overflow = '';
           document.body.style.position = '';
-        }, 1000);
-      }, 500); // Trigger mid-wipe for snappiness
-    }, 300);
+        }, 1200);
+      }, 1500); // Increased from 500ms to 1500ms (1s longer)
+    }, 2300); // Increased from 300ms to 2300ms (2s longer)
   }
 
   window.addEventListener('load', runIntro);
