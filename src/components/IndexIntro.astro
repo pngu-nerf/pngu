@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Ghost Underlay & Guaranteed Handoff */
+/* IndexIntro.astro - Layer-Locked Handoff */
 ---
 
 <div id="intro-blackout"></div>
@@ -7,7 +7,6 @@
 <div id="intro-banner-overlay"></div>
 
 <style is:global>
-  /* 1. THE STABLE LOCK */
   html.is-intro-locked,
   body.is-intro-locked {
     overflow: hidden !important;
@@ -15,12 +14,10 @@
     touch-action: none;
   }
 
-  /* 2. RIGID HEADER & GHOST UNDERLAY */
+  /* 1. INITIAL STATE: The real UI sits at 0.01 opacity (pre-rendered) */
   body.is-intro .index-header {
-    /* NEW: Instead of hidden/opacity 0, we use 0.01.
-       This forces the browser to keep the image 'loaded' and 'ready'. */
     opacity: 0.01;
-    visibility: visible !important; 
+    visibility: visible !important;
     height: var(--header-height, auto);
     margin: 0 !important;
     padding: 0 !important;
@@ -35,7 +32,7 @@
     transform: translateY(4px);
   }
 
-  /* 3. FLAT OVERLAY */
+  /* 2. OVERLAY: Sits on the highest possible layer */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
@@ -51,7 +48,7 @@
     display: block;
   }
 
-  /* 4. CURTAIN */
+  /* 3. CURTAIN */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -73,12 +70,11 @@
     transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 5. REVEAL STATES */
+  /* 4. REVEAL: Real header pops in UNSEEN behind the overlay */
   .reveal-static {
     opacity: 1 !important;
     pointer-events: auto !important;
-    /* Instant pop to match overlay */
-    transition: opacity 0.05s linear !important; 
+    transition: opacity 0.1s linear !important;
   }
 
   .reveal-active {
@@ -111,21 +107,23 @@
 
     window.scrollTo(0, 0);
 
+    // Measure
     const rect = actualBanner.getBoundingClientRect();
     const headerHeight = header.offsetHeight;
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
 
+    // Setup Overlay
     overlay.style.width = `${rect.width}px`;
     overlay.style.top = `${rect.top}px`;
     overlay.style.left = `${rect.left}px`;
-    overlay.innerHTML = `<img src="${actualBanner.src}" alt="">`;
+    overlay.innerHTML = `<img src="${actualBanner.src}" alt="" style="width:100%; height:auto; display:block;">`;
     overlay.style.display = 'block';
 
+    // Lock
     document.documentElement.classList.add('is-intro-locked');
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // ACT I: 2s Hold
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -133,25 +131,28 @@
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // ACT II: SNAP REVEAL (175ms)
+      // ACT II: THE REVEAL
       setTimeout(() => {
-        // 1. Reveal real header underneath
+        // Step 1: Reveal real header BEHIND the overlay
         header.classList.add('reveal-static');
 
-        // 2. SAFETY WINDOW: 100ms overlap to ensure no blink
-        setTimeout(() => {
-          overlay.style.display = 'none';
-        }, 100);
-
+        // Step 2: Reveal everything else
         const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
         uiElements.forEach((el, index) => {
           setTimeout(() => {
             el.classList.add('reveal-active');
           }, index * 20); 
         });
+
+        // Step 3: FADE the overlay out slowly to show the real banner
+        // We wait 200ms for the UI to finish its initial snap before fading
+        setTimeout(() => {
+          overlay.style.transition = 'opacity 0.5s ease-in-out';
+          overlay.style.opacity = '0';
+        }, 200);
       }, 175);
 
-      // ACT III: CLEAN UNLOCK
+      // ACT III: FULL UNLOCK
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
@@ -161,7 +162,7 @@
           wipe?.remove();
           blackout?.remove();
           overlay?.remove();
-        }, 100);
+        }, 600);
       }, 1400);
 
     }, 2000); 
