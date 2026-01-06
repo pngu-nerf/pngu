@@ -3,115 +3,79 @@ import MainLayout from '../layouts/MainLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import FileItem from '../components/FileItem.astro';
 
-export const prerender = false;
+// Use local data for zero-latency builds
+import dataDatabase from '../content/blaster-data-database.json';
 
-// --- GitHub Configuration ---
-const GITHUB_USER = 'pngu-nerf';
-const GITHUB_REPO = 'PNGU-Blaster-Data';
-const BRANCH = 'main';
+const R2_DATA_BASE = "https://assets.pngu.info/PNGU-Blaster-Data-main";
 
-Astro.response.headers.set('Cache-Control', 'public, max-age=1000, s-maxage=1000');
-
-// --- Logic ---
-let errorMessage = "";
-let projectList = [];
-let projects: Record<string, any> = {};
-
-async function getRepoFiles() {
-  const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
-  const response = await fetch(apiUrl, {
-    headers: { 'User-Agent': 'PNGU-Website', 'Accept': 'application/vnd.github.v3+json' }
-  });
-  if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
-  return await response.json();
-}
-
-try {
-  const data = await getRepoFiles();
-  if (data?.tree) {
-    for (const item of data.tree) {
-      if (item.type === 'blob') {
-        const pathParts = item.path.split('/');
-        if (pathParts.length > 1) {
-          const folderName = pathParts[0];
-          const fileName = pathParts[pathParts.length - 1];
-          const lowerName = fileName.toLowerCase();
-
-          if (!projects[folderName]) projects[folderName] = { title: folderName, files: [] };
-
-          if (['.xlsx', '.xls', '.docx', '.doc'].some(ext => lowerName.endsWith(ext))) {
-            const rawUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${encodeURIComponent(item.path)}`;
-            projects[folderName].files.push({
-              name: fileName,
-              downloadUrl: rawUrl,
-              previewUrl: `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`
-            });
-          }
-        }
-      }
-    }
-    projectList = Object.values(projects)
-      .map((p: any) => {
-        p.files.sort((a, b) => a.name.localeCompare(b.name));
-        return p;
-      })
-      .filter((p: any) => p.files.length > 0);
+/* Expected JSON structure:
+  {
+    "folderName": "Aegis-v1-Specs",
+    "displayName": "Aegis V1 Specifications",
+    "files": ["Aegis_V1_Performance.xlsx", "Assembly_Guide.docx"]
   }
-} catch (error: any) {
-  errorMessage = error.message;
-}
+*/
 ---
 
 <MainLayout title="Blaster Data">
-  <PageHeader title="Blaster Data" subtitle="Spreadsheets & Technical Docs" />
+  <PageHeader title="Blaster Data" subtitle="Technical Spreadsheets & Documentation" />
 
-  {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
-
-  {projectList.length === 0 && !errorMessage ? (
+  {dataDatabase.length === 0 ? (
     <div class="content-box center-text">
-      <p>No spreadsheets or documents found.</p>
+      <p>Updating documentation index...</p>
     </div>
   ) : (
-    projectList.map((project) => (
+    dataDatabase.map((project) => (
       <div class="content-box">
-        <h2>{project.title}</h2>
+        <h2>{project.displayName}</h2>
         <div class="file-list">
-          {project.files.map((file) => (
-            <FileItem name={file.name} downloadUrl={file.downloadUrl} previewType="iframe">
-              <div class="preview-container">
-                <iframe src={file.previewUrl} title={`Preview of ${file.name}`} loading="lazy"></iframe>
-              </div>
-            </FileItem>
-          ))}
+          {project.files.map((fileName) => {
+            const rawUrl = `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
+            // Point the Office Viewer to your high-speed R2 asset
+            const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+
+            return (
+              <FileItem name={fileName} downloadUrl={rawUrl} previewType="iframe">
+                <div class="preview-container">
+                  <iframe 
+                    src={previewUrl} 
+                    title={`Preview of ${fileName}`} 
+                    loading="lazy"
+                  ></iframe>
+                </div>
+              </FileItem>
+            );
+          })}
         </div>
       </div>
     ))
   )}
 
   <div class="footer-actions">
-    <p class="meta-info">Files hosted on GitHub. Updates every ~10 minutes.</p>
-    <a href={`https://github.com/${GITHUB_USER}/${GITHUB_REPO}`} target="_blank" class="github-direct-btn">
-      Access GitHub Directly &rarr;
+    <p class="meta-info">Assets delivered via Cloudflare R2 for maximum speed.</p>
+    <a href="https://github.com/pngu-nerf/PNGU-Blaster-Data" target="_blank" class="github-direct-btn">
+      View Source Repo &rarr;
     </a>
   </div>
 </MainLayout>
 
 <style>
-  /* Page-specific overrides */
   .center-text { text-align: center; color: var(--text-muted); }
   
-  .error-box {
-    background-color: rgba(63, 26, 26, 0.8);
-    border: 1px solid #ff4444;
-    color: #ffcccc;
-    padding: 1rem;
-    border-radius: 12px;
-    width: 75%;
-    margin: 0 auto 2rem auto;
+  .preview-container {
+    width: 100%;
+    margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
   }
 
-  /* Preview iFrame handling */
-  iframe { width: 100%; height: 500px; border: none; }
+  iframe { 
+    width: 100%; 
+    height: 600px; /* Slightly taller for spreadsheets */
+    border: none; 
+    background: #fff; /* Office viewer looks better with a solid background */
+  }
 
   .footer-actions { margin-top: 3rem; text-align: center; padding-bottom: 40px; }
   .meta-info { opacity: 0.5; font-size: 0.8rem; margin-bottom: 0.5rem; }
@@ -125,7 +89,7 @@ try {
     color: #fff;
     text-decoration: none;
     font-weight: 500;
-    transition: all var(--transition-base);
+    transition: all 0.2s ease;
   }
   .github-direct-btn:hover { background-color: #333; transform: translateY(-2px); }
 </style>
