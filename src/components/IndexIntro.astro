@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - High-Speed Snappy Reveal */
+/* IndexIntro.astro - Snappy Reveal with Static Header */
 ---
 
 <div id="intro-blackout"></div>
@@ -15,14 +15,19 @@
     left: 0;
   }
 
-  body.is-intro main, 
-  body.is-intro .index-header,
-  body.is-intro .content-box,
+  /* 1. INITIAL STATE */
+  body.is-intro .index-header {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    /* No transform here to keep it perfectly still */
+  }
+
+  body.is-intro .content-box, 
   body.is-intro .separator,
   body.is-intro .separator-small {
     visibility: hidden !important;
     opacity: 0 !important;
-    transform: translateY(12px); /* Reduced distance for faster-feeling motion */
+    transform: translateY(12px);
   }
 
   #intro-blackout {
@@ -48,18 +53,23 @@
     will-change: transform;
   }
 
-  /* 1. FASTER WIPE */
   .animate-wipe {
-    /* Reduced to 1.0s for an aggressive pull-back */
     transition: transform 1.0s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 2. SNAPPY REVEAL */
+  /* 2. STATIC REVEAL (For the Header) */
+  .reveal-static {
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* No motion transition, just a quick opacity snap */
+    transition: opacity 0.2s ease-out !important;
+  }
+
+  /* 3. SNAPPY REVEAL (For the Content Blocks) */
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
     transform: translateY(0) !important;
-    /* Faster 0.3s fade for that 'snap' feel */
     transition: 
       opacity 0.3s ease-out, 
       transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
@@ -82,33 +92,36 @@
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
 
-    // Start Sequence
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
-      
       if (wipe) {
         wipe.classList.add('animate-wipe');
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // 3. EARLIER TRIGGER
-      // We trigger the reveal much sooner (400ms) so content arrives while the curtain is still moving
       setTimeout(() => {
         document.body.classList.remove('is-intro');
         
-        const uiElements = document.querySelectorAll('.index-header, .content-box, .separator, .separator-small');
+        // Target the header separately for the static reveal
+        const header = document.querySelector('.index-header');
+        if (header) header.classList.add('reveal-static');
+
+        // Target content boxes for the snappy reveal
+        const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
         uiElements.forEach((el, index) => {
           setTimeout(() => {
             el.classList.add('reveal-active');
-          }, index * 50); // Tight 50ms stagger
+          }, index * 50);
         });
 
         setTimeout(() => {
           wipe?.remove();
           blackout?.remove();
+          document.body.style.overflow = '';
+          document.body.style.position = '';
         }, 1000);
       }, 400); 
-    }, 300); // Shorter hold on pure black
+    }, 300);
   }
 
   window.addEventListener('load', runIntro);
