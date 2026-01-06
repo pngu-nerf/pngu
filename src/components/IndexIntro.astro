@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Anti-Blink / Seamless Handoff */
+/* IndexIntro.astro - Ghost Underlay & Guaranteed Handoff */
 ---
 
 <div id="intro-blackout"></div>
@@ -15,13 +15,16 @@
     touch-action: none;
   }
 
-  /* 2. RIGID HEADER */
+  /* 2. RIGID HEADER & GHOST UNDERLAY */
   body.is-intro .index-header {
-    opacity: 0;
-    visibility: hidden;
+    /* NEW: Instead of hidden/opacity 0, we use 0.01.
+       This forces the browser to keep the image 'loaded' and 'ready'. */
+    opacity: 0.01;
+    visibility: visible !important; 
     height: var(--header-height, auto);
     margin: 0 !important;
     padding: 0 !important;
+    pointer-events: none;
   }
 
   body.is-intro .content-box,
@@ -70,14 +73,12 @@
     transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 5. SNAP REVEAL */
+  /* 5. REVEAL STATES */
   .reveal-static {
-    visibility: visible !important;
     opacity: 1 !important;
-    height: auto !important; 
-    /* NEW: A very tiny fade-in ensures the browser has time to paint 
-       the real image before the overlay vanishes. */
-    transition: opacity 0.1s linear !important; 
+    pointer-events: auto !important;
+    /* Instant pop to match overlay */
+    transition: opacity 0.05s linear !important; 
   }
 
   .reveal-active {
@@ -134,13 +135,13 @@
 
       // ACT II: SNAP REVEAL (175ms)
       setTimeout(() => {
-        // 1. Reveal the real header UNDER the overlay first
+        // 1. Reveal real header underneath
         header.classList.add('reveal-static');
 
-        // 2. Wait 50ms (roughly 3 frames) so the real header is painted
+        // 2. SAFETY WINDOW: 100ms overlap to ensure no blink
         setTimeout(() => {
           overlay.style.display = 'none';
-        }, 50);
+        }, 100);
 
         const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
         uiElements.forEach((el, index) => {
