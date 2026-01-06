@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Absolute Coordinate Lock */
+/* IndexIntro.astro - Center-Locked Flight Path */
 ---
 
 <div id="intro-blackout"></div>
@@ -33,9 +33,10 @@
     z-index: 10001;
     width: 85vw; 
     height: auto;
-    /* Start dead center */
+    /* Pinned to center of viewport */
     top: 50%;
     left: 50%;
+    /* This ensures it stays centered as it scales */
     transform: translate(-50%, -50%);
     filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9));
     pointer-events: none;
@@ -46,12 +47,14 @@
 
   /* Transition state for the flight */
   #intro-banner-proxy.animate-banner {
-    /* Use the JS-calculated CSS variables for the destination */
+    /* Dest coordinates provided by JS */
     top: var(--target-top) !important;
     left: var(--target-left) !important;
     width: var(--target-width) !important;
-    /* We switch transform to center the new width properly */
+    
+    /* Crucial: Keeps the anchor point in the middle during the move */
     transform: translate(-50%, -50%) !important;
+    
     transition: 
       top 1.2s cubic-bezier(0.19, 1, 0.22, 1),
       left 1.2s cubic-bezier(0.19, 1, 0.22, 1),
@@ -104,33 +107,26 @@
 
     if (!actualBanner || !blackout || !wipe) return;
 
-    // 1. Force the page to the top and lock it
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
     
-    // 2. Clone the banner
     const proxy = actualBanner.cloneNode(true) as HTMLImageElement;
     proxy.id = 'intro-banner-proxy';
     document.body.appendChild(proxy);
 
-    // 3. Pre-calculate the landing zone immediately
+    // GET PRECISE CENTER COORDINATES
     const rect = actualBanner.getBoundingClientRect();
-    const destTop = `${rect.top + (rect.height / 2)}px`;
-    const destLeft = `${rect.left + (rect.width / 2)}px`;
-    const destWidth = `${rect.width}px`;
+    const centerX = rect.left + (rect.width / 2);
+    const centerY = rect.top + (rect.height / 2);
 
-    // Inject these into the proxy's styles as CSS variables
-    proxy.style.setProperty('--target-top', destTop);
-    proxy.style.setProperty('--target-left', destLeft);
-    proxy.style.setProperty('--target-width', destWidth);
+    proxy.style.setProperty('--target-top', `${centerY}px`);
+    proxy.style.setProperty('--target-left', `${centerX}px`);
+    proxy.style.setProperty('--target-width', `${rect.width}px`);
 
-    // 4. Start Sequence
     requestAnimationFrame(() => {
-      // Fade in the big logo
       proxy.style.opacity = '1';
 
       setTimeout(() => {
-        // Trigger flight via class (uses the CSS variables we set)
         proxy.classList.add('animate-banner');
 
         setTimeout(() => {
