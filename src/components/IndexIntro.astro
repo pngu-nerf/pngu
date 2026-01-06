@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Post-Animation Scroll Lock */
+/* IndexIntro.astro - Stable Scroll Lock & Seamless Reveal */
 ---
 
 <div id="intro-blackout"></div>
@@ -7,33 +7,33 @@
 <div id="intro-banner-overlay"></div>
 
 <style is:global>
-  /* 1. THE LOCK: Active until explicitly removed by JS */
-  body.is-intro {
+  /* 1. THE STABLE LOCK: Stops scrolling without the 'position: fixed' jump */
+  html.is-intro-locked,
+  body.is-intro-locked {
     overflow: hidden !important;
-    height: 100vh !important;
-    position: fixed;
-    width: 100%;
-    top: 0;
-    left: 0;
-    touch-action: none; /* Disables touch scrolling on mobile */
+    height: 100% !important;
+    width: 100% !important;
+    touch-action: none;
   }
 
-  body.is-intro main, 
+  /* 2. INITIAL HIDE: Content is invisible by default during intro */
   body.is-intro .index-header,
   body.is-intro .content-box,
   body.is-intro .separator,
   body.is-intro .separator-small {
-    visibility: hidden !important;
-    opacity: 0 !important;
-    transform: translateY(4px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: none; /* No transitions until we trigger them */
   }
 
+  /* 3. PERSISTENT LOGO: No Shadow, No Fade-in (Instant) */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
     pointer-events: none;
     display: none;
-    opacity: 1; 
+    opacity: 1;
     will-change: opacity;
   }
 
@@ -43,6 +43,7 @@
     display: block;
   }
 
+  /* 4. CURTAIN LAYERS */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -58,26 +59,27 @@
     background: linear-gradient(to bottom, #000 0%, #000 75%, transparent 100%);
     transform: translateY(0); 
     pointer-events: none;
+    will-change: transform;
   }
 
   .animate-wipe {
     transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 2. REVEAL: Uses !important to override the is-intro hidden state */
-  .reveal-static {
-    visibility: visible !important;
-    opacity: 1 !important;
-    transition: opacity 0.1s linear !important;
-  }
-
+  /* 5. REVEAL STATES: Defined clearly to handle the snap */
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
     transform: translateY(0) !important;
     transition: 
       opacity 0.2s ease-out, 
-      transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
+      transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
+  }
+
+  .reveal-static {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transition: opacity 0.1s linear !important;
   }
 </style>
 
@@ -93,12 +95,18 @@
       blackout?.remove();
       wipe?.remove();
       overlay?.remove();
-      document.body.classList.remove('is-intro');
       return; 
     }
 
     if (!actualBanner || !overlay) return;
 
+    // A. INITIAL LOCKDOWN
+    window.scrollTo(0, 0);
+    document.documentElement.classList.add('is-intro-locked');
+    document.body.classList.add('is-intro-locked');
+    document.body.classList.add('is-intro');
+
+    // B. PIN THE OVERLAY
     const rect = actualBanner.getBoundingClientRect();
     overlay.style.width = `${rect.width}px`;
     overlay.style.top = `${rect.top}px`;
@@ -106,20 +114,18 @@
     overlay.innerHTML = `<img src="${actualBanner.src}" alt="Overlay Banner">`;
     overlay.style.display = 'block';
 
-    window.scrollTo(0, 0);
-    document.body.classList.add('is-intro');
-
-    // ACT I: 2s Initial Hold
+    // C. THE 2s HOLD
     setTimeout(() => {
+      // 1. Start the Wipe
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
         wipe.classList.add('animate-wipe');
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // ACT II: THE INSTANT REVEAL (175ms in)
-      // The UI pops in, but the scroll stays locked because is-intro is still on body
+      // 2. THE OVERLAPPING REVEAL (175ms in)
       setTimeout(() => {
+        // Pop the header and content
         const header = document.querySelector('.index-header');
         if (header) header.classList.add('reveal-static');
 
@@ -130,25 +136,27 @@
           }, index * 20); 
         });
 
+        // Start fading the overlay logo as real UI settles
         overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.3s ease-in-out';
+        overlay.style.transition = 'opacity 0.4s ease-in-out';
       }, 175);
 
-      // ACT III: THE LOCK RELEASE
-      // Timing: 900ms (wipe duration) + 500ms (your buffer) = 1400ms
+      // 3. POST-ANIMATION UNLOCK (Wipe 900ms + Buffer 500ms = 1400ms)
       setTimeout(() => {
+        // Remove the visual 'is-intro' class first
         document.body.classList.remove('is-intro');
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.height = '';
+        
+        // Final Release of the scroll lock
+        document.documentElement.classList.remove('is-intro-locked');
+        document.body.classList.remove('is-intro-locked');
 
-        // Final Cleanup of DOM elements
+        // Clean up the DOM
         setTimeout(() => {
           wipe?.remove();
           blackout?.remove();
           overlay?.remove();
         }, 500);
-      }, 1400); 
+      }, 1400);
 
     }, 2000); 
   }
