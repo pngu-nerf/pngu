@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Layer-Locked Handoff */
+/* IndexIntro.astro - Hyper-Snappy Handoff */
 ---
 
 <div id="intro-blackout"></div>
@@ -14,7 +14,7 @@
     touch-action: none;
   }
 
-  /* 1. INITIAL STATE: The real UI sits at 0.01 opacity (pre-rendered) */
+  /* 1. INITIAL STATE: Ghost pre-render */
   body.is-intro .index-header {
     opacity: 0.01;
     visibility: visible !important;
@@ -32,14 +32,16 @@
     transform: translateY(4px);
   }
 
-  /* 2. OVERLAY: Sits on the highest possible layer */
+  /* 2. OVERLAY: Top Layer Shield */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
     pointer-events: none;
     display: none;
     opacity: 1;
+    /* Force GPU acceleration to prevent frame drops */
     will-change: opacity;
+    transform: translateZ(0); 
   }
 
   #intro-banner-overlay img {
@@ -70,7 +72,7 @@
     transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 4. REVEAL: Real header pops in UNSEEN behind the overlay */
+  /* 4. REVEAL STATES */
   .reveal-static {
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -133,10 +135,8 @@
 
       // ACT II: THE REVEAL
       setTimeout(() => {
-        // Step 1: Reveal real header BEHIND the overlay
         header.classList.add('reveal-static');
 
-        // Step 2: Reveal everything else
         const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
         uiElements.forEach((el, index) => {
           setTimeout(() => {
@@ -144,15 +144,14 @@
           }, index * 20); 
         });
 
-        // Step 3: FADE the overlay out slowly to show the real banner
-        // We wait 200ms for the UI to finish its initial snap before fading
+        // SHORTENED OVERLAY PERSISTENCE: Now 100ms (.1s)
         setTimeout(() => {
-          overlay.style.transition = 'opacity 0.5s ease-in-out';
+          overlay.style.transition = 'opacity 0.1s ease-in-out';
           overlay.style.opacity = '0';
-        }, 200);
+        }, 100);
       }, 175);
 
-      // ACT III: FULL UNLOCK
+      // ACT III: SHORTENED FULL UNLOCK: Now 1000ms (0.9s wipe + 0.1s buffer)
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
@@ -162,8 +161,8 @@
           wipe?.remove();
           blackout?.remove();
           overlay?.remove();
-        }, 600);
-      }, 1400);
+        }, 200);
+      }, 1000); 
 
     }, 2000); 
   }
