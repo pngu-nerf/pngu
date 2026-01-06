@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Parallel Fade & Translation */
+/* IndexIntro.astro - Speed-Ramped Translation & Parallel Fade */
 ---
 
 <div id="intro-blackout"></div>
@@ -115,7 +115,6 @@
 
     const startWidth = finalRect.width;
     const startLeft = (window.innerWidth - startWidth) / 2;
-    // Dead center start
     const startTop = (window.innerHeight - (startWidth * (finalRect.height / finalRect.width))) / 2;
 
     overlay.style.width = `${startWidth}px`;
@@ -128,25 +127,25 @@
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // ACT I: PARALLEL FADE & ASCENT
-    // We start moving 1 second before the 2-second hold finishes.
+    // --- ANIMATION SEQUENCE ---
+
+    // 1. Initial Fade Start
     setTimeout(() => {
-      // 1. Start the Fade In (2s duration)
       overlay.style.transition = 'opacity 2.0s ease-in-out';
       overlay.style.opacity = '1';
 
-      // 2. Start the Ascent (Triggers 1s after the fade starts)
+      // 2. SPEED-RAMPED ASCENT (Starts 1s in)
       setTimeout(() => {
-        // High-velocity movement to the dock
-        overlay.style.transition = 'top 0.25s cubic-bezier(0.23, 1, 0.32, 1), left 0.25s cubic-bezier(0.23, 1, 0.32, 1), opacity 2.0s ease-in-out';
+        // Duration: 0.5s (Double your previous 0.25s)
+        // Easing: Quintic Ease-In-Out for that aggressive speed ramp effect
+        overlay.style.transition = 'top 0.5s cubic-bezier(0.83, 0, 0.17, 1), left 0.5s cubic-bezier(0.83, 0, 0.17, 1), opacity 2.0s ease-in-out';
         overlay.style.top = `${finalRect.top}px`;
         overlay.style.left = `${finalRect.left}px`;
-      }, 1000); // This is the "one second before" trigger
+      }, 1000);
 
     }, 50);
 
-    // ACT II: THE WIPE & REVEAL
-    // This happens exactly at the 2-second mark
+    // 3. THE WIPE & REVEAL (Triggers after 2s fade)
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -154,7 +153,6 @@
         wipe.style.transform = 'translateY(-110%)'; 
       }
 
-      // Sync the snap reveal
       setTimeout(() => {
         header.classList.add('reveal-static');
         const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
@@ -169,7 +167,7 @@
         }, 50);
       }, 200);
 
-      // Settle Lock (Wipe 0.8s + 0.5s Buffer)
+      // Settle Lock (0.5s buffer)
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
