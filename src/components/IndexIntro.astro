@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Safari Jitter Fix / GPU Accelerated */
+/* IndexIntro.astro - 1s Emergent Logo & Safari Optimized */
 ---
 
 <div id="intro-blackout"></div>
@@ -32,16 +32,16 @@
     transform: translateY(4px);
   }
 
-  /* 2. OVERLAY - Forced GPU Layer */
+  /* 2. OVERLAY - Starts at 0 for the 1s fade-in */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
     pointer-events: none;
     display: none;
-    opacity: 1;
-    -webkit-font-smoothing: antialiased;
+    opacity: 0; /* Changed from 1 to 0 */
     will-change: opacity;
-    transform: translateZ(0); /* Safari hardware acceleration hack */
+    transform: translateZ(0); 
+    -webkit-font-smoothing: antialiased;
   }
 
   #intro-banner-overlay img {
@@ -50,39 +50,30 @@
     display: block;
   }
 
-  /* 3. CURTAIN - Optimized for WebKit */
+  /* 3. CURTAIN - Safari Optimized */
   #intro-blackout {
     position: fixed;
     inset: 0;
     background: #000;
     z-index: 10000;
-    transform: translateZ(0);
   }
 
   #wipe-layer {
     position: fixed;
     inset: 0;
-    height: 100vh; /* Reduced from 400vh to stop Safari GPU overload */
+    height: 100vh;
     z-index: 9999;
     background: #000;
-    
-    /* Use a fixed mask instead of a moving 400vh gradient */
     -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-    
     transform: translateY(0); 
     pointer-events: none;
-    
-    /* Safari Anti-Flicker Trio */
     will-change: transform;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    -webkit-perspective: 1000;
-    perspective: 1000;
   }
 
   .animate-wipe {
-    /* Slightly faster transition to hide micro-stutters */
     transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -105,7 +96,6 @@
 
 <script>
   function runIntro() {
-    // Internal Navigation Skip
     const internalReferrer = document.referrer && document.referrer.includes(window.location.hostname);
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
@@ -124,34 +114,36 @@
 
     window.scrollTo(0, 0);
 
-    // Precise Measurement
     const rect = actualBanner.getBoundingClientRect();
     const headerHeight = header.offsetHeight;
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
 
-    // Overlay Sync
     overlay.style.width = `${rect.width}px`;
     overlay.style.top = `${rect.top}px`;
     overlay.style.left = `${rect.left}px`;
     overlay.innerHTML = `<img src="${actualBanner.src}" alt="" style="width:100%; height:auto; display:block;">`;
     overlay.style.display = 'block';
 
-    // Apply Locks
     document.documentElement.classList.add('is-intro-locked');
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // ACT I: The 2s Hold
+    // ACT 0: THE 1s FADE IN
+    // Triggering it immediately after setup
+    requestAnimationFrame(() => {
+        overlay.style.transition = 'opacity 1.0s ease-in-out';
+        overlay.style.opacity = '1';
+    });
+
+    // ACT I: The 2s Hold (Wipe begins after this)
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
-      
       if (wipe) {
         wipe.classList.add('animate-wipe');
-        // We only move 100% of height now since mask handles the fade
         wipe.style.transform = 'translateY(-110%)'; 
       }
 
-      // ACT II: THE REVEAL
+      // ACT II: THE SNAP REVEAL
       setTimeout(() => {
         header.classList.add('reveal-static');
 
