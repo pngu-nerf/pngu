@@ -1,22 +1,21 @@
 ---
-/* IndexIntro.astro - Center-Locked Flight Path */
+/* IndexIntro.astro - Minimalist Black Wipe Reveal */
 ---
 
 <div id="intro-blackout"></div>
 <div id="wipe-layer"></div>
 
 <style is:global>
-  /* 1. LOCK THE VIEWPORT */
+  /* 1. LOCK VIEWPORT & HIDE CONTENT */
   body.is-intro {
     overflow: hidden !important;
     height: 100vh !important;
-    width: 100%;
     position: fixed;
+    width: 100%;
     top: 0;
     left: 0;
   }
 
-  /* 2. HIDE REAL CONTENT */
   body.is-intro main, 
   body.is-intro .index-header,
   body.is-intro .content-box,
@@ -24,44 +23,10 @@
   body.is-intro .separator-small {
     visibility: hidden !important;
     opacity: 0 !important;
-    transform: translateY(25px);
+    transform: translateY(20px);
   }
 
-  /* 3. BANNER PROXY */
-  #intro-banner-proxy {
-    position: fixed;
-    z-index: 10001;
-    width: 85vw; 
-    height: auto;
-    /* Pinned to center of viewport */
-    top: 50%;
-    left: 50%;
-    /* This ensures it stays centered as it scales */
-    transform: translate(-50%, -50%);
-    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9));
-    pointer-events: none;
-    will-change: transform, width, top, left, opacity;
-    opacity: 0;
-    transition: opacity 0.8s ease-out;
-  }
-
-  /* Transition state for the flight */
-  #intro-banner-proxy.animate-banner {
-    /* Dest coordinates provided by JS */
-    top: var(--target-top) !important;
-    left: var(--target-left) !important;
-    width: var(--target-width) !important;
-    
-    /* Crucial: Keeps the anchor point in the middle during the move */
-    transform: translate(-50%, -50%) !important;
-    
-    transition: 
-      top 1.2s cubic-bezier(0.19, 1, 0.22, 1),
-      left 1.2s cubic-bezier(0.19, 1, 0.22, 1),
-      width 1.2s cubic-bezier(0.19, 1, 0.22, 1),
-      transform 1.2s cubic-bezier(0.19, 1, 0.22, 1) !important;
-  }
-
+  /* 2. LAYERS */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -72,31 +37,40 @@
   #wipe-layer {
     position: fixed;
     inset: 0;
-    height: 400vh;
+    height: 400vh; /* Extra tall to prevent 'bar' look */
     z-index: 9999;
-    background: linear-gradient(to bottom, #000 0%, #000 75%, transparent 100%);
+    background: linear-gradient(
+      to bottom, 
+      #000 0%, 
+      #000 75%, 
+      transparent 100%
+    );
     transform: translateY(0); 
     pointer-events: none;
+    will-change: transform;
   }
 
+  /* 3. ANIMATION */
   .animate-wipe {
-    transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
     transform: translateY(0) !important;
-    transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    transition: 
+      opacity 0.8s ease-out, 
+      transform 0.8s cubic-bezier(0.23, 1, 0.32, 1) !important;
   }
 </style>
 
 <script>
   function runIntro() {
+    // Skip if navigating internally
     const internalReferrer = document.referrer && document.referrer.includes(window.location.hostname);
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
-    const actualBanner = document.querySelector('.banner-image') as HTMLImageElement;
 
     if (internalReferrer) {
       blackout?.remove();
@@ -105,54 +79,38 @@
       return; 
     }
 
-    if (!actualBanner || !blackout || !wipe) return;
-
+    // Initialize Intro State
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
-    
-    const proxy = actualBanner.cloneNode(true) as HTMLImageElement;
-    proxy.id = 'intro-banner-proxy';
-    document.body.appendChild(proxy);
 
-    // GET PRECISE CENTER COORDINATES
-    const rect = actualBanner.getBoundingClientRect();
-    const centerX = rect.left + (rect.width / 2);
-    const centerY = rect.top + (rect.height / 2);
+    // Trigger Sequence
+    setTimeout(() => {
+      // Handover from solid blackout to the wipe layer
+      if (blackout) blackout.style.display = 'none';
+      
+      if (wipe) {
+        wipe.classList.add('animate-wipe');
+        wipe.style.transform = 'translateY(-100%)';
+      }
 
-    proxy.style.setProperty('--target-top', `${centerY}px`);
-    proxy.style.setProperty('--target-left', `${centerX}px`);
-    proxy.style.setProperty('--target-width', `${rect.width}px`);
-
-    requestAnimationFrame(() => {
-      proxy.style.opacity = '1';
-
+      // Staggered reveal of the actual page content
       setTimeout(() => {
-        proxy.classList.add('animate-banner');
-
-        setTimeout(() => {
-          blackout.style.display = 'none';
-          wipe.classList.add('animate-wipe');
-          wipe.style.transform = 'translateY(-100%)';
-
+        document.body.classList.remove('is-intro');
+        
+        const uiElements = document.querySelectorAll('.index-header, .content-box, .separator, .separator-small');
+        uiElements.forEach((el, index) => {
           setTimeout(() => {
-            document.body.classList.remove('is-intro');
-            
-            const uiElements = document.querySelectorAll('.index-header, .content-box, .separator, .separator-small');
-            uiElements.forEach((el, index) => {
-              setTimeout(() => {
-                el.classList.add('reveal-active');
-              }, index * 100);
-            });
+            el.classList.add('reveal-active');
+          }, index * 120);
+        });
 
-            setTimeout(() => {
-              proxy.remove();
-              wipe.remove();
-              blackout.remove();
-            }, 1200);
-          }, 1000); 
-        }, 500);
-      }, 800);
-    });
+        // Final Cleanup
+        setTimeout(() => {
+          wipe?.remove();
+          blackout?.remove();
+        }, 1500);
+      }, 1200); // Wait for the wipe to clear the middle of the screen
+    }, 500); // Initial hold time on pure black
   }
 
   window.addEventListener('load', runIntro);
