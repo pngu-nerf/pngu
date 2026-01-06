@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Anti-Jitter / Zero-Jump Logic */
+/* IndexIntro.astro - Sub-Pixel Alignment Fix */
 ---
 
 <div id="intro-blackout"></div>
@@ -7,9 +7,9 @@
 <div id="intro-banner-overlay"></div>
 
 <style is:global>
-  /* 1. THE STABLE LOCK: Prevents the scrollbar width jump */
   html {
-    scrollbar-gutter: stable;
+    /* Prevents horizontal layout shifting when scrollbar toggles */
+    scrollbar-gutter: stable !important;
   }
 
   html.is-intro-locked,
@@ -20,17 +20,18 @@
     touch-action: none;
   }
 
-  /* 2. INITIAL HIDE */
+  /* 1. INITIAL HIDE */
   body.is-intro .index-header,
   body.is-intro .content-box,
   body.is-intro .separator,
   body.is-intro .separator-small {
     opacity: 0;
     visibility: hidden;
-    transform: translateY(6px);
+    /* Reduced to 4px to minimize the "travel" distance */
+    transform: translateY(4px);
   }
 
-  /* 3. PERSISTENT LOGO: Pin it precisely */
+  /* 2. PERSISTENT LOGO OVERLAY */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
@@ -38,6 +39,8 @@
     display: none;
     opacity: 1;
     will-change: opacity, transform;
+    /* Added the exact shadow from your index.astro to prevent "weight" shifting */
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
   }
 
   #intro-banner-overlay img {
@@ -46,7 +49,7 @@
     display: block;
   }
 
-  /* 4. CURTAIN LAYERS */
+  /* 3. CURTAIN LAYERS */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -68,21 +71,21 @@
     transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 5. REVEAL STATES */
+  /* 4. REVEAL STATES */
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
     transform: translateY(0) !important;
     transition: 
       opacity 0.25s ease-out, 
-      transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
+      transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
   }
 
   .reveal-static {
     visibility: visible !important;
     opacity: 1 !important;
-    /* Slightly longer fade to hide any minor sub-pixel misalignment */
-    transition: opacity 0.4s linear !important; 
+    /* Slower fade for the header/tilde to blend with the overlay fade */
+    transition: opacity 0.5s linear !important; 
   }
 </style>
 
@@ -103,13 +106,13 @@
 
     if (!actualBanner || !overlay) return;
 
-    // A. INITIAL LOCKDOWN
+    // A. LOCK FIRST (Important: do this before measuring)
     window.scrollTo(0, 0);
     document.documentElement.classList.add('is-intro-locked');
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // B. PIN THE OVERLAY
+    // B. MEASURE SECOND (Measuring while locked is more accurate)
     const rect = actualBanner.getBoundingClientRect();
     overlay.style.width = `${rect.width}px`;
     overlay.style.top = `${rect.top}px`;
@@ -127,33 +130,39 @@
 
       // D. THE OVERLAPPING REVEAL (175ms in)
       setTimeout(() => {
+        // Reveal Real Header & Tilde
         const header = document.querySelector('.index-header');
+        const separator = document.querySelector('.index-header .separator');
         if (header) header.classList.add('reveal-static');
+        if (separator) (separator as HTMLElement).classList.add('reveal-static');
 
-        const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
+        // Reveal Content Blocks
+        const uiElements = document.querySelectorAll('.content-box, .separator-small');
         uiElements.forEach((el, index) => {
           setTimeout(() => {
             el.classList.add('reveal-active');
           }, index * 20); 
         });
 
-        // E. THE LONG DISSOLVE: Fades out slowly to mask the transition
+        // Slow cross-fade
         overlay.style.opacity = '0';
         overlay.style.transition = 'opacity 0.6s ease-in-out';
       }, 175);
 
-      // F. FINAL RELEASE (Wipe duration + buffer)
+      // E. FINAL RELEASE (1.4s total + small ghost buffer)
       setTimeout(() => {
-        // Cleanup DOM first while still locked
+        // Remove overlay/wipe elements first
+        overlay?.remove();
         wipe?.remove();
         blackout?.remove();
-        overlay?.remove();
 
-        // Release classes ONLY after the elements are gone
-        document.body.classList.remove('is-intro');
-        document.documentElement.classList.remove('is-intro-locked');
-        document.body.classList.remove('is-intro-locked');
-      }, 1500);
+        // One last micro-delay to let the browser settle after DOM removal
+        setTimeout(() => {
+          document.body.classList.remove('is-intro');
+          document.documentElement.classList.remove('is-intro-locked');
+          document.body.classList.remove('is-intro-locked');
+        }, 100);
+      }, 1400);
 
     }, 2000); 
   }
