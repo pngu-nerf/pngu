@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Hyper-Snappy Handoff */
+/* IndexIntro.astro - Safari Jitter Fix / GPU Accelerated */
 ---
 
 <div id="intro-blackout"></div>
@@ -14,7 +14,7 @@
     touch-action: none;
   }
 
-  /* 1. INITIAL STATE: Ghost pre-render */
+  /* 1. INITIAL STATE */
   body.is-intro .index-header {
     opacity: 0.01;
     visibility: visible !important;
@@ -32,16 +32,16 @@
     transform: translateY(4px);
   }
 
-  /* 2. OVERLAY: Top Layer Shield */
+  /* 2. OVERLAY - Forced GPU Layer */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
     pointer-events: none;
     display: none;
     opacity: 1;
-    /* Force GPU acceleration to prevent frame drops */
+    -webkit-font-smoothing: antialiased;
     will-change: opacity;
-    transform: translateZ(0); 
+    transform: translateZ(0); /* Safari hardware acceleration hack */
   }
 
   #intro-banner-overlay img {
@@ -50,26 +50,40 @@
     display: block;
   }
 
-  /* 3. CURTAIN */
+  /* 3. CURTAIN - Optimized for WebKit */
   #intro-blackout {
     position: fixed;
     inset: 0;
     background: #000;
     z-index: 10000;
+    transform: translateZ(0);
   }
 
   #wipe-layer {
     position: fixed;
     inset: 0;
-    height: 400vh;
+    height: 100vh; /* Reduced from 400vh to stop Safari GPU overload */
     z-index: 9999;
-    background: linear-gradient(to bottom, #000 0%, #000 75%, transparent 100%);
+    background: #000;
+    
+    /* Use a fixed mask instead of a moving 400vh gradient */
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    
     transform: translateY(0); 
     pointer-events: none;
+    
+    /* Safari Anti-Flicker Trio */
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    perspective: 1000;
   }
 
   .animate-wipe {
-    transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
+    /* Slightly faster transition to hide micro-stutters */
+    transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* 4. REVEAL STATES */
@@ -91,6 +105,7 @@
 
 <script>
   function runIntro() {
+    // Internal Navigation Skip
     const internalReferrer = document.referrer && document.referrer.includes(window.location.hostname);
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
@@ -109,28 +124,31 @@
 
     window.scrollTo(0, 0);
 
-    // Measure
+    // Precise Measurement
     const rect = actualBanner.getBoundingClientRect();
     const headerHeight = header.offsetHeight;
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
 
-    // Setup Overlay
+    // Overlay Sync
     overlay.style.width = `${rect.width}px`;
     overlay.style.top = `${rect.top}px`;
     overlay.style.left = `${rect.left}px`;
     overlay.innerHTML = `<img src="${actualBanner.src}" alt="" style="width:100%; height:auto; display:block;">`;
     overlay.style.display = 'block';
 
-    // Lock
+    // Apply Locks
     document.documentElement.classList.add('is-intro-locked');
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
+    // ACT I: The 2s Hold
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
+      
       if (wipe) {
         wipe.classList.add('animate-wipe');
-        wipe.style.transform = 'translateY(-100%)';
+        // We only move 100% of height now since mask handles the fade
+        wipe.style.transform = 'translateY(-110%)'; 
       }
 
       // ACT II: THE REVEAL
@@ -144,14 +162,13 @@
           }, index * 20); 
         });
 
-        // SHORTENED OVERLAY PERSISTENCE: Now 100ms (.1s)
         setTimeout(() => {
           overlay.style.transition = 'opacity 0.1s ease-in-out';
           overlay.style.opacity = '0';
         }, 100);
       }, 175);
 
-      // ACT III: SHORTENED FULL UNLOCK: Now 1000ms (0.9s wipe + 0.1s buffer)
+      // ACT III: UNLOCK
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
