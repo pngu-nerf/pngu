@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Rigid Header / Anti-Hop Logic */
+/* IndexIntro.astro - Anti-Blink / Seamless Handoff */
 ---
 
 <div id="intro-blackout"></div>
@@ -15,11 +15,10 @@
     touch-action: none;
   }
 
-  /* 2. RIGID HEADER: Stop the banner and tilde from shifting */
+  /* 2. RIGID HEADER */
   body.is-intro .index-header {
     opacity: 0;
     visibility: hidden;
-    /* Force the header to stay at its natural height so it can't "hop" up */
     height: var(--header-height, auto);
     margin: 0 !important;
     padding: 0 !important;
@@ -40,6 +39,7 @@
     pointer-events: none;
     display: none;
     opacity: 1;
+    will-change: opacity;
   }
 
   #intro-banner-overlay img {
@@ -74,8 +74,10 @@
   .reveal-static {
     visibility: visible !important;
     opacity: 1 !important;
-    height: auto !important; /* Return to natural height */
-    transition: none !important; 
+    height: auto !important; 
+    /* NEW: A very tiny fade-in ensures the browser has time to paint 
+       the real image before the overlay vanishes. */
+    transition: opacity 0.1s linear !important; 
   }
 
   .reveal-active {
@@ -108,11 +110,8 @@
 
     window.scrollTo(0, 0);
 
-    // A. MEASURE EVERYTHING BEFORE THE LOCK
     const rect = actualBanner.getBoundingClientRect();
     const headerHeight = header.offsetHeight;
-    
-    // Set a CSS variable so the header remains exactly this tall during the intro
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
 
     overlay.style.width = `${rect.width}px`;
@@ -121,12 +120,11 @@
     overlay.innerHTML = `<img src="${actualBanner.src}" alt="">`;
     overlay.style.display = 'block';
 
-    // B. LOCK
     document.documentElement.classList.add('is-intro-locked');
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // C. 2s HOLD
+    // ACT I: 2s Hold
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -134,10 +132,15 @@
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // D. SNAP REVEAL (175ms)
+      // ACT II: SNAP REVEAL (175ms)
       setTimeout(() => {
+        // 1. Reveal the real header UNDER the overlay first
         header.classList.add('reveal-static');
-        overlay.style.display = 'none';
+
+        // 2. Wait 50ms (roughly 3 frames) so the real header is painted
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 50);
 
         const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
         uiElements.forEach((el, index) => {
@@ -147,7 +150,7 @@
         });
       }, 175);
 
-      // E. CLEAN UNLOCK
+      // ACT III: CLEAN UNLOCK
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
