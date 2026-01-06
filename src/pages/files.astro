@@ -3,100 +3,33 @@ import MainLayout from '../layouts/MainLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import FileItem from '../components/FileItem.astro';
 
-export const prerender = false;
+// Use local data for instant builds
+import projectDatabase from '../content/files-database.json';
 
-// --- Configuration ---
-const GITHUB_USER = 'pngu-nerf';
-const GITHUB_REPO = 'PNGU-3D-Files';
-const BRANCH = 'main';
+const R2_BASE_URL = "https://assets.pngu.info/PNGU-3D-Files-main";
 
-Astro.response.headers.set('Cache-Control', 'public, max-age=1000, s-maxage=1000');
-
-// --- Types & Variables ---
-let errorMessage = "";
-let projectList: any[] = [];
-let projects: Record<string, any> = {};
-
-async function getRepoFiles() {
-  const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
-  const response = await fetch(apiUrl, {
-    headers: { 'User-Agent': 'PNGU-Website', 'Accept': 'application/vnd.github.v3+json' }
-  });
-  if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
-  return await response.json();
-}
-
-// Logic to fetch description from Printables Meta tags
-async function getPrintablesDescription(url: string) {
-  if (!url) return "No description available.";
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'PNGU-Website' } });
-    const html = await res.text();
-    const match = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i) || 
-                  html.match(/<meta\s+property="og:description"\s+content="([^"]*)"/i);
-    return match ? match[1].replace(/&quot;/g, '"').replace(/&#39;/g, "'") : "Description found on Printables.";
-  } catch (e) { return "Error loading description."; }
-}
-
-try {
-  const data = await getRepoFiles();
-  if (data?.tree) {
-    for (const item of data.tree) {
-      if (item.type === 'blob') {
-        const pathParts = item.path.split('/');
-        if (pathParts.length > 1) {
-          const folderName = pathParts[0];
-          const fileName = pathParts[pathParts.length - 1];
-
-          if (!projects[folderName]) {
-            projects[folderName] = { title: folderName, description: "Loading...", printablesUrl: null, files: [] };
-          }
-
-          if (fileName.toLowerCase().endsWith('.stl')) {
-            const safePath = item.path.split('/').map(encodeURIComponent).join('/');
-            projects[folderName].files.push({
-              name: fileName,
-              url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`
-            });
-          }
-          
-          if (fileName.toLowerCase().includes('link')) {
-             const res = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${item.path}`);
-             if (res.ok) projects[folderName].printablesUrl = (await res.text()).trim();
-          }
-
-          if (fileName.toLowerCase().startsWith('description')) {
-             const res = await fetch(`https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${item.path}`);
-             if (res.ok) projects[folderName].description = (await res.text()).trim();
-          }
-        }
-      }
-    }
-
-    await Promise.all(Object.values(projects).map(async (project: any) => {
-        if (project.description === "Loading...") {
-            project.description = project.printablesUrl ? await getPrintablesDescription(project.printablesUrl) : "No description available.";
-        }
-        project.files.sort((a: any, b: any) => a.name.localeCompare(b.name));
-    }));
-    projectList = Object.values(projects).filter((p: any) => p.files.length > 0);
+/* Each project in your JSON should look like:
+  {
+    "folderName": "Cynthia Bolt Remix",
+    "displayName": "Cynthia Bolt Remix",
+    "description": "...",
+    "printablesUrl": "...",
+    "stlFiles": ["part1.stl", "part2.stl"]
   }
-} catch (error: any) { errorMessage = error.message; }
+*/
 ---
 
 <MainLayout title="3D Files">
-  <PageHeader title="3D Printing Files" subtitle="Files synced from GitHub" />
+  <PageHeader title="3D Printing Files" subtitle="High-speed delivery via Cloudflare R2" />
 
-  {errorMessage && <div class="error-box"><strong>Error:</strong> {errorMessage}</div>}
-
-  {projectList.length === 0 && !errorMessage ? (
+  {projectDatabase.length === 0 ? (
     <div class="content-box center-text">
-      <p>No files found in repo.</p>
+      <p>Updating database...</p>
     </div>
   ) : (
-    projectList.map((project) => (
+    projectDatabase.map((project) => (
       <div class="content-box">
-        <h2>{project.title}</h2>
+        <h2>{project.displayName}</h2>
         
         <details class="project-desc">
           <summary>Project Info</summary>
@@ -111,21 +44,26 @@ try {
         </details>
 
         <div class="file-list">
-          {project.files.map((file: any) => (
-            <FileItem name={file.name} downloadUrl={file.url} previewType="stl">
-              <div class="viewer-container" data-stl-url={file.url}>
-                <span class="loading-text">Click to load 3D view...</span>
-              </div>
-            </FileItem>
-          ))}
+          {project.stlFiles.map((fileName) => {
+            // Construct the direct R2 URL
+            const fileUrl = `${R2_BASE_URL}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
+            
+            return (
+              <FileItem name={fileName} downloadUrl={fileUrl} previewType="stl">
+                <div class="viewer-container" data-stl-url={fileUrl}>
+                  <span class="loading-text">Click to load 3D view...</span>
+                </div>
+              </FileItem>
+            );
+          })}
         </div>
       </div>
     ))
   )}
 
   <div class="footer-actions">
-    <a href={`https://github.com/${GITHUB_USER}/${GITHUB_REPO}`} target="_blank" class="github-direct-btn">
-      Access GitHub Directly &rarr;
+    <a href="https://github.com/pngu-nerf/PNGU-3D-Files" target="_blank" class="github-direct-btn">
+      Source Repository &rarr;
     </a>
   </div>
 
@@ -163,6 +101,7 @@ try {
         scene.add(ambientLight);
 
         const loader = new STLLoader();
+        // R2 handles these requests much faster than GitHub Raw
         loader.load(url, (geometry) => {
             if (loadingText) loadingText.style.display = 'none';
             geometry.center();
@@ -191,8 +130,6 @@ try {
 
 <style>
   .center-text { text-align: center; }
-  
-  /* Project Description Styling */
   .project-desc {
     background-color: rgba(31, 31, 31, 0.6);
     border-radius: 8px;
@@ -202,13 +139,9 @@ try {
   }
   .project-desc summary { padding: 1rem; font-weight: bold; cursor: pointer; color: #e0e0e0; }
   .description-content { padding: 1rem; line-height: 1.6; color: #ccc; white-space: pre-wrap; border-top: 1px solid var(--glass-border); }
-  
-  .printables-link { display: block; margin-top: 15px; color: var(--accent-white); text-decoration: underline; font-size: 0.9rem; }
-
-  /* 3D Viewer Placeholder */
+  .printables-link { display: block; margin-top: 15px; color: #fff; text-decoration: underline; font-size: 0.9rem; }
   .viewer-container { height: 400px; display: flex; align-items: center; justify-content: center; }
   .loading-text { color: #666; font-size: 0.9rem; }
-
   .footer-actions { margin-top: 3rem; text-align: center; padding-bottom: 60px; }
   .github-direct-btn {
     display: inline-block; padding: 12px 24px; background: #272727; border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; text-decoration: none; transition: 0.2s;
