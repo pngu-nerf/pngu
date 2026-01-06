@@ -17,7 +17,11 @@ import IndexIntro from '../components/IndexIntro.astro';
         decoding="sync"
       />
     </div>
-    <a href="https://lite.pngu.info" class="separator" title="Switch to Lite Mode">~</a>
+    <div class="lite-switch-container">
+      <a href="https://lite.pngu.info" class="lite-button">
+        Switch to Lite Mode
+      </a>
+    </div>
   </header>
 
   <section class="content-box">
@@ -44,15 +48,15 @@ import IndexIntro from '../components/IndexIntro.astro';
 </MainLayout>
 
 <style>
-  /* Base state for intro: hidden until the wipe reveals them */
-  .index-header, .content-box, .separator, .separator-small {
+  /* Visibility handled by IndexIntro script */
+  .index-header, .content-box, .separator-small {
     opacity: 1; 
     transition: opacity 0.5s ease;
   }
 
   .index-header { 
     width: 100%; 
-    margin-bottom: 1rem; 
+    margin-bottom: 2.5rem; 
     position: relative;
     z-index: 10;
   }
@@ -61,7 +65,7 @@ import IndexIntro from '../components/IndexIntro.astro';
     width: 100%;
     display: flex;
     justify-content: center;
-    padding: 30px 10px;
+    padding: 30px 10px 10px 10px;
   }
   
   .banner-image {
@@ -71,27 +75,35 @@ import IndexIntro from '../components/IndexIntro.astro';
     display: block;
     filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
     pointer-events: none;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
   }
 
-  /* Modified separator to handle link states */
-  .separator { 
-    display: block; /* Required for text-align to work on an <a> tag */
+  /* Button Container & Styling */
+  .lite-switch-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .lite-button {
     text-decoration: none;
-    text-align: center; 
-    font-size: 2rem; 
-    color: rgba(255, 255, 255, 0.2); 
-    margin: 1.5rem 0; 
-    font-weight: 300; 
-    user-select: none;
-    cursor: pointer;
-    transition: color 0.3s ease, opacity 0.5s ease;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
   }
 
-  .separator:hover {
-    color: rgba(255, 255, 255, 0.6);
+  .lite-button:hover {
+    color: rgba(255, 255, 255, 1);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
   }
 
   .separator-small { margin: 2rem 0; height: 1px; }
@@ -99,8 +111,8 @@ import IndexIntro from '../components/IndexIntro.astro';
   .spacer-bottom { height: 80px; }
 
   @media (max-width: 600px) {
-    .banner-wrapper { padding: 20px 0; }
+    .banner-wrapper { padding: 20px 0 5px 0; }
     .banner-image { width: 90%; }
-    .separator { margin: 1rem 0; font-size: 1.5rem; }
+    .lite-button { font-size: 0.65rem; padding: 6px 12px; }
   }
 </style>
