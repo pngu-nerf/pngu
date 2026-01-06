@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Long Hold & Persistent Logo */
+/* IndexIntro.astro - High-Speed Reveal with Shielded Overlay */
 ---
 
 <div id="intro-blackout"></div>
@@ -16,7 +16,7 @@
     left: 0;
   }
 
-  /* Real UI hidden during intro */
+  /* Real UI hidden but ready to snap */
   body.is-intro main, 
   body.is-intro .index-header,
   body.is-intro .content-box,
@@ -31,7 +31,12 @@
     transform: translateY(12px);
   }
 
-  /* Static Overlay Image */
+  /* Remove shadow from real banner during intro to prevent darkening stack */
+  body.is-intro .banner-image {
+    filter: none !important;
+  }
+
+  /* Static Overlay (The Shield) */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
@@ -39,6 +44,7 @@
     display: none;
     opacity: 0;
     will-change: opacity;
+    /* This shadow is the only one visible during the intro */
     filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
   }
 
@@ -66,13 +72,13 @@
   }
 
   .animate-wipe {
-    transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+    transition: transform 1.0s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
   .reveal-static {
     visibility: visible !important;
     opacity: 1 !important;
-    transition: opacity 0.4s ease-out !important;
+    transition: opacity 0.1s linear !important; /* Instant snap */
   }
 
   .reveal-active {
@@ -80,8 +86,8 @@
     opacity: 1 !important;
     transform: translateY(0) !important;
     transition: 
-      opacity 0.4s ease-out, 
-      transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+      opacity 0.3s ease-out, 
+      transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
   }
 </style>
 
@@ -103,7 +109,6 @@
 
     if (!actualBanner || !overlay) return;
 
-    // Coordinate check
     const rect = actualBanner.getBoundingClientRect();
     overlay.style.width = `${rect.width}px`;
     overlay.style.top = `${rect.top}px`;
@@ -114,13 +119,11 @@
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
 
-    // --- TIMING CONTROLS ---
-    
-    // 1. SEQUENCE START: The initial black hold
+    // 1. ACT I: The 2s Blackout
     setTimeout(() => {
-      // Fade in logo and drop the blackout curtain
+      // Fade logo in quickly
       overlay.style.opacity = '1';
-      overlay.style.transition = 'opacity 0.6s ease-out';
+      overlay.style.transition = 'opacity 0.4s ease-out';
       
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -128,32 +131,35 @@
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // 2. THE REVEAL HANDOFF: Logo stays for a second longer
+      // 2. ACT II: The Snappy Reveal (Triggered almost immediately)
       setTimeout(() => {
-        document.body.classList.remove('is-intro');
-        
+        // We reveal the real UI UNDER the overlay
         const header = document.querySelector('.index-header');
         if (header) header.classList.add('reveal-static');
-
-        overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.4s ease-out';
 
         const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
         uiElements.forEach((el, index) => {
           setTimeout(() => {
             el.classList.add('reveal-active');
-          }, index * 60);
+          }, index * 50);
         });
 
+        // 3. ACT III: The Shield Dissolve (Overlay stays after the snap)
         setTimeout(() => {
-          wipe?.remove();
-          blackout?.remove();
-          overlay?.remove();
-          document.body.style.overflow = '';
-          document.body.style.position = '';
-        }, 1200);
-      }, 1500); // Increased from 500ms to 1500ms (1s longer)
-    }, 2300); // Increased from 300ms to 2300ms (2s longer)
+          document.body.classList.remove('is-intro');
+          overlay.style.opacity = '0';
+          overlay.style.transition = 'opacity 0.5s ease-in-out';
+
+          setTimeout(() => {
+            wipe?.remove();
+            blackout?.remove();
+            overlay?.remove();
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+          }, 600);
+        }, 800); // Overlay persists for 800ms AFTER the snappy reveal starts
+      }, 300); // Reveal starts 300ms into the wipe
+    }, 2000); 
   }
 
   window.addEventListener('load', runIntro);
