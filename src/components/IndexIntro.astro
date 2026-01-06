@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - 3s Fade / 1s Ramped Glide */
+/* IndexIntro.astro - Overlapping Fade & Translation */
 ---
 
 <div id="intro-blackout"></div>
@@ -127,14 +127,14 @@
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // --- UPDATED SEQUENCE ---
+    // --- OVERLAPPING TIMING ---
 
     // ACT I: THE 3s FADE
     setTimeout(() => {
       overlay.style.transition = 'opacity 3.0s ease-in-out';
       overlay.style.opacity = '1';
 
-      // ACT II: THE SLIDE + SCALE (Starts at the 2s mark)
+      // ACT II: OVERLAPPED TRANSLATION (Starts 1.5s into the 3s fade)
       setTimeout(() => {
         const aggressiveEase = 'cubic-bezier(0.95, 0.05, 0.05, 0.95)';
         
@@ -148,11 +148,12 @@
         overlay.style.top = `${finalRect.top}px`;
         overlay.style.left = `${finalRect.left}px`;
         overlay.style.transform = 'translateZ(0) scale(1)';
-      }, 2000); // Trigger 2s into the 3s total fade
+      }, 1500); 
 
     }, 50);
 
-    // ACT III: THE WIPE & REVEAL (Triggers at 3.05s)
+    // ACT III: THE WIPE (Triggers as logo docks at the 2.5s mark)
+    // Formula: Fade Start (50ms) + Movement Start (1500ms) + Movement Duration (1000ms) = 2550ms
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -174,7 +175,7 @@
         }, 50);
       }, 200);
 
-      // Final Unlock
+      // Scroll Release
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
@@ -187,7 +188,7 @@
         }, 100);
       }, 1300);
 
-    }, 3050); 
+    }, 2550); 
   }
 
   window.addEventListener('load', runIntro);
