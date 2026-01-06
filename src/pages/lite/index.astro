@@ -1,5 +1,6 @@
 ---
-/* lite.astro - Pure Performance / Zero-JS */
+/* lite/index.astro - The Fast Lane */
+const currentYear = new Date().getFullYear();
 ---
 
 <!doctype html>
@@ -9,11 +10,11 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>PNGU | Lite</title>
 		<style is:inline>
-			/* The "One-Packet" CSS - Inlined for 0ms network overhead */
+			/* Instant-paint CSS */
 			:root {
 				--bg: #333333;
 				--text: #ffffff;
-				--accent: #00d1ff; /* A bright cyan for contrast links */
+				--accent: #00d1ff;
 				--border: #444444;
 			}
 			
@@ -22,74 +23,93 @@
 			body {
 				background-color: var(--bg);
 				color: var(--text);
-				/* System font stack = 0KB download */
-				font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-				line-height: 1.6;
-				max-width: 650px;
+				font-family: system-ui, -apple-system, sans-serif;
+				line-height: 1.5;
+				max-width: 600px;
 				margin: 0 auto;
 				padding: 2rem 1rem;
 			}
 
-			header { text-align: center; margin-bottom: 2.5rem; }
+			header { text-align: center; margin-bottom: 2rem; }
 			
-			/* Decoding async prevents the image from blocking the text render */
-			img { 
-				max-width: 100%; 
-				height: auto; 
-				display: block; 
-				margin: 0 auto; 
+			.logo-text { 
+				font-size: 2.5rem; 
+				font-weight: 800; 
+				letter-spacing: -0.05em; 
+				text-transform: lowercase;
+				margin-bottom: 0.5rem;
 			}
+
+			.separator { opacity: 0.3; margin: 1.5rem 0; text-align: center; font-size: 1.5rem; }
 
 			a { color: var(--accent); text-decoration: none; }
 			a:hover { text-decoration: underline; }
 
 			.content-box {
 				border: 1px solid var(--border);
-				padding: 1.5rem;
-				margin-bottom: 1.25rem;
+				padding: 1.25rem;
+				margin-bottom: 1rem;
 				border-radius: 4px;
 			}
 
-			h1, h2 { margin-bottom: 0.75rem; font-weight: 600; }
-			ul { list-style: none; }
-			li { margin-bottom: 0.5rem; }
+			h2 { font-size: 1.1rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
+			
+			.lite-nav { list-style: none; }
+			.lite-nav li { margin-bottom: 1rem; }
+			.lite-nav .title { font-weight: bold; display: block; font-size: 1.1rem; }
+			.lite-nav .desc { font-size: 0.9rem; opacity: 0.7; display: block; }
 
-			.meta { opacity: 0.6; font-size: 0.9rem; margin-top: 2rem; text-align: center; }
+			.external-list { list-style: none; display: flex; gap: 1rem; flex-wrap: wrap; }
+			
+			footer { margin-top: 3rem; text-align: center; font-size: 0.9rem; border-top: 1px solid var(--border); padding-top: 2rem; }
+			.full-site-link { font-weight: bold; color: #fff; background: #444; padding: 0.75rem 1.5rem; border-radius: 4px; display: inline-block; margin-top: 1rem; }
 		</style>
 	</head>
 	<body>
+
 		<header>
-			<img 
-				src="/site-assets/banner.png" 
-				alt="PNGU Logo" 
-				width="200" 
-				decoding="async"
-			/>
+			<div class="logo-text">pngu</div>
+			<div class="separator">~</div>
 		</header>
 
 		<main>
 			<section class="content-box">
-				<h1>Simplified Version</h1>
-				<p>This is a low-bandwidth version of pngu.info. No animations, no scripts, no tracking.</p>
-			</section>
-
-			<section class="content-box">
-				<h2>Navigation</h2>
-				<ul>
-					<li><a href="https://pngu.info">Main Site (Cinematic)</a></li>
-					<li><a href="/projects">Project Directory</a></li>
-					<li><a href="/contact">Direct Contact</a></li>
+				<h2>Directory</h2>
+				<ul class="lite-nav">
+					<li>
+						<a href="/files" class="title">3D Files</a>
+						<span class="desc">STL files for 3D printing</span>
+					</li>
+					<li>
+						<a href="/data" class="title">Blaster Data</a>
+						<span class="desc">Performance spreadsheets & docs</span>
+					</li>
+					<li>
+						<a href="/brand" class="title">Brand Assets</a>
+						<span class="desc">Logos, fonts, and branding</span>
+					</li>
+					<li>
+						<a href="/contact" class="title">Contact</a>
+						<span class="desc">Email & Discord info</span>
+					</li>
 				</ul>
 			</section>
 
 			<section class="content-box">
-				<h2>Status</h2>
-				<p>All systems operational. Performance-first build active.</p>
+				<h2>External Links</h2>
+				<ul class="external-list">
+					<li><a href="https://www.youtube.com/@PnguNerf">YouTube</a></li>
+					<li><a href="https://github.com/pngu-nerf">GitHub</a></li>
+					<li><a href="https://www.printables.com/@PnguNerf_3188348">Printables</a></li>
+				</ul>
 			</section>
 		</main>
 
-		<footer class="meta">
-			<p>&copy; {new Date().getFullYear()} PNGU — Lite Mode</p>
+		<footer>
+			<p>Low-bandwidth mode active.</p>
+			<a href="https://pngu.info" class="full-site-link">Return to Full Experience</a>
+			<p style="margin-top: 1.5rem; opacity: 0.4;">&copy; {currentYear} PNGU</p>
 		</footer>
+
 	</body>
 </html>
