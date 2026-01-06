@@ -1,5 +1,5 @@
 ---
-/* lite/index.astro - The Fast Lane */
+/* lite/index.astro - Absolute Minimum Payload */
 const currentYear = new Date().getFullYear();
 ---
 
@@ -10,12 +10,11 @@ const currentYear = new Date().getFullYear();
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>PNGU | Lite</title>
 		<style is:inline>
-			/* Instant-paint CSS */
+			/* The Fastest Styles Possible: No Boxes, No Layout Logic */
 			:root {
 				--bg: #333333;
 				--text: #ffffff;
 				--accent: #00d1ff;
-				--border: #444444;
 			}
 			
 			* { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,45 +23,56 @@ const currentYear = new Date().getFullYear();
 				background-color: var(--bg);
 				color: var(--text);
 				font-family: system-ui, -apple-system, sans-serif;
-				line-height: 1.5;
-				max-width: 600px;
+				line-height: 1.4; /* Tighter leading for speed-reading */
+				max-width: 500px;
 				margin: 0 auto;
-				padding: 2rem 1rem;
+				padding: 1.5rem 1rem;
 			}
 
-			header { text-align: center; margin-bottom: 2rem; }
+			header { text-align: left; margin-bottom: 1.5rem; }
 			
 			.logo-text { 
-				font-size: 2.5rem; 
-				font-weight: 800; 
-				letter-spacing: -0.05em; 
+				font-size: 1.25rem; /* Half the size of previous 2.5rem */
+				font-weight: 700; 
+				letter-spacing: -0.02em;
 				text-transform: lowercase;
-				margin-bottom: 0.5rem;
 			}
 
-			.separator { opacity: 0.3; margin: 1.5rem 0; text-align: center; font-size: 1.5rem; }
+			.separator { opacity: 0.2; margin: 1rem 0; font-size: 1rem; }
 
 			a { color: var(--accent); text-decoration: none; }
 			a:hover { text-decoration: underline; }
 
-			.content-box {
-				border: 1px solid var(--border);
-				padding: 1.25rem;
-				margin-bottom: 1rem;
-				border-radius: 4px;
-			}
+			section { margin-bottom: 2rem; }
 
-			h2 { font-size: 1.1rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
+			h2 { 
+				font-size: 0.85rem; 
+				margin-bottom: 0.75rem; 
+				text-transform: uppercase; 
+				letter-spacing: 0.1em; 
+				opacity: 0.5; 
+			}
 			
 			.lite-nav { list-style: none; }
-			.lite-nav li { margin-bottom: 1rem; }
-			.lite-nav .title { font-weight: bold; display: block; font-size: 1.1rem; }
-			.lite-nav .desc { font-size: 0.9rem; opacity: 0.7; display: block; }
+			.lite-nav li { margin-bottom: 0.8rem; }
+			.lite-nav .title { font-weight: 600; display: block; font-size: 1rem; }
+			.lite-nav .desc { font-size: 0.85rem; opacity: 0.6; display: block; }
 
-			.external-list { list-style: none; display: flex; gap: 1rem; flex-wrap: wrap; }
+			.external-list { list-style: none; display: flex; gap: 1rem; }
 			
-			footer { margin-top: 3rem; text-align: center; font-size: 0.9rem; border-top: 1px solid var(--border); padding-top: 2rem; }
-			.full-site-link { font-weight: bold; color: #fff; background: #444; padding: 0.75rem 1.5rem; border-radius: 4px; display: inline-block; margin-top: 1rem; }
+			footer { 
+				margin-top: 4rem; 
+				padding-top: 1rem; 
+				border-top: 1px solid rgba(255,255,255,0.1); 
+				font-size: 0.85rem; 
+			}
+			
+			.full-site-link { 
+				color: var(--text); 
+				opacity: 0.7; 
+				text-decoration: underline; 
+				font-weight: 500;
+			}
 		</style>
 	</head>
 	<body>
@@ -73,7 +83,7 @@ const currentYear = new Date().getFullYear();
 		</header>
 
 		<main>
-			<section class="content-box">
+			<section>
 				<h2>Directory</h2>
 				<ul class="lite-nav">
 					<li>
@@ -95,7 +105,7 @@ const currentYear = new Date().getFullYear();
 				</ul>
 			</section>
 
-			<section class="content-box">
+			<section>
 				<h2>External Links</h2>
 				<ul class="external-list">
 					<li><a href="https://www.youtube.com/@PnguNerf">YouTube</a></li>
@@ -106,9 +116,8 @@ const currentYear = new Date().getFullYear();
 		</main>
 
 		<footer>
-			<p>Low-bandwidth mode active.</p>
-			<a href="https://pngu.info" class="full-site-link">Return to Full Experience</a>
-			<p style="margin-top: 1.5rem; opacity: 0.4;">&copy; {currentYear} PNGU</p>
+			<a href="https://pngu.info" class="full-site-link">Return to the normal site</a>
+			<p style="margin-top: 1rem; opacity: 0.3;">&copy; {currentYear} pngu</p>
 		</footer>
 
 	</body>
