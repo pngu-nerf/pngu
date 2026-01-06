@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - 1s Ramped Glide / 2s Total Fade */
+/* IndexIntro.astro - Aggressive Speed Ramp & Dynamic Scaling */
 ---
 
 <div id="intro-blackout"></div>
@@ -31,14 +31,15 @@
     transform: translateY(4px);
   }
 
+  /* OVERLAY - Support for Scale + Position */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
     pointer-events: none;
     display: none;
     opacity: 0;
-    will-change: opacity, top, left;
-    transform: translateZ(0); 
+    will-change: opacity, top, left, transform;
+    transform: translateZ(0) scale(2); /* Starts at 2x size */
     -webkit-font-smoothing: antialiased;
   }
 
@@ -48,6 +49,7 @@
     display: block;
   }
 
+  /* CURTAIN */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -109,14 +111,17 @@
 
     window.scrollTo(0, 0);
 
+    // 1. MEASURE FINAL DOCK
     const finalRect = actualBanner.getBoundingClientRect();
     const headerHeight = header.offsetHeight;
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
 
-    const startWidth = finalRect.width;
+    // 2. CENTER POSITION MATH
+    const startWidth = finalRect.width; 
     const startLeft = (window.innerWidth - startWidth) / 2;
     const startTop = (window.innerHeight - (startWidth * (finalRect.height / finalRect.width))) / 2;
 
+    // 3. INITIAL SETUP
     overlay.style.width = `${startWidth}px`;
     overlay.style.top = `${startTop}px`;
     overlay.style.left = `${startLeft}px`;
@@ -127,25 +132,35 @@
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // --- ANIMATION SEQUENCE ---
+    // --- THE ANIMATION SEQUENCE ---
 
-    // 1. START FADE (2.0s duration)
+    // ACT I: THE 2s FADE
     setTimeout(() => {
       overlay.style.transition = 'opacity 2.0s ease-in-out';
       overlay.style.opacity = '1';
 
-      // 2. SPEED-RAMPED ASCENT (1.0s duration)
-      // Starts exactly at the halfway mark of the fade
+      // ACT II: THE AGGRESSIVE SLIDE + SCALE (Starts 1s in)
       setTimeout(() => {
-        // Easing: Quintic Ease-In-Out for that dramatic speed ramp
-        overlay.style.transition = 'top 1.0s cubic-bezier(0.83, 0, 0.17, 1), left 1.0s cubic-bezier(0.83, 0, 0.17, 1), opacity 2.0s ease-in-out';
+        // ULTRA-AGGRESSIVE RAMP: cubic-bezier(0.95, 0.05, 0.05, 0.95)
+        // This is slow at the very start/end, and high-velocity in the middle.
+        const aggressiveEase = 'cubic-bezier(0.95, 0.05, 0.05, 0.95)';
+        
+        overlay.style.transition = `
+          top 1.0s ${aggressiveEase}, 
+          left 1.0s ${aggressiveEase}, 
+          transform 1.0s ${aggressiveEase}, 
+          opacity 2.0s ease-in-out
+        `;
+        
+        // Move to final position and scale down from 2x to 1x
         overlay.style.top = `${finalRect.top}px`;
         overlay.style.left = `${finalRect.left}px`;
+        overlay.style.transform = 'translateZ(0) scale(1)';
       }, 1000);
 
     }, 50);
 
-    // 3. THE WIPE & REVEAL (Triggers precisely as the 2s fade & 1s glide finish)
+    // ACT III: THE WIPE & REVEAL (Triggered when logo docks)
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -167,7 +182,7 @@
         }, 50);
       }, 200);
 
-      // Settle Buffer
+      // Settle buffer
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
@@ -180,7 +195,7 @@
         }, 100);
       }, 1300);
 
-    }, 2050); // Matches the 2s fade duration + small initial delay
+    }, 2050); 
   }
 
   window.addEventListener('load', runIntro);
