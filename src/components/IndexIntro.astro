@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Flat Overlay & Instant Reveal */
+/* IndexIntro.astro - Persistent Logo & Instant Sync Reveal */
 ---
 
 <div id="intro-blackout"></div>
@@ -16,7 +16,7 @@
     left: 0;
   }
 
-  /* Real UI hidden but ready to snap */
+  /* 1. INITIAL STATE: Real UI is hidden but the header is ready */
   body.is-intro main, 
   body.is-intro .index-header,
   body.is-intro .content-box,
@@ -26,20 +26,21 @@
     opacity: 0 !important;
   }
 
+  /* We keep the vertical tuck very shallow for maximum speed */
   body.is-intro .content-box,
   body.is-intro .separator {
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
 
-  /* Static Overlay (The Shield) - NOW FLAT (No Shadow) */
+  /* 2. PERSISTENT BANNER OVERLAY (No Shadow) */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
     pointer-events: none;
     display: none;
-    opacity: 0;
+    /* Visible from the start */
+    opacity: 1; 
     will-change: opacity;
-    /* Shadow removed here */
   }
 
   #intro-banner-overlay img {
@@ -48,6 +49,7 @@
     display: block;
   }
 
+  /* 3. CURTAIN LAYERS */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -65,23 +67,25 @@
     pointer-events: none;
   }
 
+  /* 4. ANIMATION - High-Tension Cubic Bezier */
   .animate-wipe {
-    transition: transform 1.0s cubic-bezier(0.19, 1, 0.22, 1);
+    transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
   .reveal-static {
     visibility: visible !important;
     opacity: 1 !important;
-    transition: opacity 0.1s linear !important; /* Instant snap */
+    transition: opacity 0.1s linear !important;
   }
 
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
     transform: translateY(0) !important;
+    /* Ultrfast 0.2s reveal */
     transition: 
-      opacity 0.3s ease-out, 
-      transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+      opacity 0.2s ease-out, 
+      transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2) !important;
   }
 </style>
 
@@ -103,56 +107,54 @@
 
     if (!actualBanner || !overlay) return;
 
+    // PIN OVERLAY IMMEDIATELY
     const rect = actualBanner.getBoundingClientRect();
     overlay.style.width = `${rect.width}px`;
     overlay.style.top = `${rect.top}px`;
     overlay.style.left = `${rect.left}px`;
     overlay.innerHTML = `<img src="${actualBanner.src}" alt="Overlay Banner">`;
     overlay.style.display = 'block';
+    overlay.style.opacity = '1';
 
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
 
-    // 1. ACT I: The 2s Blackout Hold
+    // 1. THE 2s HOLD (The Blackout is active, but Logo is already visible)
     setTimeout(() => {
-      // Fade logo in quickly
-      overlay.style.opacity = '1';
-      overlay.style.transition = 'opacity 0.4s ease-out';
-      
       if (blackout) blackout.style.display = 'none';
+      
       if (wipe) {
         wipe.classList.add('animate-wipe');
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // 2. ACT II: The INSTANT Reveal (Triggered almost immediately)
-      setTimeout(() => {
-        // We reveal the real UI UNDER the overlay immediately
-        const header = document.querySelector('.index-header');
-        if (header) header.classList.add('reveal-static');
+      // 2. INSTANT SYNC REVEAL
+      // Fired at 0ms delay relative to the wipe starting
+      const header = document.querySelector('.index-header');
+      if (header) header.classList.add('reveal-static');
 
-        const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
-        uiElements.forEach((el, index) => {
-          setTimeout(() => {
-            el.classList.add('reveal-active');
-          }, index * 50);
-        });
-
-        // 3. ACT III: The Shield Dissolve (Overlay persists)
+      const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
+      uiElements.forEach((el, index) => {
         setTimeout(() => {
-          document.body.classList.remove('is-intro');
-          overlay.style.opacity = '0';
-          overlay.style.transition = 'opacity 0.5s ease-in-out';
+          el.classList.add('reveal-active');
+        }, index * 30); // Ultra-tight 30ms stagger
+      });
 
-          setTimeout(() => {
-            wipe?.remove();
-            blackout?.remove();
-            overlay?.remove();
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-          }, 600);
-        }, 800); // Overlay persists for 800ms AFTER the snappy reveal starts
-      }, 50); // CHANGED: Reduced from 300ms to 50ms for instant trigger
+      // 3. CLEANUP HANDOFF
+      setTimeout(() => {
+        document.body.classList.remove('is-intro');
+        // Smoothly exit the proxy logo now that the real one is under it
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.3s ease-in-out';
+
+        setTimeout(() => {
+          wipe?.remove();
+          blackout?.remove();
+          overlay?.remove();
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+        }, 400);
+      }, 700); 
     }, 2000); 
   }
 
