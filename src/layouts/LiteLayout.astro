@@ -1,10 +1,6 @@
 ---
-interface Props {
-	title: string;
-}
 const { title } = Astro.props;
 ---
-
 <!doctype html>
 <html lang="en">
 	<head>
@@ -12,52 +8,10 @@ const { title } = Astro.props;
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>{title}</title>
 		<style is:inline>
-			/* CSS Reset & Core Styles - Zero External Requests */
-			:root {
-				--bg: #333333;
-				--text: #ffffff;
-				--accent: #00d1ff; /* Snappy Cyan for links */
-				--border: #444444;
-			}
-			
-			* { box-sizing: border-box; margin: 0; padding: 0; }
-			
-			body {
-				background-color: var(--bg);
-				color: var(--text);
-				font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-				line-height: 1.6;
-				max-width: 650px;
-				margin: 0 auto;
-				padding: 2rem 1rem;
-				word-wrap: break-word;
-			}
-
-			header { text-align: center; margin-bottom: 2rem; }
-			
-			/* Native image optimization hint */
-			img { 
-				max-width: 100%; 
-				height: auto; 
-				display: block; 
-				margin: 0 auto; 
-			}
-
+			:root { --bg: #333333; --text: #ffffff; --accent: #00d1ff; }
+			body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; max-width: 650px; margin: 0 auto; padding: 2rem 1rem; }
 			a { color: var(--accent); text-decoration: none; }
-			a:hover { text-decoration: underline; }
-
-			.box {
-				border: 1px solid var(--border);
-				padding: 1.5rem;
-				margin-bottom: 1rem;
-				border-radius: 4px;
-			}
-
-			h1, h2 { margin-bottom: 0.5rem; line-height: 1.2; }
-			ul { list-style: none; }
-			li { margin-bottom: 0.5rem; }
-
-			.tilde { opacity: 0.5; margin: 1rem 0; }
+			.box { border: 1px solid #444; padding: 1rem; margin-top: 1rem; }
 		</style>
 	</head>
 	<body>
