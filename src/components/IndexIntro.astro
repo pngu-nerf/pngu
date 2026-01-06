@@ -1,9 +1,10 @@
 ---
-/* IndexIntro.astro - Snappy Reveal with Static Header */
+/* IndexIntro.astro - Snappy Wipe with Static Logo Overlay */
 ---
 
 <div id="intro-blackout"></div>
 <div id="wipe-layer"></div>
+<div id="intro-banner-overlay"></div>
 
 <style is:global>
   body.is-intro {
@@ -15,21 +16,39 @@
     left: 0;
   }
 
-  /* 1. INITIAL STATE */
-  body.is-intro .index-header {
-    visibility: hidden !important;
-    opacity: 0 !important;
-    /* No transform here to keep it perfectly still */
-  }
-
-  body.is-intro .content-box, 
+  /* 1. INITIAL STATE: Real UI is hidden */
+  body.is-intro main, 
+  body.is-intro .index-header,
+  body.is-intro .content-box,
   body.is-intro .separator,
   body.is-intro .separator-small {
     visibility: hidden !important;
     opacity: 0 !important;
+  }
+
+  body.is-intro .content-box,
+  body.is-intro .separator {
     transform: translateY(12px);
   }
 
+  /* 2. STATIC BANNER OVERLAY */
+  #intro-banner-overlay {
+    position: fixed;
+    z-index: 10001; /* Sits above the wipe */
+    pointer-events: none;
+    display: none; /* Hidden until JS calculates position */
+    opacity: 0;
+    will-change: opacity;
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
+  }
+
+  #intro-banner-overlay img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* 3. CURTAIN LAYERS */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -42,30 +61,22 @@
     inset: 0;
     height: 400vh;
     z-index: 9999;
-    background: linear-gradient(
-      to bottom, 
-      #000 0%, 
-      #000 75%, 
-      transparent 100%
-    );
+    background: linear-gradient(to bottom, #000 0%, #000 75%, transparent 100%);
     transform: translateY(0); 
     pointer-events: none;
-    will-change: transform;
   }
 
   .animate-wipe {
     transition: transform 1.0s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 2. STATIC REVEAL (For the Header) */
+  /* 4. REVEAL CLASSES */
   .reveal-static {
     visibility: visible !important;
     opacity: 1 !important;
-    /* No motion transition, just a quick opacity snap */
-    transition: opacity 0.2s ease-out !important;
+    transition: opacity 0.3s ease-out !important;
   }
 
-  /* 3. SNAPPY REVEAL (For the Content Blocks) */
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
@@ -81,32 +92,55 @@
     const internalReferrer = document.referrer && document.referrer.includes(window.location.hostname);
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
+    const overlay = document.getElementById('intro-banner-overlay');
+    const actualBanner = document.querySelector('.banner-image') as HTMLImageElement;
 
     if (internalReferrer) {
       blackout?.remove();
       wipe?.remove();
+      overlay?.remove();
       document.body.classList.remove('is-intro');
       return; 
     }
 
+    if (!actualBanner || !overlay) return;
+
+    // A. SETUP OVERLAY POSITION
+    const rect = actualBanner.getBoundingClientRect();
+    overlay.style.width = `${rect.width}px`;
+    overlay.style.top = `${rect.top}px`;
+    overlay.style.left = `${rect.left}px`;
+    overlay.innerHTML = `<img src="${actualBanner.src}" alt="Overlay Banner">`;
+    overlay.style.display = 'block';
+
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
 
+    // B. SEQUENCE START
     setTimeout(() => {
+      // Fade in the overlay and start the wipe
+      overlay.style.opacity = '1';
+      overlay.style.transition = 'opacity 0.4s ease-out';
+      
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
         wipe.classList.add('animate-wipe');
         wipe.style.transform = 'translateY(-100%)';
       }
 
+      // C. REVEAL HANDOFF
       setTimeout(() => {
         document.body.classList.remove('is-intro');
         
-        // Target the header separately for the static reveal
+        // 1. Reveal real header
         const header = document.querySelector('.index-header');
         if (header) header.classList.add('reveal-static');
 
-        // Target content boxes for the snappy reveal
+        // 2. Fade OUT the overlay as the real header fades IN
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.3s ease-out';
+
+        // 3. Reveal content boxes
         const uiElements = document.querySelectorAll('.content-box, .separator, .separator-small');
         uiElements.forEach((el, index) => {
           setTimeout(() => {
@@ -114,13 +148,15 @@
           }, index * 50);
         });
 
+        // D. CLEANUP
         setTimeout(() => {
           wipe?.remove();
           blackout?.remove();
+          overlay?.remove();
           document.body.style.overflow = '';
           document.body.style.position = '';
         }, 1000);
-      }, 400); 
+      }, 500); // Trigger mid-wipe for snappiness
     }, 300);
   }
 
