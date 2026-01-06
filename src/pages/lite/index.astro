@@ -1,124 +1,48 @@
 ---
-/* lite/index.astro - Absolute Minimum Payload */
+/* lite/index.astro - The "Ghost" Build */
 const currentYear = new Date().getFullYear();
 ---
-
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>PNGU | Lite</title>
-		<style is:inline>
-			/* The Fastest Styles Possible: No Boxes, No Layout Logic */
-			:root {
-				--bg: #333333;
-				--text: #ffffff;
-				--accent: #00d1ff;
-			}
-			
-			* { box-sizing: border-box; margin: 0; padding: 0; }
-			
-			body {
-				background-color: var(--bg);
-				color: var(--text);
-				font-family: system-ui, -apple-system, sans-serif;
-				line-height: 1.4; /* Tighter leading for speed-reading */
-				max-width: 500px;
-				margin: 0 auto;
-				padding: 1.5rem 1rem;
-			}
-
-			header { text-align: left; margin-bottom: 1.5rem; }
-			
-			.logo-text { 
-				font-size: 1.25rem; /* Half the size of previous 2.5rem */
-				font-weight: 700; 
-				letter-spacing: -0.02em;
-				text-transform: lowercase;
-			}
-
-			.separator { opacity: 0.2; margin: 1rem 0; font-size: 1rem; }
-
-			a { color: var(--accent); text-decoration: none; }
-			a:hover { text-decoration: underline; }
-
-			section { margin-bottom: 2rem; }
-
-			h2 { 
-				font-size: 0.85rem; 
-				margin-bottom: 0.75rem; 
-				text-transform: uppercase; 
-				letter-spacing: 0.1em; 
-				opacity: 0.5; 
-			}
-			
-			.lite-nav { list-style: none; }
-			.lite-nav li { margin-bottom: 0.8rem; }
-			.lite-nav .title { font-weight: 600; display: block; font-size: 1rem; }
-			.lite-nav .desc { font-size: 0.85rem; opacity: 0.6; display: block; }
-
-			.external-list { list-style: none; display: flex; gap: 1rem; }
-			
-			footer { 
-				margin-top: 4rem; 
-				padding-top: 1rem; 
-				border-top: 1px solid rgba(255,255,255,0.1); 
-				font-size: 0.85rem; 
-			}
-			
-			.full-site-link { 
-				color: var(--text); 
-				opacity: 0.7; 
-				text-decoration: underline; 
-				font-weight: 500;
-			}
-		</style>
-	</head>
-	<body>
-
-		<header>
-			<div class="logo-text">pngu</div>
-			<div class="separator">~</div>
-		</header>
-
-		<main>
-			<section>
-				<h2>Directory</h2>
-				<ul class="lite-nav">
-					<li>
-						<a href="/files" class="title">3D Files</a>
-						<span class="desc">STL files for 3D printing</span>
-					</li>
-					<li>
-						<a href="/data" class="title">Blaster Data</a>
-						<span class="desc">Performance spreadsheets & docs</span>
-					</li>
-					<li>
-						<a href="/brand" class="title">Brand Assets</a>
-						<span class="desc">Logos, fonts, and branding</span>
-					</li>
-					<li>
-						<a href="/contact" class="title">Contact</a>
-						<span class="desc">Email & Discord info</span>
-					</li>
-				</ul>
-			</section>
-
-			<section>
-				<h2>External Links</h2>
-				<ul class="external-list">
-					<li><a href="https://www.youtube.com/@PnguNerf">YouTube</a></li>
-					<li><a href="https://github.com/pngu-nerf">GitHub</a></li>
-					<li><a href="https://www.printables.com/@PnguNerf_3188348">Printables</a></li>
-				</ul>
-			</section>
-		</main>
-
-		<footer>
-			<a href="https://pngu.info" class="full-site-link">Return to the normal site</a>
-			<p style="margin-top: 1rem; opacity: 0.3;">&copy; {currentYear} pngu</p>
-		</footer>
-
-	</body>
+<html lang="en" style="background:#333;color:#fff">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pngu</title>
+    <style>
+        /* Minified, Zero-Logic CSS */
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 0 auto; padding: 1rem; line-height: 1.2; }
+        a { color: #0df; text-decoration: none; }
+        h2 { font-size: .8rem; opacity: .5; margin: 1.5rem 0 .5rem; text-transform: uppercase; }
+        ul { list-style: none; }
+        li { margin-bottom: .6rem; }
+        .d { font-size: .8rem; opacity: .6; display: block; }
+        footer { margin-top: 3rem; border-top: 1px solid #444; padding-top: 1rem; font-size: .8rem; }
+    </style>
+</head>
+<body>
+    <header><b>pngu</b></header>
+    <main>
+        <section>
+            <h2>Directory</h2>
+            <ul>
+                <li><a href="/files">3D Files</a> <span class="d">STLs for printing</span></li>
+                <li><a href="/data">Blaster Data</a> <span class="d">Performance docs</span></li>
+                <li><a href="/brand">Brand Assets</a> <span class="d">Logos & fonts</span></li>
+                <li><a href="/contact">Contact</a> <span class="d">Email & Discord</span></li>
+            </ul>
+        </section>
+        <section>
+            <h2>External</h2>
+            <ul style="display:flex;gap:1rem">
+                <li><a href="https://www.youtube.com/@PnguNerf">YouTube</a></li>
+                <li><a href="https://github.com/pngu-nerf">GitHub</a></li>
+                <li><a href="https://www.printables.com/@PnguNerf_3188348">Printables</a></li>
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <a href="https://pngu.info" style="opacity:.7;text-decoration:underline">Return to the normal site</a>
+        <p style="margin-top:1rem;opacity:.3">&copy; {currentYear} pngu</p>
+    </footer>
+</body>
 </html>
