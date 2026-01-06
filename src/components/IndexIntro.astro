@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Stable Scroll Lock & Seamless Reveal */
+/* IndexIntro.astro - Anti-Jitter / Zero-Jump Logic */
 ---
 
 <div id="intro-blackout"></div>
@@ -7,34 +7,37 @@
 <div id="intro-banner-overlay"></div>
 
 <style is:global>
-  /* 1. THE STABLE LOCK: Stops scrolling without the 'position: fixed' jump */
+  /* 1. THE STABLE LOCK: Prevents the scrollbar width jump */
+  html {
+    scrollbar-gutter: stable;
+  }
+
   html.is-intro-locked,
   body.is-intro-locked {
     overflow: hidden !important;
-    height: 100% !important;
+    height: 100vh !important;
     width: 100% !important;
     touch-action: none;
   }
 
-  /* 2. INITIAL HIDE: Content is invisible by default during intro */
+  /* 2. INITIAL HIDE */
   body.is-intro .index-header,
   body.is-intro .content-box,
   body.is-intro .separator,
   body.is-intro .separator-small {
     opacity: 0;
     visibility: hidden;
-    transform: translateY(8px);
-    transition: none; /* No transitions until we trigger them */
+    transform: translateY(6px);
   }
 
-  /* 3. PERSISTENT LOGO: No Shadow, No Fade-in (Instant) */
+  /* 3. PERSISTENT LOGO: Pin it precisely */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
     pointer-events: none;
     display: none;
     opacity: 1;
-    will-change: opacity;
+    will-change: opacity, transform;
   }
 
   #intro-banner-overlay img {
@@ -59,27 +62,27 @@
     background: linear-gradient(to bottom, #000 0%, #000 75%, transparent 100%);
     transform: translateY(0); 
     pointer-events: none;
-    will-change: transform;
   }
 
   .animate-wipe {
     transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1);
   }
 
-  /* 5. REVEAL STATES: Defined clearly to handle the snap */
+  /* 5. REVEAL STATES */
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
     transform: translateY(0) !important;
     transition: 
-      opacity 0.2s ease-out, 
-      transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
+      opacity 0.25s ease-out, 
+      transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
   }
 
   .reveal-static {
     visibility: visible !important;
     opacity: 1 !important;
-    transition: opacity 0.1s linear !important;
+    /* Slightly longer fade to hide any minor sub-pixel misalignment */
+    transition: opacity 0.4s linear !important; 
   }
 </style>
 
@@ -116,16 +119,14 @@
 
     // C. THE 2s HOLD
     setTimeout(() => {
-      // 1. Start the Wipe
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
         wipe.classList.add('animate-wipe');
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // 2. THE OVERLAPPING REVEAL (175ms in)
+      // D. THE OVERLAPPING REVEAL (175ms in)
       setTimeout(() => {
-        // Pop the header and content
         const header = document.querySelector('.index-header');
         if (header) header.classList.add('reveal-static');
 
@@ -136,27 +137,23 @@
           }, index * 20); 
         });
 
-        // Start fading the overlay logo as real UI settles
+        // E. THE LONG DISSOLVE: Fades out slowly to mask the transition
         overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.4s ease-in-out';
+        overlay.style.transition = 'opacity 0.6s ease-in-out';
       }, 175);
 
-      // 3. POST-ANIMATION UNLOCK (Wipe 900ms + Buffer 500ms = 1400ms)
+      // F. FINAL RELEASE (Wipe duration + buffer)
       setTimeout(() => {
-        // Remove the visual 'is-intro' class first
+        // Cleanup DOM first while still locked
+        wipe?.remove();
+        blackout?.remove();
+        overlay?.remove();
+
+        // Release classes ONLY after the elements are gone
         document.body.classList.remove('is-intro');
-        
-        // Final Release of the scroll lock
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
-
-        // Clean up the DOM
-        setTimeout(() => {
-          wipe?.remove();
-          blackout?.remove();
-          overlay?.remove();
-        }, 500);
-      }, 1400);
+      }, 1500);
 
     }, 2000); 
   }
