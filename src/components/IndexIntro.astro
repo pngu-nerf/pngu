@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Speed-Ramped Translation & Parallel Fade */
+/* IndexIntro.astro - 1s Ramped Glide / 2s Total Fade */
 ---
 
 <div id="intro-blackout"></div>
@@ -129,23 +129,23 @@
 
     // --- ANIMATION SEQUENCE ---
 
-    // 1. Initial Fade Start
+    // 1. START FADE (2.0s duration)
     setTimeout(() => {
       overlay.style.transition = 'opacity 2.0s ease-in-out';
       overlay.style.opacity = '1';
 
-      // 2. SPEED-RAMPED ASCENT (Starts 1s in)
+      // 2. SPEED-RAMPED ASCENT (1.0s duration)
+      // Starts exactly at the halfway mark of the fade
       setTimeout(() => {
-        // Duration: 0.5s (Double your previous 0.25s)
-        // Easing: Quintic Ease-In-Out for that aggressive speed ramp effect
-        overlay.style.transition = 'top 0.5s cubic-bezier(0.83, 0, 0.17, 1), left 0.5s cubic-bezier(0.83, 0, 0.17, 1), opacity 2.0s ease-in-out';
+        // Easing: Quintic Ease-In-Out for that dramatic speed ramp
+        overlay.style.transition = 'top 1.0s cubic-bezier(0.83, 0, 0.17, 1), left 1.0s cubic-bezier(0.83, 0, 0.17, 1), opacity 2.0s ease-in-out';
         overlay.style.top = `${finalRect.top}px`;
         overlay.style.left = `${finalRect.left}px`;
       }, 1000);
 
     }, 50);
 
-    // 3. THE WIPE & REVEAL (Triggers after 2s fade)
+    // 3. THE WIPE & REVEAL (Triggers precisely as the 2s fade & 1s glide finish)
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -167,7 +167,7 @@
         }, 50);
       }, 200);
 
-      // Settle Lock (0.5s buffer)
+      // Settle Buffer
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
@@ -180,7 +180,7 @@
         }, 100);
       }, 1300);
 
-    }, 2000); 
+    }, 2050); // Matches the 2s fade duration + small initial delay
   }
 
   window.addEventListener('load', runIntro);
