@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - 1s Emergent Logo & Safari Optimized */
+/* IndexIntro.astro - Center-to-Header Translation Logic */
 ---
 
 <div id="intro-blackout"></div>
@@ -14,7 +14,6 @@
     touch-action: none;
   }
 
-  /* 1. INITIAL STATE */
   body.is-intro .index-header {
     opacity: 0.01;
     visibility: visible !important;
@@ -32,14 +31,14 @@
     transform: translateY(4px);
   }
 
-  /* 2. OVERLAY - Starts at 0 for the 1s fade-in */
+  /* OVERLAY - Now supports translation */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
     pointer-events: none;
     display: none;
-    opacity: 0; /* Changed from 1 to 0 */
-    will-change: opacity;
+    opacity: 0;
+    will-change: opacity, transform, top, left;
     transform: translateZ(0); 
     -webkit-font-smoothing: antialiased;
   }
@@ -50,7 +49,7 @@
     display: block;
   }
 
-  /* 3. CURTAIN - Safari Optimized */
+  /* CURTAIN */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -70,14 +69,12 @@
     pointer-events: none;
     will-change: transform;
     -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
   }
 
   .animate-wipe {
-    transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* 4. REVEAL STATES */
   .reveal-static {
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -114,13 +111,20 @@
 
     window.scrollTo(0, 0);
 
-    const rect = actualBanner.getBoundingClientRect();
+    // 1. MEASURE POSITIONS
+    const finalRect = actualBanner.getBoundingClientRect();
     const headerHeight = header.offsetHeight;
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
 
-    overlay.style.width = `${rect.width}px`;
-    overlay.style.top = `${rect.top}px`;
-    overlay.style.left = `${rect.left}px`;
+    // Calculate Center Start Position
+    const startWidth = finalRect.width;
+    const startLeft = (window.innerWidth - startWidth) / 2;
+    const startTop = (window.innerHeight - (startWidth * (finalRect.height / finalRect.width))) / 2;
+
+    // 2. INITIAL SETUP (DEAD CENTER)
+    overlay.style.width = `${startWidth}px`;
+    overlay.style.top = `${startTop}px`;
+    overlay.style.left = `${startLeft}px`;
     overlay.innerHTML = `<img src="${actualBanner.src}" alt="" style="width:100%; height:auto; display:block;">`;
     overlay.style.display = 'block';
 
@@ -128,22 +132,27 @@
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // ACT 0: THE 1s FADE IN
-    // Triggering it immediately after setup
+    // ACT 0: 2s FADE IN AT CENTER
     requestAnimationFrame(() => {
-        overlay.style.transition = 'opacity 1.0s ease-in-out';
+        overlay.style.transition = 'opacity 2.0s ease-in-out';
         overlay.style.opacity = '1';
     });
 
-    // ACT I: The 2s Hold (Wipe begins after this)
+    // ACT I: THE MOVEMENT (Starts after 2s fade)
     setTimeout(() => {
+      // Begin Wipe
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
         wipe.classList.add('animate-wipe');
         wipe.style.transform = 'translateY(-110%)'; 
       }
 
-      // ACT II: THE SNAP REVEAL
+      // Begin Translation to Header
+      overlay.style.transition = 'top 0.8s cubic-bezier(0.16, 1, 0.3, 1), left 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease-out';
+      overlay.style.top = `${finalRect.top}px`;
+      overlay.style.left = `${finalRect.left}px`;
+
+      // ACT II: THE SNAP REVEAL (Occurs during the slide)
       setTimeout(() => {
         header.classList.add('reveal-static');
 
@@ -154,13 +163,14 @@
           }, index * 20); 
         });
 
+        // Hide overlay shield after it arrives
         setTimeout(() => {
-          overlay.style.transition = 'opacity 0.1s ease-in-out';
           overlay.style.opacity = '0';
-        }, 100);
-      }, 175);
+        }, 150);
+      }, 500); // Trigger mid-slide
 
-      // ACT III: UNLOCK
+      // ACT III: EXTENDED LOCK (0.5s settle)
+      // Total wait = Wipe (0.9s) + Settle (0.5s) = 1400ms
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
@@ -171,9 +181,9 @@
           blackout?.remove();
           overlay?.remove();
         }, 200);
-      }, 1000); 
+      }, 1400); 
 
-    }, 2000); 
+    }, 2500); // 2s Fade + 0.5s static hold at center
   }
 
   window.addEventListener('load', runIntro);
