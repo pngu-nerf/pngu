@@ -1,18 +1,19 @@
 ---
-/* IndexIntro.astro - Locked Scroll & Guaranteed Reveal */
+/* IndexIntro.astro - Final Alignment Fix */
 ---
 
 <div id="intro-blackout"></div>
 <div id="wipe-layer"></div>
 
 <style is:global>
-  /* LOCK SCROLL during intro */
+  /* LOCK SCROLL and FORCE TOP */
   body.is-intro {
     overflow: hidden !important;
     height: 100vh !important;
+    position: fixed; /* Prevents any "jump" if the browser tries to restore scroll position */
+    width: 100%;
   }
 
-  /* 1. INITIAL STATE: Force hidden */
   body.is-intro main, 
   body.is-intro .index-header,
   body.is-intro .content-box,
@@ -20,10 +21,9 @@
   body.is-intro .separator-small {
     visibility: hidden !important;
     opacity: 0 !important;
-    transform: translateY(25px); /* Slightly deeper tuck for the slide-up */
+    transform: translateY(25px);
   }
 
-  /* 2. OVERSIZED BANNER PROXY */
   #intro-banner-proxy {
     position: fixed;
     z-index: 10001;
@@ -35,8 +35,6 @@
     filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9));
     pointer-events: none;
     will-change: transform, width, top, left, opacity;
-    
-    /* NEW: Start transparent and fade in */
     opacity: 0;
     transition: opacity 0.8s ease-out;
   }
@@ -53,15 +51,9 @@
     inset: 0;
     height: 400vh;
     z-index: 9999;
-    background: linear-gradient(
-      to bottom, 
-      #000 0%, 
-      #000 75%, 
-      transparent 100%
-    );
+    background: linear-gradient(to bottom, #000 0%, #000 75%, transparent 100%);
     transform: translateY(0); 
     pointer-events: none;
-    will-change: transform;
   }
 
   .animate-banner {
@@ -76,22 +68,17 @@
     transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* THE REVEAL: Applied to content boxes and header */
   .reveal-active {
     visibility: visible !important;
     opacity: 1 !important;
     transform: translateY(0) !important;
-    /* Increased duration for a smoother 'pop' */
-    transition: 
-      opacity 0.8s ease-out, 
-      transform 0.8s cubic-bezier(0.23, 1, 0.32, 1) !important;
+    transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.23, 1, 0.32, 1) !important;
   }
 </style>
 
 <script>
   function runIntro() {
     const internalReferrer = document.referrer && document.referrer.includes(window.location.hostname);
-    
     const blackout = document.getElementById('intro-blackout');
     const wipe = document.getElementById('wipe-layer');
     const actualBanner = document.querySelector('.banner-image') as HTMLImageElement;
@@ -105,60 +92,58 @@
 
     if (!actualBanner || !blackout || !wipe) return;
 
-    // A. LOCK EVERYTHING
-    window.scrollTo(0, 0);
+    // 1. FORCE TOP AND LOCK
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     document.body.classList.add('is-intro');
     
-    // B. SETUP PROXY
+    // 2. SETUP PROXY
     const proxy = actualBanner.cloneNode(true) as HTMLImageElement;
     proxy.id = 'intro-banner-proxy';
     document.body.appendChild(proxy);
 
-    // C. STAGED ANIMATION
+    // 3. FORCE LAYOUT CALCULATIONS
+    // This dummy variable forces the browser to calculate the banner's true position at scroll 0
+    const forceLayout = actualBanner.offsetHeight; 
+
     requestAnimationFrame(() => {
-      // 1. Fade in the big logo
       proxy.style.opacity = '1';
 
       setTimeout(() => {
-        // 2. Banner Flight
+        // Recalculate rect only when we are ready to move
         const targetRect = actualBanner.getBoundingClientRect();
+        
         proxy.classList.add('animate-banner');
+        // We use absolute center coordinates relative to the viewport
         proxy.style.top = `${targetRect.top + (targetRect.height / 2)}px`;
         proxy.style.left = `${targetRect.left + (targetRect.width / 2)}px`;
         proxy.style.width = `${targetRect.width}px`;
 
         setTimeout(() => {
-          // 3. Trigger Wipe
           blackout.style.display = 'none';
           wipe.classList.add('animate-wipe');
           wipe.style.transform = 'translateY(-100%)';
 
-          // 4. Reveal Content (Staggered)
-          // We start this slightly before the wipe ends for a seamless look
           setTimeout(() => {
+            // RELEASE FIXED POSITION
             document.body.classList.remove('is-intro');
             
-            // Querying everything including the 'separator-small' to ensure no gaps
             const uiElements = document.querySelectorAll('.index-header, .content-box, .separator, .separator-small');
             uiElements.forEach((el, index) => {
               setTimeout(() => {
                 el.classList.add('reveal-active');
-              }, index * 120); // 120ms stagger for a more premium feel
+              }, index * 120);
             });
 
-            // 5. Cleanup
             setTimeout(() => {
               proxy.remove();
               wipe.remove();
-              // Re-enable scrolling just in case is-intro didn't clear it
-              document.body.style.overflow = '';
-              document.body.style.height = '';
             }, 1200);
           }, 1000); 
-        }, 500); // Wait for flight to finish
-      }, 800); // Initial logo 'hold' time
+        }, 500);
+      }, 800);
     });
   }
 
-  window.addEventListener('DOMContentLoaded', runIntro);
+  // Use 'load' instead of 'DOMContentLoaded' to ensure images and layout are fully ready
+  window.addEventListener('load', runIntro);
 </script>
