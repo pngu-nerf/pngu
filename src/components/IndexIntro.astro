@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - Aggressive Speed Ramp & Dynamic Scaling */
+/* IndexIntro.astro - 3s Fade / 1s Ramped Glide */
 ---
 
 <div id="intro-blackout"></div>
@@ -31,7 +31,6 @@
     transform: translateY(4px);
   }
 
-  /* OVERLAY - Support for Scale + Position */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
@@ -39,7 +38,7 @@
     display: none;
     opacity: 0;
     will-change: opacity, top, left, transform;
-    transform: translateZ(0) scale(2); /* Starts at 2x size */
+    transform: translateZ(0) scale(2); 
     -webkit-font-smoothing: antialiased;
   }
 
@@ -49,7 +48,6 @@
     display: block;
   }
 
-  /* CURTAIN */
   #intro-blackout {
     position: fixed;
     inset: 0;
@@ -111,17 +109,14 @@
 
     window.scrollTo(0, 0);
 
-    // 1. MEASURE FINAL DOCK
     const finalRect = actualBanner.getBoundingClientRect();
     const headerHeight = header.offsetHeight;
     document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
 
-    // 2. CENTER POSITION MATH
     const startWidth = finalRect.width; 
     const startLeft = (window.innerWidth - startWidth) / 2;
     const startTop = (window.innerHeight - (startWidth * (finalRect.height / finalRect.width))) / 2;
 
-    // 3. INITIAL SETUP
     overlay.style.width = `${startWidth}px`;
     overlay.style.top = `${startTop}px`;
     overlay.style.left = `${startLeft}px`;
@@ -132,35 +127,32 @@
     document.body.classList.add('is-intro-locked');
     document.body.classList.add('is-intro');
 
-    // --- THE ANIMATION SEQUENCE ---
+    // --- UPDATED SEQUENCE ---
 
-    // ACT I: THE 2s FADE
+    // ACT I: THE 3s FADE
     setTimeout(() => {
-      overlay.style.transition = 'opacity 2.0s ease-in-out';
+      overlay.style.transition = 'opacity 3.0s ease-in-out';
       overlay.style.opacity = '1';
 
-      // ACT II: THE AGGRESSIVE SLIDE + SCALE (Starts 1s in)
+      // ACT II: THE SLIDE + SCALE (Starts at the 2s mark)
       setTimeout(() => {
-        // ULTRA-AGGRESSIVE RAMP: cubic-bezier(0.95, 0.05, 0.05, 0.95)
-        // This is slow at the very start/end, and high-velocity in the middle.
         const aggressiveEase = 'cubic-bezier(0.95, 0.05, 0.05, 0.95)';
         
         overlay.style.transition = `
           top 1.0s ${aggressiveEase}, 
           left 1.0s ${aggressiveEase}, 
           transform 1.0s ${aggressiveEase}, 
-          opacity 2.0s ease-in-out
+          opacity 3.0s ease-in-out
         `;
         
-        // Move to final position and scale down from 2x to 1x
         overlay.style.top = `${finalRect.top}px`;
         overlay.style.left = `${finalRect.left}px`;
         overlay.style.transform = 'translateZ(0) scale(1)';
-      }, 1000);
+      }, 2000); // Trigger 2s into the 3s total fade
 
     }, 50);
 
-    // ACT III: THE WIPE & REVEAL (Triggered when logo docks)
+    // ACT III: THE WIPE & REVEAL (Triggers at 3.05s)
     setTimeout(() => {
       if (blackout) blackout.style.display = 'none';
       if (wipe) {
@@ -182,7 +174,7 @@
         }, 50);
       }, 200);
 
-      // Settle buffer
+      // Final Unlock
       setTimeout(() => {
         document.documentElement.classList.remove('is-intro-locked');
         document.body.classList.remove('is-intro-locked');
@@ -195,7 +187,7 @@
         }, 100);
       }, 1300);
 
-    }, 2050); 
+    }, 3050); 
   }
 
   window.addEventListener('load', runIntro);
