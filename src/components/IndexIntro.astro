@@ -1,5 +1,5 @@
 ---
-/* IndexIntro.astro - High-Speed Reveal with Shielded Overlay */
+/* IndexIntro.astro - Flat Overlay & Instant Reveal */
 ---
 
 <div id="intro-blackout"></div>
@@ -31,12 +31,7 @@
     transform: translateY(12px);
   }
 
-  /* Remove shadow from real banner during intro to prevent darkening stack */
-  body.is-intro .banner-image {
-    filter: none !important;
-  }
-
-  /* Static Overlay (The Shield) */
+  /* Static Overlay (The Shield) - NOW FLAT (No Shadow) */
   #intro-banner-overlay {
     position: fixed;
     z-index: 10001; 
@@ -44,8 +39,7 @@
     display: none;
     opacity: 0;
     will-change: opacity;
-    /* This shadow is the only one visible during the intro */
-    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
+    /* Shadow removed here */
   }
 
   #intro-banner-overlay img {
@@ -119,7 +113,7 @@
     window.scrollTo(0, 0);
     document.body.classList.add('is-intro');
 
-    // 1. ACT I: The 2s Blackout
+    // 1. ACT I: The 2s Blackout Hold
     setTimeout(() => {
       // Fade logo in quickly
       overlay.style.opacity = '1';
@@ -131,9 +125,9 @@
         wipe.style.transform = 'translateY(-100%)';
       }
 
-      // 2. ACT II: The Snappy Reveal (Triggered almost immediately)
+      // 2. ACT II: The INSTANT Reveal (Triggered almost immediately)
       setTimeout(() => {
-        // We reveal the real UI UNDER the overlay
+        // We reveal the real UI UNDER the overlay immediately
         const header = document.querySelector('.index-header');
         if (header) header.classList.add('reveal-static');
 
@@ -144,7 +138,7 @@
           }, index * 50);
         });
 
-        // 3. ACT III: The Shield Dissolve (Overlay stays after the snap)
+        // 3. ACT III: The Shield Dissolve (Overlay persists)
         setTimeout(() => {
           document.body.classList.remove('is-intro');
           overlay.style.opacity = '0';
@@ -158,7 +152,7 @@
             document.body.style.position = '';
           }, 600);
         }, 800); // Overlay persists for 800ms AFTER the snappy reveal starts
-      }, 300); // Reveal starts 300ms into the wipe
+      }, 50); // CHANGED: Reduced from 300ms to 50ms for instant trigger
     }, 2000); 
   }
 
