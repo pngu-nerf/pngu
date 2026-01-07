@@ -1,57 +1,83 @@
 ---
+import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import MainLayout from '../layouts/MainLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import FileItem from '../components/FileItem.astro';
 
-// Use local data for instant builds
-import projectDatabase from '../content/files-database.json';
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: "https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com",
+  credentials: {
+    accessKeyId: import.meta.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: import.meta.env.R2_SECRET_ACCESS_KEY,
+  },
+});
 
-const R2_BASE_URL = "https://assets.pngu.info/PNGU-3D-Files-main";
+const BUCKET_NAME = "pngu-assets";
+const ASSET_PREFIX = "PNGU-Blaster-Data-main/";
+const R2_DATA_BASE = "https://assets.pngu.info/PNGU-Blaster-Data-main";
 
-/* Each project in your JSON should look like:
-  {
-    "folderName": "Cynthia Bolt Remix",
-    "displayName": "Cynthia Bolt Remix",
-    "description": "...",
-    "printablesUrl": "...",
-    "stlFiles": ["part1.stl", "part2.stl"]
-  }
-*/
+let projects = [];
+
+try {
+  const command = new ListObjectsV2Command({ 
+    Bucket: BUCKET_NAME,
+    Prefix: ASSET_PREFIX 
+  });
+  
+  const response = await s3.send(command);
+  const files = response.Contents || [];
+  const projectMap = {};
+
+  files.forEach(file => {
+    const relativeKey = file.Key.replace(ASSET_PREFIX, ""); 
+    const parts = relativeKey.split('/');
+    
+    if (parts.length < 2) return; 
+
+    const folderName = parts[0];
+    const fileName = parts[1];
+
+    if (!projectMap[folderName]) {
+      projectMap[folderName] = {
+        displayName: decodeURIComponent(folderName).replace(/%20/g, ' '),
+        folderName: folderName,
+        files: []
+      };
+    }
+    if (fileName) projectMap[folderName].files.push(fileName);
+  });
+
+  projects = Object.values(projectMap);
+} catch (e) {
+  console.error("Data Fetch Error:", e);
+}
 ---
 
-<MainLayout title="3D Files">
-  <PageHeader title="3D Printing Files" subtitle="High-speed delivery via Cloudflare R2" />
+<MainLayout title="Blaster Data">
+  <PageHeader title="Blaster Data" subtitle="Technical Spreadsheets & Documentation" />
 
-  {projectDatabase.length === 0 ? (
+  {projects.length === 0 ? (
     <div class="content-box center-text">
-      <p>Updating database...</p>
+      <p>No documentation found or index is updating...</p>
     </div>
   ) : (
-    projectDatabase.map((project) => (
+    projects.map((project) => (
       <div class="content-box">
         <h2>{project.displayName}</h2>
-        
-        <details class="project-desc">
-          <summary>Project Info</summary>
-          <div class="description-content">
-            {project.description}
-            {project.printablesUrl && (
-              <a href={project.printablesUrl} target="_blank" class="printables-link">
-                View on Printables &rarr;
-              </a>
-            )}
-          </div>
-        </details>
-
         <div class="file-list">
-          {project.stlFiles.map((fileName) => {
-            // Construct the direct R2 URL
-            const fileUrl = `${R2_BASE_URL}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
-            
+          {project.files.map((fileName) => {
+            const rawUrl = `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
+            const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+
             return (
-              <FileItem name={fileName} downloadUrl={fileUrl} previewType="stl">
-                <div class="viewer-container" data-stl-url={fileUrl}>
-                  <span class="loading-text">Click to load 3D view...</span>
+              <FileItem name={fileName} downloadUrl={rawUrl} previewType="iframe">
+                <div class="preview-container">
+                  <iframe 
+                    src={previewUrl} 
+                    title={`Preview of ${fileName}`} 
+                    loading="lazy"
+                  ></iframe>
                 </div>
               </FileItem>
             );
@@ -62,89 +88,19 @@ const R2_BASE_URL = "https://assets.pngu.info/PNGU-3D-Files-main";
   )}
 
   <div class="footer-actions">
-    <a href="https://github.com/pngu-nerf/PNGU-3D-Files" target="_blank" class="github-direct-btn">
-      Source Repository &rarr;
-    </a>
+    <div class="lite-switch-container">
+      <a href="https://lite.pngu.info/data" class="lite-button">Switch to Lite Mode</a>
+    </div>
+    <p class="meta-info">Assets delivered via Cloudflare R2.</p>
   </div>
-
-  <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-    }
-  </script>
-
-  <script type="module">
-    import * as THREE from 'three';
-    import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-    const viewedElements = new WeakSet();
-
-    function initViewer(container, url) {
-        if (viewedElements.has(container)) return;
-        viewedElements.add(container);
-
-        const loadingText = container.querySelector('.loading-text');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111111);
-        
-        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-        scene.add(ambientLight);
-
-        const loader = new STLLoader();
-        // R2 handles these requests much faster than GitHub Raw
-        loader.load(url, (geometry) => {
-            if (loadingText) loadingText.style.display = 'none';
-            geometry.center();
-            const material = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x111111, shininess: 100 });
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.rotation.x = -Math.PI / 2;
-            scene.add(mesh);
-
-            geometry.computeBoundingBox();
-            const size = geometry.boundingBox.getSize(new THREE.Vector3()).length();
-            camera.position.z = size * 1.5;
-            
-            const animate = () => { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
-            animate();
-        });
-    }
-
-    document.addEventListener('toggle', (e) => {
-        if (e.target.open && e.target.classList.contains('file-item')) {
-            const container = e.target.querySelector('.viewer-container');
-            if (container) initViewer(container, container.dataset.stlUrl);
-        }
-    }, true);
-  </script>
 </MainLayout>
 
 <style>
-  .center-text { text-align: center; }
-  .project-desc {
-    background-color: rgba(31, 31, 31, 0.6);
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--glass-border);
-    overflow: hidden;
-  }
-  .project-desc summary { padding: 1rem; font-weight: bold; cursor: pointer; color: #e0e0e0; }
-  .description-content { padding: 1rem; line-height: 1.6; color: #ccc; white-space: pre-wrap; border-top: 1px solid var(--glass-border); }
-  .printables-link { display: block; margin-top: 15px; color: #fff; text-decoration: underline; font-size: 0.9rem; }
-  .viewer-container { height: 400px; display: flex; align-items: center; justify-content: center; }
-  .loading-text { color: #666; font-size: 0.9rem; }
-  .footer-actions { margin-top: 3rem; text-align: center; padding-bottom: 60px; }
-  .github-direct-btn {
-    display: inline-block; padding: 12px 24px; background: #272727; border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; text-decoration: none; transition: 0.2s;
-  }
-  .github-direct-btn:hover { background: #333; transform: translateY(-2px); }
+  .center-text { text-align: center; color: var(--text-muted); padding: 2rem; }
+  .preview-container { width: 100%; margin-top: 1rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--glass-border); }
+  iframe { width: 100%; height: 600px; border: none; background: #fff; }
+  .footer-actions { margin-top: 3rem; text-align: center; padding-bottom: 40px; }
+  .meta-info { opacity: 0.5; font-size: 0.8rem; margin-top: 1rem; }
+  .lite-button { text-decoration: none; font-size: 0.75rem; font-weight: 600; color: rgba(255, 255, 255, 0.4); padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; background: rgba(255, 255, 255, 0.03); transition: all 0.3s ease; }
+  .lite-button:hover { color: #fff; background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); }
 </style>
