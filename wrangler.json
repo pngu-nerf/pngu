@@ -1,6 +1,6 @@
 {
   "name": "pngu",
-  "compatibility_date": "2025-10-08",
+  "compatibility_date": "2026-01-07",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./dist/_worker.js/index.js",
   "assets": {
@@ -11,15 +11,25 @@
     "enabled": true
   },
   "upload_source_maps": true,
-  
   "routes": [
     {
       "pattern": "pngu.info/*",
       "zone_name": "pngu.info"
     }
   ],
-  
   "vars": {
     "SITE_URL": "https://pngu.info"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "pngu-assets"
+    }
+  ]
 }
