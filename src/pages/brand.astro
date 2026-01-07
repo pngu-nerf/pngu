@@ -1,20 +1,52 @@
 ---
+import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import MainLayout from '../layouts/MainLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import FileItem from '../components/FileItem.astro';
 
-// We'll keep this one as a local array since brand assets change less frequently,
-// but we'll point the paths to R2.
+// Initialize the R2 Client
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: "https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com",
+  credentials: {
+    accessKeyId: import.meta.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: import.meta.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+
+const BUCKET_NAME = "pngu-assets";
+const ASSET_PREFIX = "PNGU-Brand-Assets-main/";
 const R2_BRAND_BASE = "https://assets.pngu.info/PNGU-Brand-Assets-main";
 
-const assets = [
-  { name: "Logo White (SVG)", path: "PNGU%20logo%20white.svg", type: "image" },
-  { name: "Logo Black (SVG)", path: "PNGU%20logo%20black.svg", type: "image" },
-  { name: "Profile Image", path: "Youtube%20Profile.png", type: "image" },
-  { name: "Brand Youtube Banner", path: "Youtube%20Banner.jpg", type: "image" },
-  { name: "Brand Font (OTF)", path: "Jump%20Winter.otf", type: "font" },
-  { name: "Brand Font (TTF)", path: "Jump%20Winter.ttf", type: "font" }
-];
+let assets = [];
+
+try {
+  const command = new ListObjectsV2Command({ 
+    Bucket: BUCKET_NAME,
+    Prefix: ASSET_PREFIX 
+  });
+  
+  const response = await s3.send(command);
+  const files = response.Contents || [];
+
+  assets = files
+    .map(file => {
+      const fileName = file.Key.replace(ASSET_PREFIX, "");
+      if (!fileName) return null; // Skip the directory placeholder itself
+
+      // Determine if it's an image or font based on extension
+      const isImage = /\.(svg|png|jpg|jpeg|webp)$/i.test(fileName);
+      
+      return {
+        name: decodeURIComponent(fileName),
+        path: fileName,
+        type: isImage ? 'image' : 'font'
+      };
+    })
+    .filter(Boolean); // Remove nulls
+} catch (e) {
+  console.error("Brand Assets Fetch Error:", e);
+}
 ---
 
 <MainLayout title="Brand">
@@ -22,29 +54,33 @@ const assets = [
 
   <div class="content-box">
     <h2>Downloads</h2>
-    <div class="file-list">
-      {assets.map((asset) => {
-        const fullUrl = `${R2_BRAND_BASE}/${asset.path}`;
-        
-        return (
-          <FileItem 
-            name={asset.name} 
-            downloadUrl={fullUrl} 
-            previewType={asset.type === 'image' ? 'image' : 'none'}
-          >
-            {asset.type === 'image' ? (
-              <div class="preview-container">
-                 <img src={fullUrl} alt={asset.name} loading="lazy" />
-              </div>
-            ) : (
-              <div class="no-preview-box">
-                 <p class="no-preview">Preview not available for font files.</p>
-              </div>
-            )}
-          </FileItem>
-        );
-      })}
-    </div>
+    {assets.length === 0 ? (
+      <p class="no-preview">No brand assets found in R2.</p>
+    ) : (
+      <div class="file-list">
+        {assets.map((asset) => {
+          const fullUrl = `${R2_BRAND_BASE}/${encodeURIComponent(asset.path)}`;
+          
+          return (
+            <FileItem 
+              name={asset.name} 
+              downloadUrl={fullUrl} 
+              previewType={asset.type === 'image' ? 'image' : 'none'}
+            >
+              {asset.type === 'image' ? (
+                <div class="preview-container">
+                   <img src={fullUrl} alt={asset.name} loading="lazy" />
+                </div>
+              ) : (
+                <div class="no-preview-box">
+                   <p class="no-preview">Preview not available for {asset.name.split('.').pop().toUpperCase()} files.</p>
+                </div>
+              )}
+            </FileItem>
+          );
+        })}
+      </div>
+    )}
   </div>
 </MainLayout>
 
@@ -64,6 +100,7 @@ const assets = [
     align-items: center;
     padding: 2rem;
     border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
   }
   
   .preview-container img { 
@@ -78,7 +115,8 @@ const assets = [
     text-align: center; 
     background: rgba(255,255,255,0.03);
     border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
   }
 
-  .no-preview { color: var(--text-muted); font-style: italic; font-size: 0.9rem; }
+  .no-preview { color: var(--text-muted); font-style: italic; font-size: 0.9rem; text-align: center; }
 </style>
