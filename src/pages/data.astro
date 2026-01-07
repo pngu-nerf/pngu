@@ -1,37 +1,80 @@
 ---
+import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import MainLayout from '../layouts/MainLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import FileItem from '../components/FileItem.astro';
 
-// Use local data for zero-latency builds
-import dataDatabase from '../content/blaster-data-database.json';
+// Initialize the R2 Client
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: "https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com",
+  credentials: {
+    accessKeyId: import.meta.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: import.meta.env.R2_SECRET_ACCESS_KEY,
+  },
+});
 
+const BUCKET_NAME = "pngu-assets";
+const ASSET_PREFIX = "PNGU-Blaster-Data-main/";
 const R2_DATA_BASE = "https://assets.pngu.info/PNGU-Blaster-Data-main";
 
-/* Expected JSON structure:
-  {
-    "folderName": "Aegis-v1-Specs",
-    "displayName": "Aegis V1 Specifications",
-    "files": ["Aegis_V1_Performance.xlsx", "Assembly_Guide.docx"]
-  }
-*/
+let projects = [];
+
+try {
+  const command = new ListObjectsV2Command({ 
+    Bucket: BUCKET_NAME,
+    Prefix: ASSET_PREFIX 
+  });
+  
+  const response = await s3.send(command);
+  const files = response.Contents || [];
+  const projectMap = {};
+
+  files.forEach(file => {
+    // Strip the prefix to get the relative path inside the folder
+    const relativeKey = file.Key.replace(ASSET_PREFIX, ""); 
+    const parts = relativeKey.split('/');
+    
+    // We expect: ["Folder Name", "File Name"]
+    if (parts.length < 2) return; 
+
+    const folderName = parts[0];
+    const fileName = parts[1];
+
+    if (!projectMap[folderName]) {
+      projectMap[folderName] = {
+        displayName: decodeURIComponent(folderName).replace(/%20/g, ' '),
+        folderName: folderName,
+        files: []
+      };
+    }
+    
+    // Add file if it exists and isn't just the directory placeholder
+    if (fileName) {
+      projectMap[folderName].files.push(fileName);
+    }
+  });
+
+  projects = Object.values(projectMap);
+} catch (e) {
+  console.error("Data Fetch Error:", e);
+}
 ---
 
 <MainLayout title="Blaster Data">
   <PageHeader title="Blaster Data" subtitle="Technical Spreadsheets & Documentation" />
 
-  {dataDatabase.length === 0 ? (
+  {projects.length === 0 ? (
     <div class="content-box center-text">
-      <p>Updating documentation index...</p>
+      <p>Updating documentation index or no files found...</p>
     </div>
   ) : (
-    dataDatabase.map((project) => (
+    projects.map((project) => (
       <div class="content-box">
         <h2>{project.displayName}</h2>
         <div class="file-list">
           {project.files.map((fileName) => {
             const rawUrl = `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
-            // Point the Office Viewer to your high-speed R2 asset
             const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
 
             return (
@@ -60,7 +103,7 @@ const R2_DATA_BASE = "https://assets.pngu.info/PNGU-Blaster-Data-main";
 </MainLayout>
 
 <style>
-  .center-text { text-align: center; color: var(--text-muted); }
+  .center-text { text-align: center; color: var(--text-muted); padding: 2rem; }
   
   .preview-container {
     width: 100%;
@@ -72,9 +115,9 @@ const R2_DATA_BASE = "https://assets.pngu.info/PNGU-Blaster-Data-main";
 
   iframe { 
     width: 100%; 
-    height: 600px; /* Slightly taller for spreadsheets */
+    height: 600px; 
     border: none; 
-    background: #fff; /* Office viewer looks better with a solid background */
+    background: #fff; 
   }
 
   .footer-actions { margin-top: 3rem; text-align: center; padding-bottom: 40px; }
