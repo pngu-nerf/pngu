@@ -1,0 +1,285 @@
+---
+import { getR2Data } from '../lib/r2';
+import { R2_DATA_BASE } from '../constants';
+import BackgroundEffects from '../components/BackgroundEffects.astro';
+
+// 1. Fetch the data from R2
+const rawProjects = await getR2Data("PNGU-Blaster-Data-main/");
+
+// 2. Group by First Letter
+const grouped = rawProjects.reduce((acc: any, project: any) => {
+  const name = project.displayName || "General Assets";
+  const firstChar = name[0].toUpperCase();
+  const char = /[A-Z]/.test(firstChar) ? firstChar : "#";
+  
+  if (!acc[char]) acc[char] = [];
+  acc[char].push(project);
+  return acc;
+}, {});
+
+const sortedLetters = Object.keys(grouped).sort((a, b) => {
+    if (a === "#") return 1;
+    if (b === "#") return -1;
+    return a.localeCompare(b);
+});
+
+const currentYear = new Date().getFullYear();
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Blaster Data | PNGU</title>
+
+		<style>
+            * { 
+                box-sizing: border-box; 
+                -webkit-tap-highlight-color: transparent; 
+            }
+
+			body {
+				font-family: sans-serif; padding: 2rem; text-align: center;
+				max-width: 900px; margin: 0 auto; color: #ffffff; background-color: #0f0f0f;
+			}
+            
+            #bg-layer {
+                position: fixed;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                background-color: #0f0f0f;
+                z-index: -2;
+            }
+			
+			.header-box { text-align: center; margin-bottom: 2rem; }
+			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
+			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
+
+			.nav-links {
+				margin-top: 2rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+			}
+
+			.nav-links a {
+				text-decoration: none;
+                display: inline-block;
+				font-size: 0.75rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: rgba(255, 255, 255, 0.4);
+				padding: 12px 28px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 25px; 
+				background: rgba(255, 255, 255, 0.03);
+				backdrop-filter: blur(4px);
+				transition: all 0.3s ease;
+                width: 240px;
+			}
+
+            @media (hover: hover) {
+                .nav-links a:hover {
+                    color: rgba(255, 255, 255, 1);
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: rgba(255, 255, 255, 0.3);
+                    transform: translateY(-2px);
+                }
+                .download-btn:hover { background: #fff; color: #000; transform: scale(1.02); }
+            }
+
+            .search-container { margin: 2rem auto; width: 100%; max-width: 500px; position: relative; }
+            #data-search {
+                width: 100%; padding: 14px 20px; border-radius: 30px;
+                background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+                color: #fff; font-size: 1rem; outline: none; transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+            }
+
+            .letter-header { 
+                font-size: 2rem; font-weight: 800; color: rgba(255,255,255,0.1); 
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05); margin: 3rem 0 1rem 0; text-align: left; padding-left: 10px;
+            }
+
+			.content-box {
+				background-color: rgba(40, 40, 40, 0.4); 
+                backdrop-filter: blur(20px) saturate(120%);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 16px;
+				padding: 2rem;
+				width: 100%;
+				margin: 1.5rem auto; 
+				text-align: left;
+			}
+            
+            h2 { margin-top: 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 25px; }
+
+            .file-list { display: flex; flex-direction: column; gap: 16px; }
+
+            details.file-dropdown {
+                background-color: rgba(30, 30, 30, 0.4);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 12px;
+                overflow: hidden;
+                transition: all 0.3s ease;
+            }
+
+            summary {
+                padding: 18px 24px;
+                cursor: pointer;
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                user-select: none;
+            }
+            summary::-webkit-details-marker { display: none; }
+
+            .summary-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+            .file-name { font-weight: 600; font-size: 1.1rem; color: #fff; }
+            .preview-text { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: #666; }
+            details[open] .preview-text { color: #fff; }
+
+            .download-btn {
+                color: #ffffff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
+                padding: 10px 24px; border: 1px solid #ffffff; border-radius: 8px;
+                background: rgba(255,255,255,0.05); transition: all 0.2s ease;
+                display: inline-block; width: fit-content;
+            }
+
+            .preview-wrap { padding: 0 24px 24px 24px; animation: slideIn 0.3s ease-out; }
+            .iframe-container {
+                width: 100%; height: 600px; border-radius: 8px;
+                overflow: hidden; background: #fff; border: 1px solid rgba(255,255,255,0.1);
+            }
+
+            iframe { width: 100%; height: 100%; border: none; }
+
+            .footer-meta {
+                margin-top: 5rem; opacity: 0.3; font-size: 0.75rem;
+                letter-spacing: 0.15em; padding-bottom: 4rem; text-transform: uppercase;
+            }
+
+            @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+			@media (max-width: 600px) {
+				body { padding: 1.5rem 1rem; }
+				h1 { font-size: 2rem; }
+                .nav-links a { width: 100%; }
+                .content-box { padding: 1.5rem; }
+                .download-btn { width: fit-content; margin: 0 auto; }
+                .iframe-container { height: 400px; }
+			}
+		</style>
+	</head>
+	<body>
+        <div id="bg-layer"></div>
+        <BackgroundEffects />
+
+        <div class="header-box">
+			<h1>Blaster Data</h1>
+			<p class="subtitle">Documentation & Spreadsheets</p>
+			<div class="nav-links">
+                <a href="/">← Back</a>
+                <a href="https://lite.pngu.info/data">Lite Version</a>
+            </div>
+		</div>
+
+        <div class="search-container">
+            <input type="text" id="data-search" placeholder="Search blaster data..." />
+        </div>
+
+        <div id="results-container">
+            {sortedLetters.map((letter) => (
+                <div class="letter-group" data-letter={letter}>
+                    <div class="letter-header">{letter}</div>
+                    {grouped[letter].map((project: any) => (
+                        <div class="content-box project-card" data-title={project.displayName.toLowerCase()}>
+                            <h2>{project.displayName}</h2>
+                            <div class="file-list">
+                                {project.files.map((fileName: string) => {
+                                    const rawUrl = `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
+                                    const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+
+                                    return (
+                                        <details class="file-dropdown" data-filename={fileName.toLowerCase()}>
+                                            <summary>
+                                                <div class="summary-header">
+                                                    <span class="file-name">{fileName}</span>
+                                                    <span class="preview-text">PREVIEW ▼</span>
+                                                </div>
+                                                <a 
+                                                  href={rawUrl} 
+                                                  class="download-btn" 
+                                                  download 
+                                                  onclick="event.stopPropagation();"
+                                                >
+                                                  Download Asset
+                                                </a>
+                                            </summary>
+                                            <div class="preview-wrap">
+                                                <div class="iframe-container">
+                                                    <iframe 
+                                                        src={previewUrl} 
+                                                        title={`Preview of ${fileName}`} 
+                                                        loading="lazy"
+                                                    ></iframe>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ))}
+        </div>
+
+        <footer class="footer-meta">
+            © {currentYear} pngu
+        </footer>
+
+        <script is:inline>
+            const searchInput = document.getElementById('data-search');
+            const letterGroups = document.querySelectorAll('.letter-group');
+
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                
+                letterGroups.forEach(group => {
+                    let hasVisibleProject = false;
+                    const cards = group.querySelectorAll('.project-card');
+                    
+                    cards.forEach(card => {
+                        const title = card.dataset.title;
+                        const files = card.querySelectorAll('.file-dropdown');
+                        let hasVisibleFile = false;
+
+                        files.forEach(file => {
+                            const name = file.dataset.filename;
+                            if (name.includes(term) || title.includes(term)) {
+                                file.style.display = 'block';
+                                hasVisibleFile = true;
+                            } else {
+                                file.style.display = 'none';
+                            }
+                        });
+
+                        if (hasVisibleFile) {
+                            card.style.display = 'block';
+                            hasVisibleProject = true;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+
+                    group.style.display = hasVisibleProject ? 'block' : 'none';
+                });
+            });
+        </script>
+	</body>
+</html>
