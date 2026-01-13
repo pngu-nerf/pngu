@@ -1,79 +1,36 @@
 ---
-const currentYear = new Date().getFullYear();
 ---
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Home | Lite</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: ui-sans-serif, system-ui, sans-serif; 
-            background: #333; 
-            color: #fff; 
-            max-width: 400px; 
-            margin: 0 auto; 
-            padding: 2rem 1rem;
-        }
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 3rem; 
-        }
-        b { font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
-        
-        h2 { font-size: 0.7rem; color: #888; margin: 2rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
-        
-        nav a { 
-            display: block; 
-            padding: 12px 0; 
-            color: #fff; 
-            text-decoration: none; 
-            border-bottom: 1px solid #444; 
-            font-weight: 500;
-        }
-        nav a:active { background: #444; }
-
-        .ext { display: flex; gap: 1.5rem; margin-top: 0.5rem; }
-        .ext a { color: #aaa; font-size: 0.8rem; text-decoration: underline; }
-
-        footer { margin-top: 6rem; border-top: 1px solid #444; padding-top: 1rem; }
-        .reg-link { color: #aaa; text-decoration: underline; font-size: 0.8rem; display: block; margin-bottom: 1rem; }
-        .cr { font-size: 0.7rem; color: #666; }
-    </style>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Home | Lite</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font:13px/1.5 sans-serif;background:#333;color:#fff;text-align:center;padding:10vh 1rem}
+  header{margin-bottom:3rem}
+  b{font-size:1rem;letter-spacing:2px}
+  nav{display:flex;flex-direction:column;align-items:center;margin-bottom:3rem}
+  a{color:#fff;text-decoration:none;padding:10px 0;width:200px;border-bottom:1px solid #444}
+  a:active{background:#444}
+  .ext{display:flex;justify-content:center;gap:1rem;margin-bottom:4rem}
+  .ext a{width:auto;border:0;color:#888;font-size:11px;text-decoration:underline}
+  .reg{color:#555;font-size:11px;text-decoration:underline}
+</style>
 </head>
 <body>
-    <header>
-        <b>PNGU LITE</b>
-    </header>
-
-    <main>
-        <section>
-            <h2>Directory</h2>
-            <nav>
-                <a href="/lite/files">3D Files</a>
-                <a href="/lite/data">Blaster Data</a>
-                <a href="/lite/brand">Brand Assets</a>
-                <a href="/lite/contact">Contact</a>
-            </nav>
-        </section>
-
-        <section>
-            <h2>External</h2>
-            <div class="ext">
-                <a href="https://youtube.com/@PnguNerf">YouTube</a>
-                <a href="https://github.com/pngu-nerf">GitHub</a>
-                <a href="https://printables.com/@PnguNerf_3188348">Printables</a>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <a href="https://pngu.info" class="reg-link">Back to regular site</a>
-        <p class="cr">&copy; {currentYear} PNGU</p>
-    </footer>
+  <header><b>PNGU LITE</b></header>
+  <nav>
+    <a href="/lite/files">3D FILES</a>
+    <a href="/lite/data">BLASTER DATA</a>
+    <a href="/lite/brand">BRAND ASSETS</a>
+    <a href="/lite/contact">CONTACT</a>
+  </nav>
+  <div class="ext">
+    <a href="https://youtube.com/@PnguNerf">YouTube</a>
+    <a href="https://github.com/pngu-nerf">GitHub</a>
+    <a href="https://printables.com/@PnguNerf_3188348">Printables</a>
+  </div>
+  <a href="https://pngu.info" class="reg">Back to regular site</a>
 </body>
 </html>
