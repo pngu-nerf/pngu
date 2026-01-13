@@ -1,66 +1,42 @@
 ---
-import NavLink from '../../components/NavLink.astro';
-const currentYear = new Date().getFullYear();
+import { getR2Data } from '../../lib/r2';
+import { R2_DATA_BASE } from '../../constants';
+
+// Pulling dynamically from R2 so you never have to edit this file again
+const raw = await getR2Data("PNGU-Brand-Assets-main/");
+const assets = raw[0]?.files || []; 
 ---
-
+<!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<title>Lite | Brand Assets</title>
-		<style>
-			body { 
-                font-family: sans-serif; 
-                padding: 1.5rem; 
-                background: #000; 
-                color: #fff; 
-                max-width: 800px; 
-                margin: 0 auto; 
-            }
-			.nav { margin-bottom: 2rem; text-align: left; }
-			.nav a { 
-                color: #aaa; 
-                text-decoration: none; 
-                font-size: 0.8rem; 
-                border: 1px solid #333; 
-                padding: 8px 16px; 
-                border-radius: 20px; 
-            }
-			h1 { 
-                font-size: 1.5rem; 
-                margin: 1.5rem 0; 
-                border-bottom: 1px solid #222; 
-                padding-bottom: 10px; 
-            }
-            .list-container {
-                margin-top: 2rem;
-                display: flex;
-                flex-direction: column;
-                gap: 1rem;
-            }
-		</style>
-	</head>
-	<body>
-		<div class="nav"><a href="/lite">← Back</a></div>
-		<h1>Brand Assets</h1>
-        
-        <div class="list-container">
-            <NavLink 
-                href="https://assets.pngu.info/pngu-logo-white.png" 
-                title="Main Logo (White)" 
-                description="High-res PNG for dark backgrounds" 
-                external 
-            />
-            <NavLink 
-                href="https://assets.pngu.info/pngu-icon.png" 
-                title="Icon Only" 
-                description="Square brand mark" 
-                external 
-            />
-        </div>
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="preconnect" href={R2_DATA_BASE} />
+<title>brand</title>
+<style>
+  body{font:14px/1.4 sans-serif;background:#000;color:#fff;max-width:400px;margin:0 auto;padding:1rem}
+  header{margin-bottom:2rem}
+  a{color:#0df;text-decoration:none;display:block;padding:12px;background:#111;border:1px solid #222;border-radius:4px;margin-bottom:8px}
+  a:active{background:#222}
+  .b{border:0;background:0;color:#444;padding:0;margin-bottom:20px}
+  span{display:block;font-size:10px;color:#555;text-transform:uppercase;margin-top:4px}
+  h1{font-size:1.2rem;margin-bottom:4px}
+</style>
+</head>
+<body>
+<a href="/lite" class="b">← back</a>
+<header>
+  <h1>Brand Assets</h1>
+  <p style="color:#444;font-size:12px">Direct R2 links</p>
+</header>
 
-		<footer style="margin-top: 5rem; opacity: 0.3; font-size: 0.7rem;">
-            © {currentYear} PNGU
-        </footer>
-	</body>
-</html>
+<div id="l">
+{assets.map((f: string) => (
+  <a href={`${R2_DATA_BASE}/PNGU-Brand-Assets-main/${f}`} download>
+    {f.replace('.png', '').replace(/-/g, ' ')}
+    <span>Download PNG ↓</span>
+  </a>
+))}
+</div>
+
+<footer style="margin-top:4rem;color:#222;font-size:10px">© PNGU</footer>
+</body></html>
