@@ -1,14 +1,14 @@
 ---
 import { getR2Data } from '../lib/r2';
+import { R2_DATA_BASE } from '../constants';
 import MainLayout from '../layouts/MainLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import FileItem from '../components/FileItem.astro';
 
-// Single source of truth for the base URL
-const R2_DATA_BASE = "https://assets.pngu.info/PNGU-Blaster-Data-main";
-
-// Fetch grouped data using our new utility
-// We pass the prefix to tell it exactly which "folder" to scan
+/** * FETCH LOGIC
+ * The actual work is now outsourced to '../lib/r2'. 
+ * We simply ask for the folder we want to display.
+ */
 const projects = await getR2Data("PNGU-Blaster-Data-main/");
 ---
 
@@ -18,7 +18,7 @@ const projects = await getR2Data("PNGU-Blaster-Data-main/");
   {projects.length === 0 ? (
     <div class="content-box center-text">
       <p>Updating documentation index or no files found...</p>
-      <p class="debug-hint">Check your R2 keys and ensure nodejs_compat is enabled.</p>
+      <p class="debug-hint">Check your R2 keys in Cloudflare and ensure nodejs_compat is enabled.</p>
     </div>
   ) : (
     projects.map((project: any) => (
@@ -26,6 +26,7 @@ const projects = await getR2Data("PNGU-Blaster-Data-main/");
         <h2>{project.displayName}</h2>
         <div class="file-list">
           {project.files.map((fileName: string) => {
+            // URL construction using centralized constant
             const rawUrl = `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
             const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
 
@@ -66,6 +67,7 @@ const projects = await getR2Data("PNGU-Blaster-Data-main/");
     border: 1px solid var(--glass-border);
   }
 
+  /* Microsoft Office Preview Iframe Styles */
   iframe { 
     width: 100%; 
     height: 600px; 
