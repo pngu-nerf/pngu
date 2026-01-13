@@ -43,7 +43,12 @@ const currentYear = new Date().getFullYear();
 		<title>Brand Assets | PNGU</title>
 
 		<style>
-            * { box-sizing: border-box; }
+            /* Production Polish: Global Mobile Resets */
+            * { 
+                box-sizing: border-box; 
+                -webkit-tap-highlight-color: transparent; /* Kills the blue selection box */
+            }
+
 			body {
 				font-family: sans-serif; padding: 2rem; text-align: center;
 				max-width: 900px; margin: 0 auto; color: #ffffff; background-color: #0f0f0f;
@@ -61,7 +66,12 @@ const currentYear = new Date().getFullYear();
 				border-radius: 25px; background: rgba(255, 255, 255, 0.03);
 				backdrop-filter: blur(4px); transition: all 0.3s ease; width: 240px;
 			}
-            .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+
+            /* Hover Guard: Only apply hover effects on devices with a mouse */
+            @media (hover: hover) {
+                .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+                .download-btn:hover { background: #fff; color: #000; transform: scale(1.02); }
+            }
 
             .search-container { margin: 2rem auto; width: 100%; max-width: 500px; position: relative; }
             #brand-search {
@@ -70,7 +80,6 @@ const currentYear = new Date().getFullYear();
                 color: #fff; font-size: 1rem; outline: none; transition: all 0.3s ease;
                 backdrop-filter: blur(10px);
             }
-            #brand-search:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(0,0,0,0.4); }
 
             .letter-header { 
                 font-size: 2rem; font-weight: 800; color: rgba(255,255,255,0.1); 
@@ -92,10 +101,8 @@ const currentYear = new Date().getFullYear();
                 color: #ffffff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
                 padding: 10px 24px; border: 1px solid #ffffff; border-radius: 8px;
                 background: rgba(255,255,255,0.05); transition: all 0.2s ease;
-                /* Ensures it is only as wide as the text on all devices */
-                display: inline-block; width: fit-content; 
+                display: inline-block; width: fit-content;
             }
-            .download-btn:hover { background: #fff; color: #000; }
 
             .preview-wrap { padding: 24px; animation: slideIn 0.3s ease-out; }
             .checkerboard {
@@ -117,9 +124,9 @@ const currentYear = new Date().getFullYear();
 			@media (max-width: 600px) {
 				body { padding: 1.5rem 1rem; }
 				h1 { font-size: 2rem; }
-                /* Nav links still full width */
                 .nav-links a { width: 100%; }
-                /* Download button width rule removed here so it stays fit-content */
+                /* Explicitly keeping button fit-content on mobile as requested */
+                .download-btn { width: fit-content; margin: 0 auto; }
 			}
 		</style>
 	</head>
