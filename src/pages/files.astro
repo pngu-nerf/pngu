@@ -7,69 +7,49 @@ const GITHUB_REPO = 'PNGU-3D-Files';
 const BRANCH = 'main';
 const currentYear = new Date().getFullYear();
 
-// --- Types ---
-type FileItem = {
-  name: string;
-  path: string;
-  url: string;
-};
-
-type ProjectItem = {
-  title: string;
-  description: string;
-  printablesUrl: string | null;
-  files: FileItem[];
-};
-
-// --- Variables ---
-let errorMessage = "";
-let projects: Record<string, ProjectItem> = {};
-let projectList: ProjectItem[] = [];
-
 // --- Logic: Fetch from GitHub ---
+let projects: any[] = [];
 try {
   const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
   const response = await fetch(apiUrl, {
     headers: { 'User-Agent': 'PNGU-Website', 'Accept': 'application/vnd.github.v3+json' }
   });
-
-  if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
-
   const data = await response.json();
 
   if (data && data.tree) {
+    const projectMap: Record<string, any> = {};
     for (const item of data.tree) {
-      if (item.type === 'blob') { 
+      if (item.type === 'blob' && item.path.toLowerCase().endsWith('.stl')) {
         const pathParts = item.path.split('/');
         if (pathParts.length > 1) {
           const folderName = pathParts[0];
           const fileName = pathParts[pathParts.length - 1];
-
-          if (!projects[folderName]) {
-            projects[folderName] = {
-              title: folderName,
-              description: "No description available.",
-              printablesUrl: null,
-              files: []
-            };
+          if (!projectMap[folderName]) {
+            projectMap[folderName] = { title: folderName, files: [] };
           }
-
-          if (fileName.toLowerCase().endsWith('.stl')) {
-            const safePath = item.path.split('/').map(encodeURIComponent).join('/');
-            projects[folderName].files.push({
-              name: fileName,
-              path: item.path,
-              url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}` 
-            });
-          }
+          const safePath = item.path.split('/').map(encodeURIComponent).join('/');
+          projectMap[folderName].files.push({
+            name: fileName,
+            url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${safePath}`
+          });
         }
       }
     }
-    projectList = Object.values(projects).filter(p => p.files.length > 0);
+    projects = Object.values(projectMap).sort((a, b) => a.title.localeCompare(b.title));
   }
-} catch (error: any) {
-  errorMessage = error.message;
+} catch (e) {
+  console.error(e);
 }
+
+// Group by First Letter
+const grouped = projects.reduce((acc, project) => {
+  const char = project.title[0].toUpperCase();
+  if (!acc[char]) acc[char] = [];
+  acc[char].push(project);
+  return acc;
+}, {});
+
+const sortedLetters = Object.keys(grouped).sort();
 ---
 
 <html lang="en">
@@ -81,190 +61,80 @@ try {
 
 		<style>
             * { box-sizing: border-box; }
-
 			body {
-				font-family: sans-serif;
-				padding: 2rem;
-				text-align: center;
-				max-width: 900px;
-				margin: 0 auto;
-				color: #ffffff;
-                background-color: #0f0f0f;
+				font-family: sans-serif; padding: 2rem; text-align: center;
+				max-width: 900px; margin: 0 auto; color: #ffffff; background-color: #0f0f0f;
 			}
-            
-            #bg-layer {
-                position: fixed;
-                top: 0; left: 0;
-                width: 100%; height: 100%;
-                background-color: #0f0f0f;
-                z-index: -2;
-            }
-			
-			.header-box { text-align: center; margin-bottom: 3rem; }
+            #bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f0f0f; z-index: -2; }
+			.header-box { text-align: center; margin-bottom: 2rem; }
 			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
 			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
 
-            /* Navigation Buttons - Stacked Pills */
-			.nav-links {
-				margin-top: 2rem;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 1rem;
-			}
+            /* Search Bar Styling */
+            .search-container { margin: 2rem auto; width: 100%; max-width: 500px; position: relative; }
+            #file-search {
+                width: 100%; padding: 14px 20px; border-radius: 30px;
+                background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+                color: #fff; font-size: 1rem; outline: none; transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+            }
+            #file-search:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(0,0,0,0.4); }
 
+			.nav-links { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 			.nav-links a {
-				text-decoration: none;
-                display: inline-block;
-				font-size: 0.75rem;
-				font-weight: 600;
-				text-transform: uppercase;
-				letter-spacing: 0.1em;
-				color: rgba(255, 255, 255, 0.4);
-				padding: 10px 24px;
-				border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 20px;
-				background: rgba(255, 255, 255, 0.03);
-				backdrop-filter: blur(4px);
-				transition: all 0.3s ease;
-                width: 220px;
+				text-decoration: none; display: inline-block; font-size: 0.75rem; font-weight: 600;
+				text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.4);
+				padding: 12px 28px; border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 25px; background: rgba(255, 255, 255, 0.03);
+				backdrop-filter: blur(4px); transition: all 0.3s ease; width: 240px;
 			}
+            .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
 
-            .nav-links a:hover {
-                color: rgba(255, 255, 255, 1);
-				background: rgba(255, 255, 255, 0.1);
-				border-color: rgba(255, 255, 255, 0.3);
-				transform: translateY(-1px);
+            /* Alphabetical Groupings */
+            .letter-group { margin-bottom: 3rem; text-align: left; }
+            .letter-header { 
+                font-size: 2rem; font-weight: 800; color: rgba(255,255,255,0.1); 
+                border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem; padding-left: 10px;
             }
 
             /* Content Containers */
 			.content-box {
-				background-color: rgba(40, 40, 40, 0.4); 
-                backdrop-filter: blur(20px) saturate(120%);
-                -webkit-backdrop-filter: blur(20px) saturate(120%);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 16px;
-				padding: 2rem;
-				width: 100%;
-				margin: 2rem auto; 
-				text-align: left;
+				background-color: rgba(40, 40, 40, 0.4); backdrop-filter: blur(20px) saturate(120%);
+                border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+				padding: 1.5rem; width: 100%; margin: 1.5rem auto; text-align: left;
 			}
-            
-            h2 { 
-                margin-top: 0;
-                font-size: 1.5rem;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                padding-bottom: 10px;
-                margin-bottom: 20px;
-            }
+            h2 { margin-top: 0; font-size: 1.3rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 20px; }
 
-            /* File Row Structure: [Name + DL] | [PREVIEW Dropdown] */
+            /* Full-Bar Dropdown Style */
             .file-list { display: flex; flex-direction: column; gap: 12px; }
-
-            .file-row {
-                background-color: rgba(26, 26, 26, 0.6);
-                border: 1px solid rgba(255,255,255,0.05);
-                border-radius: 12px;
-                overflow: hidden;
-            }
-
-            .row-main {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 12px 16px;
-            }
-
-            .file-info {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                flex: 1;
-            }
-
-            .file-name { font-weight: 500; font-size: 0.95rem; }
-
-            .direct-dl {
-                color: rgba(255,255,255,0.4);
-                text-decoration: none;
-                font-size: 0.7rem;
-                padding: 4px 10px;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px;
-                transition: all 0.2s;
-            }
-            .direct-dl:hover {
-                color: #fff;
-                background: rgba(255,255,255,0.1);
-                border-color: rgba(255,255,255,0.3);
-            }
-
-            /* Dropdown Preview Trigger */
-            summary {
-                cursor: pointer;
-                list-style: none;
-                padding: 12px;
-                border-left: 1px solid rgba(255,255,255,0.1);
-                color: #666;
-                transition: all 0.2s;
-                user-select: none;
-            }
-            summary:hover { color: #fff; background: rgba(255,255,255,0.02); }
+            details.file-dropdown { background-color: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
+            summary { padding: 18px 20px; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 12px; }
             summary::-webkit-details-marker { display: none; }
+            .summary-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+            .file-name { font-weight: 600; font-size: 1rem; color: #fff; }
+            .preview-text { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; color: #555; }
+            details[open] .preview-text { color: #fff; }
 
-            summary::after {
-                content: 'PREVIEW ▼';
-                font-size: 0.65rem;
-                font-weight: 800;
-                letter-spacing: 0.05em;
+            .download-btn {
+                color: #ffffff; text-decoration: none; font-size: 0.75rem; font-weight: 700;
+                padding: 10px 18px; border: 1px solid #ffffff; border-radius: 8px;
+                background: rgba(255,255,255,0.05); transition: all 0.2s ease;
             }
+            .download-btn:hover { background: #fff; color: #000; }
 
-            details[open] summary { color: #fff; background: rgba(255,255,255,0.05); }
+            /* 3D Viewer */
+            .preview-wrap { padding: 0; background: #111; }
+            .viewer-container { height: 400px; width: 100%; position: relative; background: #0a0a0a; }
+            .loading-text { position: absolute; color: #444; font-size: 0.75rem; z-index: 10; width: 100%; text-align: center; }
 
-            /* 3D Viewer Container */
-            .preview-wrap {
-                padding: 0;
-                background: #111;
-                animation: slideIn 0.3s ease-out;
-            }
-
-            .viewer-container {
-                height: 400px;
-                width: 100%;
-                position: relative;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                overflow: hidden;
-            }
-
-            .loading-text {
-                position: absolute;
-                color: #666;
-                font-size: 0.8rem;
-                z-index: 10;
-            }
-
-            .footer-meta {
-                margin-top: 4rem;
-                opacity: 0.3;
-                font-size: 0.7rem;
-                letter-spacing: 0.1em;
-                padding-bottom: 3rem;
-                text-transform: uppercase;
-            }
-
-            @keyframes slideIn {
-                from { opacity: 0; transform: translateY(-5px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
+            .footer-meta { margin-top: 5rem; opacity: 0.3; font-size: 0.7rem; letter-spacing: 0.15em; padding-bottom: 4rem; text-transform: uppercase; }
 
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
-				h1 { font-size: 1.8rem; }
-                .nav-links a { width: 90%; }
-                .row-main { flex-direction: column; align-items: flex-start; gap: 10px; }
-                summary { border-left: none; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; text-align: center; }
+				h1 { font-size: 2rem; }
+                .nav-links a { width: 100%; }
+                .download-btn { width: 100%; }
+                .viewer-container { height: 300px; }
 			}
 		</style>
 	</head>
@@ -281,51 +151,47 @@ try {
             </div>
 		</div>
 
-        {errorMessage && <div class="content-box" style="color: #ff4444;"><strong>Error:</strong> {errorMessage}</div>}
+        <div class="search-container">
+            <input type="text" id="file-search" placeholder="Search projects or files..." />
+        </div>
 
-        {projectList.length === 0 && !errorMessage ? (
-            <div class="content-box" style="text-align: center;">
-                <p style="color: #666; font-size: 0.8rem; letter-spacing: 0.1em;">CONNECTING TO REPO...</p>
-            </div>
-        ) : (
-            projectList.map((project) => (
-                <div class="content-box">
-                    <h2>{project.title}</h2>
-                    <div class="file-list">
-                        {project.files.map((file) => (
-                            <div class="file-row">
-                                <div class="row-main">
-                                    <div class="file-info">
-                                        <span class="file-name">{file.name}</span>
-                                        <a href={file.url} class="direct-dl" download>DL</a>
-                                    </div>
-                                    <details class="file-dropdown">
-                                        <summary></summary>
+        <div id="results-container">
+            {sortedLetters.map((letter) => (
+                <div class="letter-group" data-letter={letter}>
+                    <div class="letter-header">{letter}</div>
+                    {grouped[letter].map((project) => (
+                        <div class="content-box project-card" data-title={project.title.toLowerCase()}>
+                            <h2>{project.title}</h2>
+                            <div class="file-list">
+                                {project.files.map((file) => (
+                                    <details class="file-dropdown" data-filename={file.name.toLowerCase()}>
+                                        <summary>
+                                            <div class="summary-header">
+                                                <span class="file-name">{file.name}</span>
+                                                <span class="preview-text">3D PREVIEW ▼</span>
+                                            </div>
+                                            <a href={file.url} class="download-btn" download onclick="event.stopPropagation();">
+                                                Download STL
+                                            </a>
+                                        </summary>
                                         <div class="preview-wrap">
                                             <div class="viewer-container" data-stl-url={file.url}>
-                                                <span class="loading-text">Initializing 3D Environment...</span>
+                                                <span class="loading-text">Initializing 3D Engine...</span>
                                             </div>
                                         </div>
                                     </details>
-                                </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
                 </div>
-            ))
-        )}
+            ))}
+        </div>
 
-        <footer class="footer-meta">
-            © {currentYear} pngu
-        </footer>
+        <footer class="footer-meta">© {currentYear} pngu</footer>
 
         <script type="importmap">
-            {
-                "imports": {
-                    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-                }
-            }
+            { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
         </script>
 
         <script type="module">
@@ -333,60 +199,80 @@ try {
             import { STLLoader } from 'three/addons/loaders/STLLoader.js';
             import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-            const activeViewers = new WeakSet();
+            // --- Search Functionality ---
+            const searchInput = document.getElementById('file-search');
+            const projectCards = document.querySelectorAll('.project-card');
+            const letterGroups = document.querySelectorAll('.letter-group');
 
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                
+                letterGroups.forEach(group => {
+                    let hasVisibleProject = false;
+                    const cards = group.querySelectorAll('.project-card');
+                    
+                    cards.forEach(card => {
+                        const title = card.dataset.title;
+                        const files = card.querySelectorAll('.file-dropdown');
+                        let hasVisibleFile = false;
+
+                        files.forEach(file => {
+                            const name = file.dataset.filename;
+                            if (name.includes(term) || title.includes(term)) {
+                                file.style.display = 'block';
+                                hasVisibleFile = true;
+                            } else {
+                                file.style.display = 'none';
+                            }
+                        });
+
+                        if (hasVisibleFile) {
+                            card.style.display = 'block';
+                            hasVisibleProject = true;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+
+                    group.style.display = hasVisibleProject ? 'block' : 'none';
+                });
+            });
+
+            // --- 3D Viewer Logic ---
+            const activeViewers = new WeakSet();
             function initViewer(container, url) {
                 if (activeViewers.has(container)) return;
                 activeViewers.add(container);
-
-                const loadingText = container.querySelector('.loading-text');
-                if (loadingText) loadingText.textContent = "Fetching Geometry...";
-
                 const scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x111111);
-                
+                scene.background = new THREE.Color(0x0a0a0a);
                 const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
                 const renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(container.clientWidth, container.clientHeight);
                 container.appendChild(renderer.domElement);
-
                 const controls = new OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-
-                scene.add(new THREE.AmbientLight(0x404040, 2));
-                const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+                scene.add(new THREE.AmbientLight(0xffffff, 1));
+                const dirLight = new THREE.DirectionalLight(0xffffff, 2);
                 dirLight.position.set(1, 1, 1);
                 scene.add(dirLight);
 
-                const loader = new STLLoader();
-                loader.load(url, (geometry) => {
-                    if (loadingText) loadingText.style.display = 'none';
-                    geometry.center();
-
-                    const material = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x444444, shininess: 100 });
-                    const mesh = new THREE.Mesh(geometry, material);
+                new STLLoader().load(url, (geo) => {
+                    container.querySelector('.loading-text').style.display = 'none';
+                    geo.center();
+                    const mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x111111, shininess: 100 }));
                     mesh.rotation.x = -Math.PI / 2;
                     scene.add(mesh);
-
-                    geometry.computeBoundingBox();
-                    const maxSize = Math.max(geometry.boundingBox.max.x - geometry.boundingBox.min.x, geometry.boundingBox.max.y - geometry.boundingBox.min.y);
-                    camera.position.z = maxSize * 2.5;
-                    controls.update();
-
-                    function animate() {
-                        requestAnimationFrame(animate);
-                        controls.update();
-                        renderer.render(scene, camera);
-                    }
+                    geo.computeBoundingBox();
+                    const size = Math.max(geo.boundingBox.max.x - geo.boundingBox.min.x, geo.boundingBox.max.y - geo.boundingBox.min.y);
+                    camera.position.z = size * 2.5;
+                    const animate = () => { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
                     animate();
                 });
             }
 
             document.addEventListener('toggle', (e) => {
                 if (e.target.open && e.target.classList.contains('file-dropdown')) {
-                    const container = e.target.querySelector('.viewer-container');
-                    const url = container.dataset.stlUrl;
-                    if (container && url) setTimeout(() => initViewer(container, url), 50);
+                    const viewer = e.target.querySelector('.viewer-container');
+                    if (viewer) setTimeout(() => initViewer(viewer, viewer.dataset.stlUrl), 50);
                 }
             }, true);
         </script>
