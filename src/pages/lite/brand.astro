@@ -1,5 +1,6 @@
 ---
-import BrandAsset from '../../components/BrandAsset.astro';
+import Brand from '../../components/brand.astro'; 
+
 const currentYear = new Date().getFullYear();
 ---
 
@@ -21,9 +22,9 @@ const currentYear = new Date().getFullYear();
 		<div class="nav"><a href="/lite">← Back</a></div>
 		<h1>Brand Assets</h1>
 		<div class="grid">
-			<BrandAsset title="Main Logo" fileName="pngu-logo-white.png" />
-			<BrandAsset title="Icon Only" fileName="pngu-icon.png" />
+			<Brand title="Main Logo" fileName="pngu-logo-white.png" />
+			<Brand title="Icon Only" fileName="pngu-icon.png" />
 		</div>
-		<footer style="margin-top: 5rem; opacity: 0.3; font-size: 0.7rem; letter-spacing: 0.1em;">© {currentYear} PNGU</footer>
+		<footer style="margin-top: 5rem; opacity: 0.3; font-size: 0.7rem;">© {currentYear} PNGU</footer>
 	</body>
 </html>
