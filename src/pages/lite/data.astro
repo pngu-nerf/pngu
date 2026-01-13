@@ -1,10 +1,8 @@
 ---
 import { getR2Data } from '../../lib/r2';
 import { R2_DATA_BASE } from '../../constants';
-
 const raw = await getR2Data("PNGU-Blaster-Data-main/");
 const projects = raw.sort((a:any, b:any) => (a.displayName||"").localeCompare(b.displayName||""));
-
 const grouped = projects.reduce((acc: any, p: any) => {
   const char = p.displayName[0].toUpperCase();
   if (!acc[char]) acc[char] = [];
@@ -13,48 +11,4 @@ const grouped = projects.reduce((acc: any, p: any) => {
 }, {});
 const letters = Object.keys(grouped).sort();
 ---
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<link rel="preconnect" href={R2_DATA_BASE} />
-<title>data</title>
-<style>
-  body{font:13px/1.2 sans-serif;background:#333;color:#fff;max-width:400px;margin:0 auto;padding:1rem}
-  header{display:flex;justify-content:space-between;margin-bottom:2rem}
-  a{color:#fff;text-decoration:none;display:block;padding:10px 0;border-bottom:1px solid #444}
-  a:active{background:#444}
-  .h{font:900 24px sans-serif;color:#222;margin:2rem 0 0.5rem;line-height:1}
-  h2{font:700 10px sans-serif;color:#888;margin:1.5rem 0 0;text-transform:uppercase}
-  footer{margin-top:4rem;text-align:center;font-size:10px;color:#555}
-  .reg{text-decoration:underline}
-</style>
-</head>
-<body>
-<header>
-  <b>DATA</b>
-  <a href="https://pngu.info" class="reg">Back to regular site</a>
-</header>
-
-<div id="l">
-{letters.map(l => (
-  <>
-    <div class="h">{l}</div>
-    {grouped[l].map((p:any) => (
-      <section>
-        <h2>{p.displayName}</h2>
-        {p.files.map((f:string) => (
-          <a href={`${R2_DATA_BASE}/PNGU-Blaster-Data-main/${encodeURIComponent(p.folderName)}/${encodeURIComponent(f)}`} download>
-            {f}
-          </a>
-        ))}
-      </section>
-    ))}
-  </>
-))}
-</div>
-
-<footer>
-  <p>© PNGU</p>
-</footer>
-</body></html>
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:;base64,iVBOR="><link rel="preconnect" href={R2_DATA_BASE}><title>Data | Lite</title><style>body{font:13px sans-serif;background:#333;color:#fff;text-align:center;padding:5vh 1rem}header{margin-bottom:2rem}b{display:block;font-size:11px;color:#888;text-transform:uppercase}a{color:#fff;text-decoration:none;display:block;padding:12px 0;width:240px;margin:0 auto;border-bottom:1px solid #444}a:active{background:#444}.h{font:900 32px sans-serif;color:#222;margin:2rem 0 0}.reg{display:block;margin-top:4rem;color:#555;font-size:11px;text-decoration:underline}h2{font:700 10px sans-serif;color:#888;margin:1.5rem 0 0;text-transform:uppercase}</style><b>DATA DIRECTORY</b>{letters.map(l=>(<><div class="h">{l}</div>{grouped[l].map((p:any)=>(<section><h2>{p.displayName}</h2>{p.files.map((f:string)=>(<a href={`${R2_DATA_BASE}/PNGU-Blaster-Data-main/${encodeURIComponent(p.folderName)}/${encodeURIComponent(f)}`} download>{f}</a>))}</section>))}</>))}<a href="https://pngu.info" class="reg">Back to regular site</a>
