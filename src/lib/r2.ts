@@ -1,18 +1,19 @@
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
+// Initialize the R2 Client
+// This uses the credentials you set in the Cloudflare Pages Dashboard
 const s3 = new S3Client({
   region: "auto",
   endpoint: "https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com",
   credentials: {
-    // These must be set in your Cloudflare Pages Dashboard (Settings > Variables)
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || import.meta.env.R2_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || import.meta.env.R2_SECRET_ACCESS_KEY || "",
   },
 });
 
-export async function getR2Data(folderPrefix: string) {
-  const BUCKET_NAME = "pngu-assets";
+const BUCKET_NAME = "pngu-assets";
 
+export async function getR2Data(folderPrefix: string) {
   try {
     const command = new ListObjectsV2Command({
       Bucket: BUCKET_NAME,
@@ -27,7 +28,7 @@ export async function getR2Data(folderPrefix: string) {
       const relativeKey = file.Key?.replace(folderPrefix, "") || "";
       const parts = relativeKey.split("/");
       
-      // We need a subfolder and a filename
+      // We expect: ["Folder Name", "File Name"]
       if (parts.length < 2 || !parts[1]) return;
 
       const folderName = parts[0];
@@ -45,7 +46,8 @@ export async function getR2Data(folderPrefix: string) {
 
     return Object.values(projectMap);
   } catch (error) {
-    console.error("[R2 SDK ERROR]:", error);
+    // This will appear in your Cloudflare Build logs if the "keys" are wrong
+    console.error(`[R2 SDK ERROR] Prefix: ${folderPrefix}`, error);
     return [];
   }
 }
