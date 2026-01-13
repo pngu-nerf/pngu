@@ -6,15 +6,23 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 // 1. Fetch Brand Assets from R2
 const rawProjects = await getR2Data("PNGU-Brand-Assets-main/");
 
-// 2. Group by First Letter (Fixes the "sortedLetters is not defined" error)
+// 2. Group by First Letter (Robust Version)
 const grouped = rawProjects.reduce((acc: any, project: any) => {
-  const char = project.displayName[0].toUpperCase();
+  const firstChar = (project.displayName || "Misc")[0].toUpperCase();
+  const char = /[A-Z]/.test(firstChar) ? firstChar : "#"; // Group numbers/symbols under #
+  
   if (!acc[char]) acc[char] = [];
   acc[char].push(project);
   return acc;
 }, {});
 
-const sortedLetters = Object.keys(grouped).sort();
+// Define sortedLetters for the template loop
+const sortedLetters = Object.keys(grouped).sort((a, b) => {
+    if (a === "#") return 1;
+    if (b === "#") return -1;
+    return a.localeCompare(b);
+});
+
 const currentYear = new Date().getFullYear();
 ---
 
@@ -71,7 +79,7 @@ const currentYear = new Date().getFullYear();
 			}
             h2 { margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 25px; }
 
-            /* List and Row Styling */
+            /* Full-Bar Dropdown Style */
             .file-list { display: flex; flex-direction: column; gap: 16px; }
             details.file-dropdown { background-color: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; transition: all 0.3s ease;}
             
@@ -83,7 +91,7 @@ const currentYear = new Date().getFullYear();
             .preview-text { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: #666; }
             details[open] .preview-text { color: #fff; }
 
-            /* Full Width Button Fix: Using fit-content for Desktop */
+            /* Corrected Download Button */
             .download-btn {
                 color: #ffffff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
                 padding: 10px 24px; border: 1px solid #ffffff; border-radius: 8px;
@@ -165,12 +173,12 @@ const currentYear = new Date().getFullYear();
                                                     <span class="preview-text">PREVIEW ▼</span>
                                                 </div>
                                                 <a 
-                                                    href={fullUrl} 
-                                                    class="download-btn" 
-                                                    download 
-                                                    onclick="event.stopPropagation();"
+                                                  href={fullUrl} 
+                                                  class="download-btn" 
+                                                  download 
+                                                  onclick="event.stopPropagation();"
                                                 >
-                                                    Download Asset
+                                                  Download Asset
                                                 </a>
                                             </summary>
                                             <div class="preview-wrap">
