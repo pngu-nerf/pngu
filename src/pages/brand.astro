@@ -70,6 +70,7 @@ const currentYear = new Date().getFullYear();
                 color: #fff; font-size: 1rem; outline: none; transition: all 0.3s ease;
                 backdrop-filter: blur(10px);
             }
+            #brand-search:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(0,0,0,0.4); }
 
             .letter-header { 
                 font-size: 2rem; font-weight: 800; color: rgba(255,255,255,0.1); 
@@ -91,7 +92,8 @@ const currentYear = new Date().getFullYear();
                 color: #ffffff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
                 padding: 10px 24px; border: 1px solid #ffffff; border-radius: 8px;
                 background: rgba(255,255,255,0.05); transition: all 0.2s ease;
-                display: inline-block; width: fit-content;
+                /* Ensures it is only as wide as the text on all devices */
+                display: inline-block; width: fit-content; 
             }
             .download-btn:hover { background: #fff; color: #000; }
 
@@ -113,8 +115,11 @@ const currentYear = new Date().getFullYear();
             @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
 			@media (max-width: 600px) {
+				body { padding: 1.5rem 1rem; }
+				h1 { font-size: 2rem; }
+                /* Nav links still full width */
                 .nav-links a { width: 100%; }
-                .download-btn { width: 100%; text-align: center; }
+                /* Download button width rule removed here so it stays fit-content */
 			}
 		</style>
 	</head>
