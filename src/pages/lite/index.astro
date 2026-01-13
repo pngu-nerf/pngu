@@ -6,113 +6,74 @@ const currentYear = new Date().getFullYear();
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="PNGU Lite - High-speed directory" />
-    <title>pngu | lite</title>
+    <title>Home | Lite</title>
     <style>
-        /* CSS Reset + System Fonts (0ms layout shift) */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background: #111; 
-            color: #eee; 
+            font-family: ui-sans-serif, system-ui, sans-serif; 
+            background: #333; 
+            color: #fff; 
             max-width: 400px; 
             margin: 0 auto; 
-            padding: 2rem 1rem; 
-            line-height: 1.4;
+            padding: 2rem 1rem;
         }
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 3rem; 
+        }
+        b { font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase; }
         
-        header { margin-bottom: 2rem; }
-        b { font-size: 1.2rem; letter-spacing: -0.02em; }
-
-        h2 { font-size: 0.7rem; color: #666; margin: 2rem 0 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        h2 { font-size: 0.7rem; color: #888; margin: 2rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
         
-        ul { list-style: none; }
-        
-        /* High-tap-area links for faster mobile interaction */
-        .nav-link { 
+        nav a { 
             display: block; 
-            padding: 0.8rem 0; 
-            color: #0df; 
+            padding: 12px 0; 
+            color: #fff; 
             text-decoration: none; 
-            border-bottom: 1px solid #222;
+            border-bottom: 1px solid #444; 
+            font-weight: 500;
         }
-        
-        /* Removing transitions for "Instant" feel on click */
-        .nav-link:active { background: #222; }
+        nav a:active { background: #444; }
 
-        .d { font-size: 0.8rem; color: #777; display: block; margin-top: 0.1rem; }
-        
-        .external-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem; }
-        .external-row a { color: #888; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; }
+        .ext { display: flex; gap: 1.5rem; margin-top: 0.5rem; }
+        .ext a { color: #aaa; font-size: 0.8rem; text-decoration: underline; }
 
-        footer { margin-top: 4rem; padding-top: 1rem; font-size: 0.75rem; color: #444; }
-        .back-link { color: #555; text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+        footer { margin-top: 6rem; border-top: 1px solid #444; padding-top: 1rem; }
+        .reg-link { color: #aaa; text-decoration: underline; font-size: 0.8rem; display: block; margin-bottom: 1rem; }
+        .cr { font-size: 0.7rem; color: #666; }
     </style>
 </head>
 <body>
-    <header><b>pngu</b></header>
+    <header>
+        <b>PNGU LITE</b>
+    </header>
+
     <main>
         <section>
             <h2>Directory</h2>
             <nav>
-                <ul>
-                    <li>
-                        <a href="/lite/files" class="nav-link">
-                            3D Files <span class="d">STL library</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/lite/data" class="nav-link">
-                            Blaster Data <span class="d">Performance spreadsheets</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/lite/brand" class="nav-link">
-                            Brand Assets <span class="d">Identity files</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/lite/contact" class="nav-link">
-                            Contact <span class="d">Direct messaging</span>
-                        </a>
-                    </li>
-                </ul>
+                <a href="/lite/files">3D Files</a>
+                <a href="/lite/data">Blaster Data</a>
+                <a href="/lite/brand">Brand Assets</a>
+                <a href="/lite/contact">Contact</a>
             </nav>
         </section>
 
         <section>
             <h2>External</h2>
-            <div class="external-row">
-                <a href="https://www.youtube.com/@PnguNerf">YouTube</a>
+            <div class="ext">
+                <a href="https://youtube.com/@PnguNerf">YouTube</a>
                 <a href="https://github.com/pngu-nerf">GitHub</a>
-                <a href="https://www.printables.com/@PnguNerf_3188348">Printables</a>
+                <a href="https://printables.com/@PnguNerf_3188348">Printables</a>
             </div>
         </section>
     </main>
 
     <footer>
-        <a href="/" class="back-link">Standard Version</a>
-        <p>&copy; {currentYear} pngu</p>
+        <a href="https://pngu.info" class="reg-link">Back to regular site</a>
+        <p class="cr">&copy; {currentYear} PNGU</p>
     </footer>
-
-    <script>
-        /* Speculative Prefetching: 
-           Begins loading the page content when the user starts to 
-           press their finger down (touchstart) or hovers (mouseover), 
-           making the actual click feel instantaneous.
-        */
-        const prefetch = (url) => {
-            if (document.querySelector(`link[href="${url}"]`)) return;
-            const link = document.createElement('link');
-            link.rel = 'prefetch';
-            link.href = url;
-            document.head.appendChild(link);
-        };
-
-        document.querySelectorAll('a[href^="/lite"]').forEach(link => {
-            link.addEventListener('mouseover', () => prefetch(link.href));
-            link.addEventListener('touchstart', () => prefetch(link.href));
-        });
-    </script>
 </body>
 </html>
