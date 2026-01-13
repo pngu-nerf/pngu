@@ -1,122 +1,224 @@
 ---
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import MainLayout from '../layouts/MainLayout.astro';
-import PageHeader from '../components/PageHeader.astro';
-import FileItem from '../components/FileItem.astro';
+import { getR2Data } from '../lib/r2';
+import { R2_BRAND_BASE } from '../constants';
+import BackgroundEffects from '../components/BackgroundEffects.astro';
 
-// Initialize the R2 Client
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: "https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com",
-  credentials: {
-    accessKeyId: import.meta.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: import.meta.env.R2_SECRET_ACCESS_KEY,
-  },
-});
-
-const BUCKET_NAME = "pngu-assets";
-const ASSET_PREFIX = "PNGU-Brand-Assets-main/";
-const R2_BRAND_BASE = "https://assets.pngu.info/PNGU-Brand-Assets-main";
-
-let assets = [];
-
-try {
-  const command = new ListObjectsV2Command({ 
-    Bucket: BUCKET_NAME,
-    Prefix: ASSET_PREFIX 
-  });
-  
-  const response = await s3.send(command);
-  const files = response.Contents || [];
-
-  assets = files
-    .map(file => {
-      const fileName = file.Key.replace(ASSET_PREFIX, "");
-      if (!fileName) return null; // Skip the directory placeholder itself
-
-      // Determine if it's an image or font based on extension
-      const isImage = /\.(svg|png|jpg|jpeg|webp)$/i.test(fileName);
-      
-      return {
-        name: decodeURIComponent(fileName),
-        path: fileName,
-        type: isImage ? 'image' : 'font'
-      };
-    })
-    .filter(Boolean); // Remove nulls
-} catch (e) {
-  console.error("Brand Assets Fetch Error:", e);
-}
+// Logic: Fetch Brand Assets from R2 (which we've already set up in lib/r2)
+const projects = await getR2Data("PNGU-Brand-Assets-main/");
+const currentYear = new Date().getFullYear();
 ---
 
-<MainLayout title="Brand">
-  <PageHeader title="Brand Assets" subtitle="Logos, Banners & Fonts" />
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Brand Assets | PNGU</title>
 
-  <div class="content-box">
-    <h2>Downloads</h2>
-    {assets.length === 0 ? (
-      <p class="no-preview">No brand assets found in R2.</p>
-    ) : (
-      <div class="file-list">
-        {assets.map((asset) => {
-          const fullUrl = `${R2_BRAND_BASE}/${encodeURIComponent(asset.path)}`;
-          
-          return (
-            <FileItem 
-              name={asset.name} 
-              downloadUrl={fullUrl} 
-              previewType={asset.type === 'image' ? 'image' : 'none'}
-            >
-              {asset.type === 'image' ? (
-                <div class="preview-container">
-                   <img src={fullUrl} alt={asset.name} loading="lazy" />
+		<style>
+            * { box-sizing: border-box; }
+			body {
+				font-family: sans-serif; padding: 2rem; text-align: center;
+				max-width: 900px; margin: 0 auto; color: #ffffff; background-color: #0f0f0f;
+			}
+            #bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f0f0f; z-index: -2; }
+			.header-box { text-align: center; margin-bottom: 2rem; }
+			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
+			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
+
+            /* Navigation Buttons - Stacked Pills */
+			.nav-links { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+			.nav-links a {
+				text-decoration: none; display: inline-block; font-size: 0.75rem; font-weight: 600;
+				text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.4);
+				padding: 12px 28px; border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 25px; background: rgba(255, 255, 255, 0.03);
+				backdrop-filter: blur(4px); transition: all 0.3s ease; width: 240px;
+			}
+            .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+
+            /* Search Bar Styling */
+            .search-container { margin: 2rem auto; width: 100%; max-width: 500px; position: relative; }
+            #brand-search {
+                width: 100%; padding: 14px 20px; border-radius: 30px;
+                background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+                color: #fff; font-size: 1rem; outline: none; transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+            }
+            #brand-search:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(0,0,0,0.4); }
+
+            /* Alphabetical Headers */
+            .letter-header { 
+                font-size: 2rem; font-weight: 800; color: rgba(255,255,255,0.1); 
+                border-bottom: 1px solid rgba(255,255,255,0.05); margin: 3rem 0 1rem 0; text-align: left; padding-left: 10px;
+            }
+
+            /* Content Containers */
+			.content-box {
+				background-color: rgba(40, 40, 40, 0.4); backdrop-filter: blur(20px) saturate(120%);
+                border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+				padding: 1.5rem; width: 100%; margin: 1.5rem auto; text-align: left;
+			}
+            h2 { margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 25px; }
+
+            /* List and Row Styling */
+            .file-list { display: flex; flex-direction: column; gap: 16px; }
+            details.file-dropdown { background-color: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
+            
+            summary { padding: 18px 24px; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+            summary::-webkit-details-marker { display: none; }
+            
+            .summary-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+            .file-name { font-weight: 600; font-size: 1.1rem; color: #fff; }
+            .preview-text { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: #666; }
+            details[open] .preview-text { color: #fff; }
+
+            /* Download Button */
+            .download-btn {
+                color: #ffffff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
+                padding: 10px 24px; border: 1px solid #ffffff; border-radius: 8px;
+                background: rgba(255,255,255,0.05); transition: all 0.2s ease;
+                display: inline-block; width: fit-content; text-align: center;
+            }
+            .download-btn:hover { background: #fff; color: #000; transform: scale(1.02); }
+
+            /* Preview Area with Checkerboard for Transparency */
+            .preview-wrap { padding: 24px; animation: slideIn 0.3s ease-out; }
+            .checkerboard {
+                background-color: #111;
+                background-image: 
+                    linear-gradient(45deg, #181818 25%, transparent 25%), 
+                    linear-gradient(-45deg, #181818 25%, transparent 25%), 
+                    linear-gradient(45deg, transparent 75%, #181818 75%), 
+                    linear-gradient(-45deg, transparent 75%, #181818 75%);
+                background-size: 20px 20px;
+                border-radius: 8px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 2rem;
+                border: 1px solid rgba(255,255,255,0.05);
+            }
+            .checkerboard img { max-width: 100%; max-height: 400px; object-fit: contain; }
+
+            .no-preview { color: #555; font-style: italic; font-size: 0.9rem; text-align: center; padding: 2rem; }
+
+            .footer-meta { margin-top: 5rem; opacity: 0.3; font-size: 0.75rem; letter-spacing: 0.15em; padding-bottom: 4rem; text-transform: uppercase; }
+
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateY(-8px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+			@media (max-width: 600px) {
+				body { padding: 1rem; }
+				h1 { font-size: 2rem; }
+                .nav-links a { width: 100%; }
+                .download-btn { width: 100%; }
+			}
+		</style>
+	</head>
+	<body>
+        <div id="bg-layer"></div>
+        <BackgroundEffects />
+
+        <div class="header-box">
+			<h1>Brand Assets</h1>
+			<p class="subtitle">Logos, Banners & Official Fonts</p>
+			<div class="nav-links">
+                <a href="/">← Back</a>
+                <a href="https://lite.pngu.info/brand">Lite Version</a>
+            </div>
+		</div>
+
+        <div class="search-container">
+            <input type="text" id="brand-search" placeholder="Search logos or font names..." />
+        </div>
+
+        <div id="results-container">
+            {sortedLetters.map((letter) => (
+                <div class="letter-group" data-letter={letter}>
+                    <div class="letter-header">{letter}</div>
+                    {grouped[letter].map((project) => (
+                        <div class="content-box project-card" data-title={project.title.toLowerCase()}>
+                            <h2>{project.displayName}</h2>
+                            <div class="file-list">
+                                {project.files.map((fileName: string) => {
+                                    const fullUrl = `${R2_BRAND_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
+                                    const isImage = /\.(svg|png|jpg|jpeg|webp)$/i.test(fileName);
+
+                                    return (
+                                        <details class="file-dropdown" data-filename={fileName.toLowerCase()}>
+                                            <summary>
+                                                <div class="summary-header">
+                                                    <span class="file-name">{fileName}</span>
+                                                    <span class="preview-text">PREVIEW ▼</span>
+                                                </div>
+                                                <a href={fullUrl} class="download-btn" download onclick="event.stopPropagation();">
+                                                    Download Asset
+                                                </a>
+                                            </summary>
+                                            <div class="preview-wrap">
+                                                {isImage ? (
+                                                    <div class="checkerboard">
+                                                        <img src={fullUrl} alt={fileName} loading="lazy" />
+                                                    </div>
+                                                ) : (
+                                                    <div class="no-preview">
+                                                        Preview not available for {fileName.split('.').pop().toUpperCase()} files.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </details>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
                 </div>
-              ) : (
-                <div class="no-preview-box">
-                   <p class="no-preview">Preview not available for {asset.name.split('.').pop().toUpperCase()} files.</p>
-                </div>
-              )}
-            </FileItem>
-          );
-        })}
-      </div>
-    )}
-  </div>
-</MainLayout>
+            ))}
+        </div>
 
-<style>
-  /* Checkerboard transparency background */
-  .preview-container {
-    background-color: #111;
-    background-image: 
-      linear-gradient(45deg, #181818 25%, transparent 25%), 
-      linear-gradient(-45deg, #181818 25%, transparent 25%), 
-      linear-gradient(45deg, transparent 75%, #181818 75%), 
-      linear-gradient(-45deg, transparent 75%, #181818 75%);
-    background-size: 20px 20px;
-    min-height: 200px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-  
-  .preview-container img { 
-    max-width: 100%; 
-    max-height: 300px; 
-    object-fit: contain; 
-    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
-  }
+        <footer class="footer-meta">© {currentYear} pngu</footer>
 
-  .no-preview-box { 
-    padding: 2rem; 
-    text-align: center; 
-    background: rgba(255,255,255,0.03);
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
+        <script is:inline>
+            // --- Search Functionality ---
+            const searchInput = document.getElementById('brand-search');
+            const letterGroups = document.querySelectorAll('.letter-group');
 
-  .no-preview { color: var(--text-muted); font-style: italic; font-size: 0.9rem; text-align: center; }
-</style>
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                
+                letterGroups.forEach(group => {
+                    let hasVisibleProject = false;
+                    const cards = group.querySelectorAll('.project-card');
+                    
+                    cards.forEach(card => {
+                        const title = card.dataset.title;
+                        const files = card.querySelectorAll('.file-dropdown');
+                        let hasVisibleFile = false;
+
+                        files.forEach(file => {
+                            const name = file.dataset.filename;
+                            if (name.includes(term) || title.includes(term)) {
+                                file.style.display = 'block';
+                                hasVisibleFile = true;
+                            } else {
+                                file.style.display = 'none';
+                            }
+                        });
+
+                        if (hasVisibleFile) {
+                            card.style.display = 'block';
+                            hasVisibleProject = true;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+
+                    group.style.display = hasVisibleProject ? 'block' : 'none';
+                });
+            });
+        </script>
+	</body>
+</html>
