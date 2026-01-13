@@ -3,55 +3,58 @@ import { getR2Data } from '../../lib/r2';
 import { R2_DATA_BASE } from '../../constants';
 
 const raw = await getR2Data("PNGU-Blaster-Data-main/");
-const projects = raw.sort((a, b) => (a.displayName || "").localeCompare(b.displayName || ""));
+const projects = raw.sort((a:any, b:any) => (a.displayName||"").localeCompare(b.displayName||""));
+
+const grouped = projects.reduce((acc: any, p: any) => {
+  const char = p.displayName[0].toUpperCase();
+  if (!acc[char]) acc[char] = [];
+  acc[char].push(p);
+  return acc;
+}, {});
+const letters = Object.keys(grouped).sort();
 ---
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width"/>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <link rel="preconnect" href={R2_DATA_BASE} />
 <title>data</title>
 <style>
-  body{font-family:sans-serif;background:#000;color:#fff;max-width:400px;margin:0 auto;padding:1rem;font-size:14px}
-  a{color:#0df;text-decoration:none;display:block;padding:12px 0;border-bottom:1px solid #111}
-  a:active{background:#111}
-  h2{font-size:10px;color:#444;text-transform:uppercase;margin:20px 0 5px;letter-spacing:1px}
-  input{width:100%;background:#111;border:1px solid #222;color:#fff;padding:8px;margin:10px 0;border-radius:4px;outline:none}
-  
-  /* CSS-Only Search Logic (Faster than JS) */
-  body:has(input[value=""]) .p{display:block}
-  /* This requires a tiny bit of JS to toggle a data-attribute for total zero-lag filtering */
+  body{font:13px/1.2 sans-serif;background:#333;color:#fff;max-width:400px;margin:0 auto;padding:1rem}
+  header{display:flex;justify-content:space-between;margin-bottom:2rem}
+  a{color:#fff;text-decoration:none;display:block;padding:10px 0;border-bottom:1px solid #444}
+  a:active{background:#444}
+  .h{font:900 24px sans-serif;color:#222;margin:2rem 0 0.5rem;line-height:1}
+  h2{font:700 10px sans-serif;color:#888;margin:1.5rem 0 0;text-transform:uppercase}
+  footer{margin-top:4rem;text-align:center;font-size:10px;color:#555}
+  .reg{text-decoration:underline}
 </style>
 </head>
 <body>
-<a href="/lite" style="border:0;color:#444;padding:0">← back</a>
-<input type="text" id="q" placeholder="filter..." autofocus />
+<header>
+  <b>DATA</b>
+  <a href="https://pngu.info" class="reg">Back to regular site</a>
+</header>
+
 <div id="l">
-{projects.map(p => (
-  <div class="p" data-n={p.displayName.toLowerCase()}>
-    <h2>{p.displayName}</h2>
-    {p.files.map(f => (
-      <a href={`${R2_DATA_BASE}/${encodeURIComponent(p.folderName)}/${encodeURIComponent(f)}`} download data-f={f.toLowerCase()}>
-        {f} <span style="float:right;color:#222">↓</span>
-      </a>
+{letters.map(l => (
+  <>
+    <div class="h">{l}</div>
+    {grouped[l].map((p:any) => (
+      <section>
+        <h2>{p.displayName}</h2>
+        {p.files.map((f:string) => (
+          <a href={`${R2_DATA_BASE}/PNGU-Blaster-Data-main/${encodeURIComponent(p.folderName)}/${encodeURIComponent(f)}`} download>
+            {f}
+          </a>
+        ))}
+      </section>
     ))}
-  </div>
+  </>
 ))}
 </div>
-<script is:inline>
-  const i=document.getElementById('q'), c=[...document.querySelectorAll('.p')];
-  i.oninput=()=>{
-    const v=i.value.toLowerCase();
-    c.map(n=>{
-      let h=1;
-      const f=[...n.querySelectorAll('a')];
-      f.map(a=>{
-        const m=a.getAttribute('data-f').includes(v)||n.getAttribute('data-n').includes(v);
-        a.style.display=m?'block':'none';
-        if(m)h=0;
-      });
-      n.style.display=h?'none':'block';
-    });
-  };
-</script>
+
+<footer>
+  <p>© PNGU</p>
+</footer>
 </body></html>
