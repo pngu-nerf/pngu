@@ -1,64 +1,15 @@
 ---
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { getR2Data } from '../lib/r2';
 import MainLayout from '../layouts/MainLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import FileItem from '../components/FileItem.astro';
 
-// Initialize the R2 Client
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: "https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com",
-  credentials: {
-    accessKeyId: import.meta.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: import.meta.env.R2_SECRET_ACCESS_KEY,
-  },
-});
-
-const BUCKET_NAME = "pngu-assets";
-const ASSET_PREFIX = "PNGU-Blaster-Data-main/";
+// Single source of truth for the base URL
 const R2_DATA_BASE = "https://assets.pngu.info/PNGU-Blaster-Data-main";
 
-let projects = [];
-
-try {
-  const command = new ListObjectsV2Command({ 
-    Bucket: BUCKET_NAME,
-    Prefix: ASSET_PREFIX 
-  });
-  
-  const response = await s3.send(command);
-  const files = response.Contents || [];
-  const projectMap = {};
-
-  files.forEach(file => {
-    // Strip the prefix to get the relative path inside the folder
-    const relativeKey = file.Key.replace(ASSET_PREFIX, ""); 
-    const parts = relativeKey.split('/');
-    
-    // We expect: ["Folder Name", "File Name"]
-    if (parts.length < 2) return; 
-
-    const folderName = parts[0];
-    const fileName = parts[1];
-
-    if (!projectMap[folderName]) {
-      projectMap[folderName] = {
-        displayName: decodeURIComponent(folderName).replace(/%20/g, ' '),
-        folderName: folderName,
-        files: []
-      };
-    }
-    
-    // Add file if it exists and isn't just the directory placeholder
-    if (fileName) {
-      projectMap[folderName].files.push(fileName);
-    }
-  });
-
-  projects = Object.values(projectMap);
-} catch (e) {
-  console.error("Data Fetch Error:", e);
-}
+// Fetch grouped data using our new utility
+// We pass the prefix to tell it exactly which "folder" to scan
+const projects = await getR2Data("PNGU-Blaster-Data-main/");
 ---
 
 <MainLayout title="Blaster Data">
@@ -67,13 +18,14 @@ try {
   {projects.length === 0 ? (
     <div class="content-box center-text">
       <p>Updating documentation index or no files found...</p>
+      <p class="debug-hint">Check your R2 keys and ensure nodejs_compat is enabled.</p>
     </div>
   ) : (
-    projects.map((project) => (
+    projects.map((project: any) => (
       <div class="content-box">
         <h2>{project.displayName}</h2>
         <div class="file-list">
-          {project.files.map((fileName) => {
+          {project.files.map((fileName: string) => {
             const rawUrl = `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
             const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
 
@@ -104,6 +56,7 @@ try {
 
 <style>
   .center-text { text-align: center; color: var(--text-muted); padding: 2rem; }
+  .debug-hint { font-size: 0.8rem; opacity: 0.6; margin-top: 0.5rem; }
   
   .preview-container {
     width: 100%;
