@@ -1,93 +1,221 @@
 ---
 import { getR2Data } from '../lib/r2';
 import { R2_DATA_BASE } from '../constants';
-import MainLayout from '../layouts/MainLayout.astro';
-import PageHeader from '../components/PageHeader.astro';
-import FileItem from '../components/FileItem.astro';
+import BackgroundEffects from '../components/BackgroundEffects.astro';
 
-/** * FETCH LOGIC
- * The actual work is now outsourced to '../lib/r2'. 
- * We simply ask for the folder we want to display.
- */
+// Logic: Fetch the documentation index from R2
 const projects = await getR2Data("PNGU-Blaster-Data-main/");
 ---
 
-<MainLayout title="Blaster Data">
-  <PageHeader title="Blaster Data" subtitle="Technical Spreadsheets & Documentation" />
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<title>Technical Data | PNGU</title>
 
-  {projects.length === 0 ? (
-    <div class="content-box center-text">
-      <p>Updating documentation index or no files found...</p>
-      <p class="debug-hint">Check your R2 keys in Cloudflare and ensure nodejs_compat is enabled.</p>
-    </div>
-  ) : (
-    projects.map((project: any) => (
-      <div class="content-box">
-        <h2>{project.displayName}</h2>
-        <div class="file-list">
-          {project.files.map((fileName: string) => {
-            // URL construction using centralized constant
-            const rawUrl = `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
-            const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+		<style>
+            /* Reset and Base Styles matching Homepage */
+            * { box-sizing: border-box; }
 
-            return (
-              <FileItem name={fileName} downloadUrl={rawUrl} previewType="iframe">
-                <div class="preview-container">
-                  <iframe 
-                    src={previewUrl} 
-                    title={`Preview of ${fileName}`} 
-                    loading="lazy"
-                  ></iframe>
+			body {
+				font-family: sans-serif;
+				padding: 2rem;
+				text-align: center;
+				max-width: 900px;
+				margin: 0 auto;
+				color: #ffffff;
+                background-color: #0f0f0f;
+			}
+            
+            #bg-layer {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #0f0f0f;
+                z-index: -2;
+            }
+			
+			.header-box { text-align: center; margin-bottom: 3rem; }
+
+			.content-box {
+				background-color: rgba(40, 40, 40, 0.4); 
+                backdrop-filter: blur(20px) saturate(120%);
+                -webkit-backdrop-filter: blur(20px) saturate(120%);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 16px;
+				padding: 2rem;
+				width: 85%;
+				margin: 2rem auto; 
+				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+				text-align: left;
+                transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                            box-shadow 0.4s ease, 
+                            border-color 0.4s ease;
+			}
+            
+            .content-box:hover {
+                transform: scale(1.01) translateY(-2px);
+                box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+			
+			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
+            
+            h2 { 
+                margin-top: 0;
+                color: #ffffff;
+                font-size: 1.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            }
+            
+			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
+
+            /* Navigation Links */
+			.nav-links {
+				margin-top: 1.5rem;
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+			}
+			.nav-links a {
+				display: inline-block;
+				padding: 8px 16px;
+				background-color: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255,255,255,0.1);
+				border-radius: 8px;
+                color: #fff;
+                text-decoration: none;
+                font-size: 0.9rem;
+                font-weight: 500;
+                transition: all 0.2s;
+			}
+            .nav-links a:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255,255,255,0.3);
+                transform: translateY(-1px);
+            }
+
+            /* File Items Styles */
+            .file-list { display: flex; flex-direction: column; gap: 12px; }
+
+            .file-card {
+                background-color: rgba(26, 26, 26, 0.6);
+                border: 1px solid rgba(255,255,255,0.05);
+                border-radius: 12px;
+                padding: 1rem;
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .file-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .file-name { font-weight: 500; color: #fff; }
+
+            .download-btn {
+                color: #ffffff;
+                text-decoration: none;
+                font-size: 0.8rem;
+                font-weight: bold;
+                padding: 6px 12px;
+                border: 1px solid #ffffff;
+                border-radius: 6px;
+                transition: all 0.2s;
+                background-color: rgba(255,255,255,0.05);
+            }
+
+            .download-btn:hover { 
+                background-color: #ffffff; 
+                color: #000; 
+            }
+
+            .preview-container {
+                width: 100%;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 1px solid rgba(255,255,255,0.1);
+                background: #fff;
+            }
+
+            iframe { 
+                width: 100%; 
+                height: 500px; 
+                border: none; 
+            }
+
+            .footer-meta {
+                margin-top: 4rem;
+                opacity: 0.4;
+                font-size: 0.75rem;
+                padding-bottom: 2rem;
+            }
+
+			@media (max-width: 600px) {
+				h1 { font-size: 2rem; }
+                .content-box { width: 100%; padding: 1.5rem; }
+                iframe { height: 400px; }
+			}
+		</style>
+	</head>
+	<body>
+        <div id="bg-layer"></div>
+        <BackgroundEffects />
+
+        <div class="header-box">
+			<h1>Technical Data</h1>
+			<p class="subtitle">Cloud-synced Documentation & Spreadsheets</p>
+			<div class="nav-links">
+                <a href="/">← Main Hub</a>
+                <a href="/lite">Lite Version</a>
+            </div>
+		</div>
+
+        {projects.length === 0 ? (
+            <div class="content-box" style="text-align: center;">
+                <p style="color: #888;">Initializing documentation index...</p>
+            </div>
+        ) : (
+            projects.map((project: any) => (
+                <div class="content-box">
+                    <h2>{project.displayName}</h2>
+                    <div class="file-list">
+                        {project.files.map((fileName: string) => {
+                            const rawUrl = `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
+                            const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
+
+                            return (
+                                <div class="file-card">
+                                    <div class="file-header">
+                                        <span class="file-name">{fileName}</span>
+                                        <a href={rawUrl} class="download-btn" download>Download CSV/XLSX</a>
+                                    </div>
+                                    <div class="preview-container">
+                                        <iframe 
+                                            src={previewUrl} 
+                                            title={`Preview of ${fileName}`} 
+                                            loading="lazy"
+                                        ></iframe>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-              </FileItem>
-            );
-          })}
+            ))
+        )}
+
+        <div class="footer-meta">
+            Assets delivered via Cloudflare R2 Infrastructure.
         </div>
-      </div>
-    ))
-  )}
-
-  <div class="footer-actions">
-    <p class="meta-info">Assets delivered via Cloudflare R2 for maximum speed.</p>
-    <a href="https://github.com/pngu-nerf/PNGU-Blaster-Data" target="_blank" class="github-direct-btn">
-      View Source Repo &rarr;
-    </a>
-  </div>
-</MainLayout>
-
-<style>
-  .center-text { text-align: center; color: var(--text-muted); padding: 2rem; }
-  .debug-hint { font-size: 0.8rem; opacity: 0.6; margin-top: 0.5rem; }
-  
-  .preview-container {
-    width: 100%;
-    margin-top: 1rem;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--glass-border);
-  }
-
-  /* Microsoft Office Preview Iframe Styles */
-  iframe { 
-    width: 100%; 
-    height: 600px; 
-    border: none; 
-    background: #fff; 
-  }
-
-  .footer-actions { margin-top: 3rem; text-align: center; padding-bottom: 40px; }
-  .meta-info { opacity: 0.5; font-size: 0.8rem; margin-bottom: 0.5rem; }
-  
-  .github-direct-btn {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #272727;
-    border: 1px solid var(--glass-border);
-    border-radius: 8px;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-  .github-direct-btn:hover { background-color: #333; transform: translateY(-2px); }
-</style>
+	</body>
+</html>
