@@ -3,8 +3,18 @@ import { getR2Data } from '../lib/r2';
 import { R2_BRAND_BASE } from '../constants';
 import BackgroundEffects from '../components/BackgroundEffects.astro';
 
-// Logic: Fetch Brand Assets from R2 (which we've already set up in lib/r2)
-const projects = await getR2Data("PNGU-Brand-Assets-main/");
+// 1. Fetch Brand Assets from R2
+const rawProjects = await getR2Data("PNGU-Brand-Assets-main/");
+
+// 2. Group by First Letter (Fixes the "sortedLetters is not defined" error)
+const grouped = rawProjects.reduce((acc: any, project: any) => {
+  const char = project.displayName[0].toUpperCase();
+  if (!acc[char]) acc[char] = [];
+  acc[char].push(project);
+  return acc;
+}, {});
+
+const sortedLetters = Object.keys(grouped).sort();
 const currentYear = new Date().getFullYear();
 ---
 
@@ -63,9 +73,9 @@ const currentYear = new Date().getFullYear();
 
             /* List and Row Styling */
             .file-list { display: flex; flex-direction: column; gap: 16px; }
-            details.file-dropdown { background-color: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
+            details.file-dropdown { background-color: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; transition: all 0.3s ease;}
             
-            summary { padding: 18px 24px; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+            summary { padding: 18px 24px; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 12px; user-select: none;}
             summary::-webkit-details-marker { display: none; }
             
             .summary-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -73,7 +83,7 @@ const currentYear = new Date().getFullYear();
             .preview-text { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: #666; }
             details[open] .preview-text { color: #fff; }
 
-            /* Download Button */
+            /* Full Width Button Fix: Using fit-content for Desktop */
             .download-btn {
                 color: #ffffff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
                 padding: 10px 24px; border: 1px solid #ffffff; border-radius: 8px;
@@ -102,7 +112,6 @@ const currentYear = new Date().getFullYear();
             .checkerboard img { max-width: 100%; max-height: 400px; object-fit: contain; }
 
             .no-preview { color: #555; font-style: italic; font-size: 0.9rem; text-align: center; padding: 2rem; }
-
             .footer-meta { margin-top: 5rem; opacity: 0.3; font-size: 0.75rem; letter-spacing: 0.15em; padding-bottom: 4rem; text-transform: uppercase; }
 
             @keyframes slideIn {
@@ -111,10 +120,11 @@ const currentYear = new Date().getFullYear();
             }
 
 			@media (max-width: 600px) {
-				body { padding: 1rem; }
+				body { padding: 1.5rem 1rem; }
 				h1 { font-size: 2rem; }
                 .nav-links a { width: 100%; }
                 .download-btn { width: 100%; }
+                .content-box { padding: 1.5rem; }
 			}
 		</style>
 	</head>
@@ -139,8 +149,8 @@ const currentYear = new Date().getFullYear();
             {sortedLetters.map((letter) => (
                 <div class="letter-group" data-letter={letter}>
                     <div class="letter-header">{letter}</div>
-                    {grouped[letter].map((project) => (
-                        <div class="content-box project-card" data-title={project.title.toLowerCase()}>
+                    {grouped[letter].map((project: any) => (
+                        <div class="content-box project-card" data-title={project.displayName.toLowerCase()}>
                             <h2>{project.displayName}</h2>
                             <div class="file-list">
                                 {project.files.map((fileName: string) => {
@@ -154,7 +164,12 @@ const currentYear = new Date().getFullYear();
                                                     <span class="file-name">{fileName}</span>
                                                     <span class="preview-text">PREVIEW ▼</span>
                                                 </div>
-                                                <a href={fullUrl} class="download-btn" download onclick="event.stopPropagation();">
+                                                <a 
+                                                    href={fullUrl} 
+                                                    class="download-btn" 
+                                                    download 
+                                                    onclick="event.stopPropagation();"
+                                                >
                                                     Download Asset
                                                 </a>
                                             </summary>
@@ -182,7 +197,6 @@ const currentYear = new Date().getFullYear();
         <footer class="footer-meta">© {currentYear} pngu</footer>
 
         <script is:inline>
-            // --- Search Functionality ---
             const searchInput = document.getElementById('brand-search');
             const letterGroups = document.querySelectorAll('.letter-group');
 
