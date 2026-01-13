@@ -1,6 +1,5 @@
 ---
-import Brand from '../../components/brand.astro'; 
-
+import NavLink from '../../components/NavLink.astro';
 const currentYear = new Date().getFullYear();
 ---
 
@@ -10,21 +9,58 @@ const currentYear = new Date().getFullYear();
 		<meta name="viewport" content="width=device-width" />
 		<title>Lite | Brand Assets</title>
 		<style>
-			body { font-family: sans-serif; padding: 1.5rem; background: #000; color: #fff; max-width: 800px; margin: 0 auto; }
+			body { 
+                font-family: sans-serif; 
+                padding: 1.5rem; 
+                background: #000; 
+                color: #fff; 
+                max-width: 800px; 
+                margin: 0 auto; 
+            }
 			.nav { margin-bottom: 2rem; text-align: left; }
-			.nav a { color: #aaa; text-decoration: none; font-size: 0.8rem; border: 1px solid #333; padding: 8px 16px; border-radius: 20px; }
-			h1 { font-size: 1.5rem; margin: 1.5rem 0; border-bottom: 1px solid #222; padding-bottom: 10px; }
-			.grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem; }
-			@media (min-width: 600px) { .grid { grid-template-columns: 1fr 1fr; } }
+			.nav a { 
+                color: #aaa; 
+                text-decoration: none; 
+                font-size: 0.8rem; 
+                border: 1px solid #333; 
+                padding: 8px 16px; 
+                border-radius: 20px; 
+            }
+			h1 { 
+                font-size: 1.5rem; 
+                margin: 1.5rem 0; 
+                border-bottom: 1px solid #222; 
+                padding-bottom: 10px; 
+            }
+            .list-container {
+                margin-top: 2rem;
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
 		</style>
 	</head>
 	<body>
 		<div class="nav"><a href="/lite">← Back</a></div>
 		<h1>Brand Assets</h1>
-		<div class="grid">
-			<Brand title="Main Logo" fileName="pngu-logo-white.png" />
-			<Brand title="Icon Only" fileName="pngu-icon.png" />
-		</div>
-		<footer style="margin-top: 5rem; opacity: 0.3; font-size: 0.7rem;">© {currentYear} PNGU</footer>
+        
+        <div class="list-container">
+            <NavLink 
+                href="https://assets.pngu.info/pngu-logo-white.png" 
+                title="Main Logo (White)" 
+                description="High-res PNG for dark backgrounds" 
+                external 
+            />
+            <NavLink 
+                href="https://assets.pngu.info/pngu-icon.png" 
+                title="Icon Only" 
+                description="Square brand mark" 
+                external 
+            />
+        </div>
+
+		<footer style="margin-top: 5rem; opacity: 0.3; font-size: 0.7rem;">
+            © {currentYear} PNGU
+        </footer>
 	</body>
 </html>
