@@ -1,28 +1,33 @@
+import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: "https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com",
+  credentials: {
+    // These must be set in your Cloudflare Pages Dashboard (Settings > Variables)
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+  },
+});
+
 export async function getR2Data(folderPrefix: string) {
   const BUCKET_NAME = "pngu-assets";
-  
-  // Use the public .dev URL or your custom assets domain to bypass S3 signing
-  // Replace the URL below with your actual "Public Development URL" from the dashboard
-  const publicUrl = `https://pub-805dbe440d6c45d485c1539d5ede38b1.r2.dev/?prefix=${folderPrefix}`;
 
   try {
-    const response = await fetch(publicUrl);
-    
-    if (!response.ok) {
-      // If this still fails, it's because the .dev URL doesn't allow listing.
-      // We may need to switch back to the SDK with the Vite fix we discussed.
-      throw new Error(`R2 HTTP Error: ${response.status}`);
-    }
-    
-    const xmlText = await response.text();
-    const matches = [...xmlText.matchAll(/<Key>(.*?)<\/Key>/g)];
-    const filenames = matches.map(m => m[1]);
+    const command = new ListObjectsV2Command({
+      Bucket: BUCKET_NAME,
+      Prefix: folderPrefix,
+    });
 
+    const response = await s3.send(command);
+    const files = response.Contents || [];
     const projectMap: Record<string, any> = {};
 
-    filenames.forEach((key) => {
-      const relativeKey = key.replace(folderPrefix, "");
+    files.forEach((file) => {
+      const relativeKey = file.Key?.replace(folderPrefix, "") || "";
       const parts = relativeKey.split("/");
+      
+      // We need a subfolder and a filename
       if (parts.length < 2 || !parts[1]) return;
 
       const folderName = parts[0];
@@ -40,7 +45,7 @@ export async function getR2Data(folderPrefix: string) {
 
     return Object.values(projectMap);
   } catch (error) {
-    console.error("[R2 FETCH ERROR]:", error);
+    console.error("[R2 SDK ERROR]:", error);
     return [];
   }
 }
