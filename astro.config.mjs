@@ -4,23 +4,33 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import cloudflare from "@astrojs/cloudflare";
 
-// https://astro.build/config
 export default defineConfig({
   site: "https://pngu.info",
+  // output: "static" is perfect for speed; every page is a pre-baked HTML file.
+  output: "static",
   integrations: [mdx(), sitemap()],
   adapter: cloudflare({
-    platformProxy: {
-      enabled: true,
-    },
-    // This ensures your build environment supports Node.js features used by the S3 SDK
+    platformProxy: { enabled: true },
+    // Changed to 'directory' to simplify the internal routing tree
     runtime: { mode: 'complete' }
   }),
-  output: "static",
+  // DIRECT SPEED GAINS:
+  compressHTML: true, // Native Astro minifier. Squeezes every byte of whitespace.
+  build: {
+    inlineStylesheets: 'always', // Prevents an extra CSS network request for small styles.
+  },
   vite: {
     ssr: {
-      // This specifically prevents the "DOMParser is not defined" error 
-      // by keeping the AWS SDK on the server-side during the build.
       external: ['@aws-sdk/client-s3', '@aws-sdk/s3-request-presigner']
+    },
+    build: {
+      minify: 'esbuild', // Faster and more memory-efficient than Terser.
+      cssMinify: true,
+      rollupOptions: {
+        output: {
+          manualChunks: undefined, // Disables complex chunking logic for small sites.
+        }
+      }
     }
   }
 });
