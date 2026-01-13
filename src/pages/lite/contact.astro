@@ -1,161 +1,35 @@
 ---
-import BackgroundEffects from '../components/BackgroundEffects.astro';
-import ContactItem from '../components/ContactItem.astro';
-
+import ContactItem from '../../components/ContactItem.astro';
 const currentYear = new Date().getFullYear();
 ---
 
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
-		<title>Contact | PNGU</title>
-
+		<title>Lite | Contact</title>
 		<style>
-            /* Global Mobile & Layout Reset */
-            * { 
-                box-sizing: border-box; 
-                -webkit-tap-highlight-color: transparent; /* Kills the blue selection box on mobile */
-            }
-
-			body {
-				font-family: sans-serif;
-				padding: 2rem;
-				text-align: center;
-				max-width: 900px;
-				margin: 0 auto;
-				color: #ffffff;
-                background-color: #0f0f0f;
-			}
-            
-            #bg-layer {
-                position: fixed;
-                top: 0; left: 0;
-                width: 100%; height: 100%;
-                background-color: #0f0f0f;
-                z-index: -2;
-            }
-			
-			.header-box { text-align: center; margin-bottom: 3rem; }
-			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
-			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
-
-            /* Navigation Buttons - Stacked & Pill-Shaped */
-			.nav-links {
-				margin-top: 2rem;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 1rem;
-			}
-
-			.nav-links a {
-				text-decoration: none;
-                display: inline-block;
-				font-size: 0.75rem;
-				font-weight: 600;
-				text-transform: uppercase;
-				letter-spacing: 0.1em;
-				color: rgba(255, 255, 255, 0.4);
-				padding: 12px 28px;
-				border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 25px; 
-				background: rgba(255, 255, 255, 0.03);
-				backdrop-filter: blur(4px);
-				transition: all 0.3s ease;
-                width: 240px;
-			}
-
-            /* Hover Guard: Prevents 'stuck' states on mobile tap */
-            @media (hover: hover) {
-                .nav-links a:hover {
-                    color: rgba(255, 255, 255, 1);
-                    background: rgba(255, 255, 255, 0.1);
-                    border-color: rgba(255, 255, 255, 0.3);
-                    transform: translateY(-1px);
-                }
-            }
-
-            /* Content Containers */
-			.content-box {
-				background-color: rgba(40, 40, 40, 0.4); 
-                backdrop-filter: blur(20px) saturate(120%);
-                -webkit-backdrop-filter: blur(20px) saturate(120%);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 16px;
-				padding: 2.5rem;
-				width: 100%;
-				margin: 2rem auto; 
-				text-align: left;
-			}
-            
-            h2 { 
-                margin-top: 0;
-                font-size: 1.5rem;
-                color: #fff;
-                margin-bottom: 0.5rem;
-            }
-
-            .description {
-                color: #a0a0a0;
-                line-height: 1.6;
-                font-size: 0.95rem;
-                margin-bottom: 2rem;
-            }
-
-            .footer-meta {
-                margin-top: 5rem;
-                opacity: 0.3;
-                font-size: 0.75rem;
-                letter-spacing: 0.15em;
-                padding-bottom: 4rem;
-                text-transform: uppercase;
-            }
-
-			@media (max-width: 600px) {
-				body { padding: 1.5rem 1rem; }
-				h1 { font-size: 2rem; }
-                .nav-links a { width: 100%; }
-                .content-box { padding: 1.5rem; }
-			}
+			body { font-family: sans-serif; padding: 1.5rem; background: #000; color: #fff; max-width: 800px; margin: 0 auto; }
+			.nav { margin-bottom: 2rem; text-align: left; }
+			.nav a { color: #aaa; text-decoration: none; font-size: 0.8rem; border: 1px solid #333; padding: 8px 16px; border-radius: 20px; }
+			.box { border: 1px solid #222; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; }
+			h2 { font-size: 1.1rem; margin-top: 0; color: #fff; }
+			p { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
 		</style>
 	</head>
 	<body>
-        <div id="bg-layer"></div>
-        <BackgroundEffects />
-
-        <div class="header-box">
-			<h1>Contact</h1>
-			<p class="subtitle">Reach out for collaborations or questions</p>
-			<div class="nav-links">
-                <a href="/">← Back</a>
-                <a href="https://lite.pngu.info/contact">Lite Version</a>
-            </div>
+		<div class="nav"><a href="/lite">← Back</a></div>
+		<h1>Contact</h1>
+		<div class="box">
+			<h2>Email</h2>
+			<p>For professional inquiries and partnerships.</p>
+			<ContactItem buttonId="lite-email" value="contact@pngu.info" label="Copy Email" />
 		</div>
-
-        <div class="content-box">
-            <h2>Email Address</h2>
-            <p class="description">For professional inquiries and partnerships.</p>
-            <ContactItem 
-              buttonId="copy-email-btn" 
-              value="contact@pngu.info" 
-              label="Copy Email" 
-            />
-        </div>
-
-        <div class="content-box">
-            <h2>Discord</h2>
-            <p class="description">For casual chats and community contact.</p>
-            <ContactItem 
-              buttonId="copy-discord-btn" 
-              value="penguinnoly" 
-              label="Copy Handle" 
-            />
-        </div>
-
-        <footer class="footer-meta">
-            © {currentYear} pngu
-        </footer>
+		<div class="box">
+			<h2>Discord</h2>
+			<p>For casual chats and community contact.</p>
+			<ContactItem buttonId="lite-discord" value="penguinnoly" label="Copy Handle" />
+		</div>
+		<footer style="margin-top: 5rem; opacity: 0.3; font-size: 0.7rem;">© {currentYear} PNGU</footer>
 	</body>
 </html>
