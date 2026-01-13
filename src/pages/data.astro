@@ -39,7 +39,7 @@ const currentYear = new Date().getFullYear();
 			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
 			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
 
-            /* Navigation Buttons - Stacked & Pill-Shaped */
+            /* Navigation Buttons - Stacked Pills */
 			.nav-links {
 				margin-top: 2rem;
                 display: flex;
@@ -56,20 +56,20 @@ const currentYear = new Date().getFullYear();
 				text-transform: uppercase;
 				letter-spacing: 0.1em;
 				color: rgba(255, 255, 255, 0.4);
-				padding: 10px 24px;
+				padding: 12px 28px;
 				border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 20px; /* Matches homepage pill shape */
+				border-radius: 25px; 
 				background: rgba(255, 255, 255, 0.03);
 				backdrop-filter: blur(4px);
 				transition: all 0.3s ease;
-                width: 220px;
+                width: 240px;
 			}
 
             .nav-links a:hover {
                 color: rgba(255, 255, 255, 1);
 				background: rgba(255, 255, 255, 0.1);
 				border-color: rgba(255, 255, 255, 0.3);
-				transform: translateY(-1px);
+				transform: translateY(-2px);
             }
 
             /* Content Containers */
@@ -90,111 +90,120 @@ const currentYear = new Date().getFullYear();
                 font-size: 1.5rem;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                 padding-bottom: 10px;
-                margin-bottom: 20px;
+                margin-bottom: 25px;
             }
 
-            /* Collapsible File Items */
-            .file-list { display: flex; flex-direction: column; gap: 12px; }
+            /* Full-Bar Dropdown Style */
+            .file-list { display: flex; flex-direction: column; gap: 16px; }
 
-            .file-row {
-                background-color: rgba(26, 26, 26, 0.6);
-                border: 1px solid rgba(255,255,255,0.05);
+            details.file-dropdown {
+                background-color: rgba(30, 30, 30, 0.4);
+                border: 1px solid rgba(255,255,255,0.08);
                 border-radius: 12px;
                 overflow: hidden;
+                transition: all 0.3s ease;
             }
 
-            .row-main {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 12px 16px;
+            details.file-dropdown[open] {
+                border-color: rgba(255,255,255,0.2);
+                background-color: rgba(45, 45, 45, 0.4);
             }
 
-            .file-info {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                flex: 1;
-            }
-
-            .file-name { font-weight: 500; font-size: 0.95rem; }
-
-            /* Direct Download Button (Next to name) */
-            .direct-dl {
-                color: rgba(255,255,255,0.4);
-                text-decoration: none;
-                font-size: 0.7rem;
-                padding: 4px 10px;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px;
-                transition: all 0.2s;
-            }
-            .direct-dl:hover {
-                color: #fff;
-                background: rgba(255,255,255,0.1);
-                border-color: rgba(255,255,255,0.3);
-            }
-
-            /* Dropdown Summary */
+            /* The "Bar" */
             summary {
+                padding: 18px 24px;
                 cursor: pointer;
                 list-style: none;
-                padding: 12px;
-                border-left: 1px solid rgba(255,255,255,0.1);
-                color: #666;
-                transition: all 0.2s;
+                display: flex;
+                flex-direction: column; /* Stacked content */
+                gap: 12px;
+                user-select: none;
             }
-            summary:hover { color: #fff; background: rgba(255,255,255,0.02); }
+            
             summary::-webkit-details-marker { display: none; }
 
-            summary::after {
-                content: 'PREVIEW ▼';
-                font-size: 0.65rem;
-                font-weight: 800;
-                letter-spacing: 0.05em;
+            /* Top row of the summary */
+            .summary-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
             }
 
-            details[open] summary { color: #fff; background: rgba(255,255,255,0.05); }
+            .file-name { font-weight: 600; font-size: 1.1rem; color: #fff; }
 
-            /* Inner Content */
+            /* Preview Indicator */
+            .preview-text {
+                font-size: 0.65rem;
+                font-weight: 800;
+                letter-spacing: 0.1em;
+                color: #666;
+                transition: color 0.3s ease;
+            }
+
+            details[open] .preview-text { color: #fff; }
+
+            /* Enlarged Download Button */
+            .download-btn {
+                color: #ffffff;
+                text-decoration: none;
+                font-size: 0.8rem;
+                font-weight: 700;
+                padding: 10px 20px;
+                border: 1px solid #ffffff;
+                border-radius: 8px;
+                background: rgba(255,255,255,0.05);
+                transition: all 0.2s ease;
+                display: inline-block;
+                text-align: center;
+                width: fit-content;
+            }
+
+            .download-btn:hover { 
+                background: #fff; 
+                color: #000; 
+                transform: scale(1.02);
+            }
+
+            /* Preview Content */
             .preview-wrap {
-                padding: 20px;
-                background: rgba(0,0,0,0.2);
+                padding: 0 24px 24px 24px;
                 animation: slideIn 0.3s ease-out;
             }
 
             .iframe-container {
                 width: 100%;
-                height: 500px;
+                height: 600px;
                 border-radius: 8px;
                 overflow: hidden;
                 background: #fff;
-                border: 1px solid rgba(0,0,0,0.2);
+                border: 1px solid rgba(255,255,255,0.1);
             }
 
             iframe { width: 100%; height: 100%; border: none; }
 
             .footer-meta {
-                margin-top: 4rem;
+                margin-top: 5rem;
                 opacity: 0.3;
-                font-size: 0.7rem;
-                letter-spacing: 0.1em;
-                padding-bottom: 3rem;
+                font-size: 0.75rem;
+                letter-spacing: 0.15em;
+                padding-bottom: 4rem;
                 text-transform: uppercase;
             }
 
             @keyframes slideIn {
-                from { opacity: 0; transform: translateY(-5px); }
+                from { opacity: 0; transform: translateY(-8px); }
                 to { opacity: 1; transform: translateY(0); }
             }
 
 			@media (max-width: 600px) {
-				body { padding: 1rem; }
-				h1 { font-size: 1.8rem; }
-                .nav-links a { width: 90%; }
-                .row-main { flex-direction: column; align-items: flex-start; gap: 10px; }
-                summary { border-left: none; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; text-align: center; }
-                .iframe-container { height: 350px; }
+				body { padding: 1.5rem 1rem; }
+				h1 { font-size: 2rem; }
+                .nav-links a { width: 100%; }
+                .content-box { padding: 1.5rem; }
+                .file-name { font-size: 1rem; }
+                .download-btn { width: 100%; } /* Full width button on mobile */
+                .iframe-container { height: 400px; }
 			}
 		</style>
 	</head>
@@ -204,7 +213,7 @@ const currentYear = new Date().getFullYear();
 
         <div class="header-box">
 			<h1>Technical Data</h1>
-			<p class="subtitle">Documentation Repository</p>
+			<p class="subtitle">Documentation & Spreadsheets</p>
 			<div class="nav-links">
                 <a href="/">← Back</a>
                 <a href="https://lite.pngu.info/data">Lite Version</a>
@@ -213,7 +222,7 @@ const currentYear = new Date().getFullYear();
 
         {projects.length === 0 ? (
             <div class="content-box" style="text-align: center;">
-                <p style="color: #666; font-size: 0.8rem; letter-spacing: 0.1em;">INITIALIZING CLUSTER...</p>
+                <p style="color: #444; font-size: 0.8rem; letter-spacing: 0.1em;">CONNECTING TO CLUSTER...</p>
             </div>
         ) : (
             projects.map((project: any) => (
@@ -225,26 +234,31 @@ const currentYear = new Date().getFullYear();
                             const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
 
                             return (
-                                <div class="file-row">
-                                    <div class="row-main">
-                                        <div class="file-info">
+                                <details class="file-dropdown">
+                                    <summary>
+                                        <div class="summary-header">
                                             <span class="file-name">{fileName}</span>
-                                            <a href={rawUrl} class="direct-dl" download>DL</a>
+                                            <span class="preview-text">PREVIEW ▼</span>
                                         </div>
-                                        <details class="file-dropdown">
-                                            <summary></summary>
-                                            <div class="preview-wrap">
-                                                <div class="iframe-container">
-                                                    <iframe 
-                                                        src={previewUrl} 
-                                                        title={`Preview of ${fileName}`} 
-                                                        loading="lazy"
-                                                    ></iframe>
-                                                </div>
-                                            </div>
-                                        </details>
+                                        <a 
+                                          href={rawUrl} 
+                                          class="download-btn" 
+                                          download 
+                                          onclick="event.stopPropagation();"
+                                        >
+                                          Download Asset
+                                        </a>
+                                    </summary>
+                                    <div class="preview-wrap">
+                                        <div class="iframe-container">
+                                            <iframe 
+                                                src={previewUrl} 
+                                                title={`Preview of ${fileName}`} 
+                                                loading="lazy"
+                                            ></iframe>
+                                        </div>
                                     </div>
-                                </div>
+                                </details>
                             );
                         })}
                     </div>
