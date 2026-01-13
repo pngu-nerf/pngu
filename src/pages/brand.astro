@@ -6,14 +6,12 @@ import BackgroundEffects from '../components/BackgroundEffects.astro';
 // 1. Fetch data
 const projects = await getR2Data("PNGU-Brand-Assets-main/");
 
-// 2. Flatten all files into one list since there are no folders
+// 2. Flatten all files into one list - Corrected path logic
 const allFiles = projects.flatMap(project => 
   project.files.map(fileName => ({
     name: fileName,
-    // If folderName is ".", the file is in the root
-    fullUrl: project.folderName === "." 
-      ? `${R2_BRAND_BASE}/${encodeURIComponent(fileName)}`
-      : `${R2_BRAND_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`
+    // Using R2_BRAND_BASE which already contains the folder name
+    fullUrl: `${R2_BRAND_BASE}/${encodeURIComponent(fileName)}`
   }))
 );
 
@@ -43,12 +41,7 @@ const currentYear = new Date().getFullYear();
 		<title>Brand Assets | PNGU</title>
 
 		<style>
-            /* Production Polish: Global Mobile Resets */
-            * { 
-                box-sizing: border-box; 
-                -webkit-tap-highlight-color: transparent; /* Kills the blue selection box */
-            }
-
+            * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 			body {
 				font-family: sans-serif; padding: 2rem; text-align: center;
 				max-width: 900px; margin: 0 auto; color: #ffffff; background-color: #0f0f0f;
@@ -67,7 +60,6 @@ const currentYear = new Date().getFullYear();
 				backdrop-filter: blur(4px); transition: all 0.3s ease; width: 240px;
 			}
 
-            /* Hover Guard: Only apply hover effects on devices with a mouse */
             @media (hover: hover) {
                 .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
                 .download-btn:hover { background: #fff; color: #000; transform: scale(1.02); }
@@ -125,7 +117,6 @@ const currentYear = new Date().getFullYear();
 				body { padding: 1.5rem 1rem; }
 				h1 { font-size: 2rem; }
                 .nav-links a { width: 100%; }
-                /* Explicitly keeping button fit-content on mobile as requested */
                 .download-btn { width: fit-content; margin: 0 auto; }
 			}
 		</style>
@@ -138,7 +129,7 @@ const currentYear = new Date().getFullYear();
 			<h1>Brand Assets</h1>
 			<p class="subtitle">Logos & Banners</p>
 			<div class="nav-links">
-                <a href="/">← Back</a>
+                <a href="/">← Back Home</a>
                 <a href="https://lite.pngu.info/brand">Lite Version</a>
             </div>
 		</div>
@@ -161,7 +152,7 @@ const currentYear = new Date().getFullYear();
                                             <span class="file-name">{file.name}</span>
                                             <span class="preview-text">PREVIEW ▼</span>
                                         </div>
-                                        <a href={file.fullUrl} class="download-btn" download onclick="event.stopPropagation();">
+                                        <a href={file.fullUrl} class="download-btn" download={file.name} onclick="event.stopPropagation();">
                                             Download Asset
                                         </a>
                                     </summary>
@@ -172,7 +163,7 @@ const currentYear = new Date().getFullYear();
                                             </div>
                                         ) : (
                                             <div style="text-align:center; color:#555; font-style:italic;">
-                                                Preview not available for this file type.
+                                                Preview not available.
                                             </div>
                                         )}
                                     </div>
