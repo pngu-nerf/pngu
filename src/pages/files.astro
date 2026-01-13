@@ -1,29 +1,27 @@
 ---
 import BackgroundEffects from '../components/BackgroundEffects.astro';
 import { getR2Data } from '../lib/r2';
-import { R2_DATA_BASE } from '../constants';
+import { R2_FILES_BASE } from '../constants';
 
 const currentYear = new Date().getFullYear();
 
-// --- Logic: Fetch from R2 instead of GitHub ---
 let projects: any[] = [];
 try {
-    // Pulling from the 3D Files folder in your R2 bucket
+    // Correctly fetching from the 3D Files root
     const rawProjects = await getR2Data("PNGU-3D-Files-main/");
     
     projects = rawProjects.map(project => ({
         title: project.displayName,
         files: project.files.map((fileName: string) => ({
             name: fileName,
-            // Constructing the direct R2 public URL
-            url: `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`
+            // Using R2_FILES_BASE which already contains the folder path
+            url: `${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`
         }))
     })).sort((a, b) => a.title.localeCompare(b.title));
 } catch (e) {
     console.error("R2 Fetch Error:", e);
 }
 
-// Grouping logic for alphabetical separation
 const grouped = projects.reduce((acc, project) => {
     const char = project.title[0].toUpperCase();
     const key = /[A-Z]/.test(char) ? char : "#";
@@ -47,11 +45,7 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
 		<title>3D Files | PNGU</title>
 
 		<style>
-            * { 
-                box-sizing: border-box; 
-                -webkit-tap-highlight-color: transparent; 
-            }
-
+            * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 			body {
 				font-family: sans-serif; padding: 2rem; text-align: center;
 				max-width: 900px; margin: 0 auto; color: #ffffff; background-color: #0f0f0f;
@@ -116,11 +110,9 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
 
             .preview-wrap { padding: 0; background: #111; }
             .viewer-container { height: 400px; width: 100%; position: relative; background: #0a0a0a; }
-            .loading-text { position: absolute; color: #444; font-size: 0.75rem; z-index: 10; width: 100%; text-align: center; }
+            .loading-text { position: absolute; color: #444; font-size: 0.75rem; z-index: 10; width: 100%; text-align: center; padding-top: 180px; }
 
             .footer-meta { margin-top: 5rem; opacity: 0.3; font-size: 0.7rem; letter-spacing: 0.15em; padding-bottom: 4rem; text-transform: uppercase; }
-
-            @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
@@ -139,8 +131,8 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
 			<h1>3D Files</h1>
 			<p class="subtitle">Component & Blaster Models</p>
 			<div class="nav-links">
-                <a href="/">← Back</a>
-                <a href="https://lite.pngu.info/files">Lite Version</a>
+                <a href="/">← Back Home</a>
+                <a href="https://lite.pngu.info/files">Switch to Lite Version</a>
             </div>
 		</div>
 
@@ -192,22 +184,18 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
             import { STLLoader } from 'three/addons/loaders/STLLoader.js';
             import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-            // --- Search Functionality ---
             const searchInput = document.getElementById('file-search');
             const letterGroups = document.querySelectorAll('.letter-group');
 
             searchInput.addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase();
-                
                 letterGroups.forEach(group => {
                     let hasVisibleProject = false;
                     const cards = group.querySelectorAll('.project-card');
-                    
                     cards.forEach(card => {
                         const title = card.dataset.title;
                         const files = card.querySelectorAll('.file-dropdown');
                         let hasVisibleFile = false;
-
                         files.forEach(file => {
                             const name = file.dataset.filename;
                             if (name.includes(term) || title.includes(term)) {
@@ -217,20 +205,13 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
                                 file.style.display = 'none';
                             }
                         });
-
-                        if (hasVisibleFile) {
-                            card.style.display = 'block';
-                            hasVisibleProject = true;
-                        } else {
-                            card.style.display = 'none';
-                        }
+                        card.style.display = hasVisibleFile ? 'block' : 'none';
+                        if (hasVisibleFile) hasVisibleProject = true;
                     });
-
                     group.style.display = hasVisibleProject ? 'block' : 'none';
                 });
             });
 
-            // --- 3D Viewer Logic ---
             const activeViewers = new WeakSet();
             function initViewer(container, url) {
                 if (activeViewers.has(container)) return;
@@ -263,6 +244,9 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
                     camera.position.z = size * 2.5;
                     const animate = () => { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
                     animate();
+                }, undefined, (err) => {
+                    const loadingText = container.querySelector('.loading-text');
+                    if (loadingText) loadingText.innerText = 'Error loading 3D model (Check CORS)';
                 });
             }
 
