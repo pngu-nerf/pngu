@@ -3,7 +3,6 @@ import { getR2Data } from '../lib/r2';
 import { R2_DATA_BASE } from '../constants';
 import BackgroundEffects from '../components/BackgroundEffects.astro';
 
-// Logic: Fetch the documentation index from R2
 const projects = await getR2Data("PNGU-Blaster-Data-main/");
 const currentYear = new Date().getFullYear();
 ---
@@ -40,32 +39,37 @@ const currentYear = new Date().getFullYear();
 			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
 			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
 
-            /* Navigation Buttons - Stacked & Matched to Homepage */
+            /* Navigation Buttons - Stacked & Pill-Shaped */
 			.nav-links {
 				margin-top: 2rem;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 0.75rem;
+                gap: 1rem;
 			}
+
 			.nav-links a {
-				display: inline-block;
-				width: 200px; /* Fixed width for consistent stacking */
-				padding: 12px 24px;
-				background-color: #272727;
-                border: 1px solid rgba(255,255,255,0.1);
-				border-radius: 8px; /* Matches homepage button radius */
-                color: #fff;
-                text-decoration: none;
-                font-size: 0.9rem;
-                font-weight: 500;
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+				text-decoration: none;
+                display: inline-block;
+				font-size: 0.75rem;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: rgba(255, 255, 255, 0.4);
+				padding: 10px 24px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 20px; /* Matches homepage pill shape */
+				background: rgba(255, 255, 255, 0.03);
+				backdrop-filter: blur(4px);
+				transition: all 0.3s ease;
+                width: 220px;
 			}
+
             .nav-links a:hover {
-                background-color: #333;
-                border-color: rgba(255,255,255,0.3);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                color: rgba(255, 255, 255, 1);
+				background: rgba(255, 255, 255, 0.1);
+				border-color: rgba(255, 255, 255, 0.3);
+				transform: translateY(-1px);
             }
 
             /* Content Containers */
@@ -90,71 +94,74 @@ const currentYear = new Date().getFullYear();
             }
 
             /* Collapsible File Items */
-            .file-list { display: flex; flex-direction: column; gap: 10px; }
+            .file-list { display: flex; flex-direction: column; gap: 12px; }
 
-            details.file-dropdown {
+            .file-row {
                 background-color: rgba(26, 26, 26, 0.6);
                 border: 1px solid rgba(255,255,255,0.05);
                 border-radius: 12px;
                 overflow: hidden;
-                transition: border-color 0.2s;
             }
 
-            details.file-dropdown[open] {
-                border-color: rgba(255,255,255,0.2);
+            .row-main {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
             }
 
+            .file-info {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex: 1;
+            }
+
+            .file-name { font-weight: 500; font-size: 0.95rem; }
+
+            /* Direct Download Button (Next to name) */
+            .direct-dl {
+                color: rgba(255,255,255,0.4);
+                text-decoration: none;
+                font-size: 0.7rem;
+                padding: 4px 10px;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 6px;
+                transition: all 0.2s;
+            }
+            .direct-dl:hover {
+                color: #fff;
+                background: rgba(255,255,255,0.1);
+                border-color: rgba(255,255,255,0.3);
+            }
+
+            /* Dropdown Summary */
             summary {
-                padding: 16px 20px;
                 cursor: pointer;
                 list-style: none;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-weight: 500;
-                user-select: none;
+                padding: 12px;
+                border-left: 1px solid rgba(255,255,255,0.1);
+                color: #666;
+                transition: all 0.2s;
             }
-            
+            summary:hover { color: #fff; background: rgba(255,255,255,0.02); }
             summary::-webkit-details-marker { display: none; }
 
             summary::after {
-                content: '→';
-                font-size: 1.1rem;
-                color: #666;
-                transition: transform 0.3s ease, color 0.3s ease;
+                content: 'PREVIEW ▼';
+                font-size: 0.65rem;
+                font-weight: 800;
+                letter-spacing: 0.05em;
             }
 
-            details[open] summary::after {
-                transform: rotate(90deg);
-                color: #fff;
-            }
-
-            summary:hover { background-color: rgba(255, 255, 255, 0.03); }
+            details[open] summary { color: #fff; background: rgba(255,255,255,0.05); }
 
             /* Inner Content */
             .preview-wrap {
-                padding: 0 20px 20px 20px;
+                padding: 20px;
+                background: rgba(0,0,0,0.2);
                 animation: slideIn 0.3s ease-out;
             }
-
-            .download-area {
-                margin-bottom: 15px;
-                display: flex;
-                justify-content: flex-end;
-            }
-
-            .download-btn {
-                color: #ffffff;
-                text-decoration: none;
-                font-size: 0.75rem;
-                padding: 6px 14px;
-                border: 1px solid #ffffff;
-                border-radius: 6px;
-                background: transparent;
-                transition: all 0.2s;
-            }
-
-            .download-btn:hover { background: #fff; color: #000; }
 
             .iframe-container {
                 width: 100%;
@@ -162,28 +169,32 @@ const currentYear = new Date().getFullYear();
                 border-radius: 8px;
                 overflow: hidden;
                 background: #fff;
-                border: 1px solid rgba(255,255,255,0.1);
+                border: 1px solid rgba(0,0,0,0.2);
             }
 
             iframe { width: 100%; height: 100%; border: none; }
 
             .footer-meta {
                 margin-top: 4rem;
-                opacity: 0.5;
-                font-size: 0.8rem;
+                opacity: 0.3;
+                font-size: 0.7rem;
+                letter-spacing: 0.1em;
                 padding-bottom: 3rem;
+                text-transform: uppercase;
             }
 
             @keyframes slideIn {
-                from { opacity: 0; transform: translateY(-10px); }
+                from { opacity: 0; transform: translateY(-5px); }
                 to { opacity: 1; transform: translateY(0); }
             }
 
 			@media (max-width: 600px) {
 				body { padding: 1rem; }
-				h1 { font-size: 2rem; }
-                .nav-links a { width: 100%; } /* Full width on mobile */
-                .iframe-container { height: 400px; }
+				h1 { font-size: 1.8rem; }
+                .nav-links a { width: 90%; }
+                .row-main { flex-direction: column; align-items: flex-start; gap: 10px; }
+                summary { border-left: none; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; text-align: center; }
+                .iframe-container { height: 350px; }
 			}
 		</style>
 	</head>
@@ -192,17 +203,17 @@ const currentYear = new Date().getFullYear();
         <BackgroundEffects />
 
         <div class="header-box">
-			<h1>Blaster Data</h1>
-			<p class="subtitle">Spreadsheets and Docs for Blasters</p>
+			<h1>Technical Data</h1>
+			<p class="subtitle">Documentation Repository</p>
 			<div class="nav-links">
-                <a href="/">Back</a>
+                <a href="/">← Back</a>
                 <a href="https://lite.pngu.info/data">Lite Version</a>
             </div>
 		</div>
 
         {projects.length === 0 ? (
             <div class="content-box" style="text-align: center;">
-                <p style="color: #666;">Syncing...</p>
+                <p style="color: #666; font-size: 0.8rem; letter-spacing: 0.1em;">INITIALIZING CLUSTER...</p>
             </div>
         ) : (
             projects.map((project: any) => (
@@ -214,23 +225,26 @@ const currentYear = new Date().getFullYear();
                             const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(rawUrl)}`;
 
                             return (
-                                <details class="file-dropdown">
-                                    <summary>
-                                        <span class="file-name">{fileName}</span>
-                                    </summary>
-                                    <div class="preview-wrap">
-                                        <div class="download-area">
-                                            <a href={rawUrl} class="download-btn" download>Download Asset</a>
+                                <div class="file-row">
+                                    <div class="row-main">
+                                        <div class="file-info">
+                                            <span class="file-name">{fileName}</span>
+                                            <a href={rawUrl} class="direct-dl" download>DL</a>
                                         </div>
-                                        <div class="iframe-container">
-                                            <iframe 
-                                                src={previewUrl} 
-                                                title={`Preview of ${fileName}`} 
-                                                loading="lazy"
-                                            ></iframe>
-                                        </div>
+                                        <details class="file-dropdown">
+                                            <summary></summary>
+                                            <div class="preview-wrap">
+                                                <div class="iframe-container">
+                                                    <iframe 
+                                                        src={previewUrl} 
+                                                        title={`Preview of ${fileName}`} 
+                                                        loading="lazy"
+                                                    ></iframe>
+                                                </div>
+                                            </div>
+                                        </details>
                                     </div>
-                                </details>
+                                </div>
                             );
                         })}
                     </div>
