@@ -3,24 +3,33 @@ import { getR2Data } from '../lib/r2';
 import { R2_BRAND_BASE } from '../constants';
 import BackgroundEffects from '../components/BackgroundEffects.astro';
 
-// 1. Fetch Brand Assets from R2
-const rawProjects = await getR2Data("PNGU-Brand-Assets-main/");
+// 1. Fetch data
+const projects = await getR2Data("PNGU-Brand-Assets-main/");
 
-// 2. Group by First Letter (Robust Version)
-const grouped = rawProjects.reduce((acc: any, project: any) => {
-  const firstChar = (project.displayName || "Misc")[0].toUpperCase();
-  const char = /[A-Z]/.test(firstChar) ? firstChar : "#"; // Group numbers/symbols under #
-  
+// 2. Flatten all files into one list since there are no folders
+const allFiles = projects.flatMap(project => 
+  project.files.map(fileName => ({
+    name: fileName,
+    // If folderName is ".", the file is in the root
+    fullUrl: project.folderName === "." 
+      ? `${R2_BRAND_BASE}/${encodeURIComponent(fileName)}`
+      : `${R2_BRAND_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`
+  }))
+);
+
+// 3. Group individual files by first letter
+const grouped = allFiles.reduce((acc: any, file: any) => {
+  const firstChar = file.name[0].toUpperCase();
+  const char = /[A-Z]/.test(firstChar) ? firstChar : "#";
   if (!acc[char]) acc[char] = [];
-  acc[char].push(project);
+  acc[char].push(file);
   return acc;
 }, {});
 
-// Define sortedLetters for the template loop
 const sortedLetters = Object.keys(grouped).sort((a, b) => {
-    if (a === "#") return 1;
-    if (b === "#") return -1;
-    return a.localeCompare(b);
+  if (a === "#") return 1;
+  if (b === "#") return -1;
+  return a.localeCompare(b);
 });
 
 const currentYear = new Date().getFullYear();
@@ -44,7 +53,6 @@ const currentYear = new Date().getFullYear();
 			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
 			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
 
-            /* Navigation Buttons - Stacked Pills */
 			.nav-links { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 			.nav-links a {
 				text-decoration: none; display: inline-block; font-size: 0.75rem; font-weight: 600;
@@ -55,7 +63,6 @@ const currentYear = new Date().getFullYear();
 			}
             .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
 
-            /* Search Bar Styling */
             .search-container { margin: 2rem auto; width: 100%; max-width: 500px; position: relative; }
             #brand-search {
                 width: 100%; padding: 14px 20px; border-radius: 30px;
@@ -63,44 +70,31 @@ const currentYear = new Date().getFullYear();
                 color: #fff; font-size: 1rem; outline: none; transition: all 0.3s ease;
                 backdrop-filter: blur(10px);
             }
-            #brand-search:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(0,0,0,0.4); }
 
-            /* Alphabetical Headers */
             .letter-header { 
                 font-size: 2rem; font-weight: 800; color: rgba(255,255,255,0.1); 
-                border-bottom: 1px solid rgba(255,255,255,0.05); margin: 3rem 0 1rem 0; text-align: left; padding-left: 10px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05); margin: 3rem 0 1rem 0; text-align: left;
             }
 
-            /* Content Containers */
-			.content-box {
-				background-color: rgba(40, 40, 40, 0.4); backdrop-filter: blur(20px) saturate(120%);
-                border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
-				padding: 1.5rem; width: 100%; margin: 1.5rem auto; text-align: left;
-			}
-            h2 { margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 25px; }
-
-            /* Full-Bar Dropdown Style */
-            .file-list { display: flex; flex-direction: column; gap: 16px; }
-            details.file-dropdown { background-color: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; transition: all 0.3s ease;}
+            .file-list { display: flex; flex-direction: column; gap: 12px; }
+            details.file-dropdown { background-color: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
             
-            summary { padding: 18px 24px; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 12px; user-select: none;}
+            summary { padding: 18px 24px; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 12px; user-select: none; text-align: left; }
             summary::-webkit-details-marker { display: none; }
             
             .summary-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-            .file-name { font-weight: 600; font-size: 1.1rem; color: #fff; }
+            .file-name { font-weight: 600; font-size: 1rem; color: #fff; }
             .preview-text { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: #666; }
             details[open] .preview-text { color: #fff; }
 
-            /* Corrected Download Button */
             .download-btn {
                 color: #ffffff; text-decoration: none; font-size: 0.8rem; font-weight: 700;
                 padding: 10px 24px; border: 1px solid #ffffff; border-radius: 8px;
                 background: rgba(255,255,255,0.05); transition: all 0.2s ease;
-                display: inline-block; width: fit-content; text-align: center;
+                display: inline-block; width: fit-content;
             }
-            .download-btn:hover { background: #fff; color: #000; transform: scale(1.02); }
+            .download-btn:hover { background: #fff; color: #000; }
 
-            /* Preview Area with Checkerboard for Transparency */
             .preview-wrap { padding: 24px; animation: slideIn 0.3s ease-out; }
             .checkerboard {
                 background-color: #111;
@@ -110,29 +104,17 @@ const currentYear = new Date().getFullYear();
                     linear-gradient(45deg, transparent 75%, #181818 75%), 
                     linear-gradient(-45deg, transparent 75%, #181818 75%);
                 background-size: 20px 20px;
-                border-radius: 8px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding: 2rem;
-                border: 1px solid rgba(255,255,255,0.05);
+                border-radius: 8px; display: flex; justify-content: center; align-items: center; padding: 2rem; border: 1px solid rgba(255,255,255,0.05);
             }
             .checkerboard img { max-width: 100%; max-height: 400px; object-fit: contain; }
 
-            .no-preview { color: #555; font-style: italic; font-size: 0.9rem; text-align: center; padding: 2rem; }
             .footer-meta { margin-top: 5rem; opacity: 0.3; font-size: 0.75rem; letter-spacing: 0.15em; padding-bottom: 4rem; text-transform: uppercase; }
 
-            @keyframes slideIn {
-                from { opacity: 0; transform: translateY(-8px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
+            @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
 			@media (max-width: 600px) {
-				body { padding: 1.5rem 1rem; }
-				h1 { font-size: 2rem; }
                 .nav-links a { width: 100%; }
-                .download-btn { width: 100%; }
-                .content-box { padding: 1.5rem; }
+                .download-btn { width: 100%; text-align: center; }
 			}
 		</style>
 	</head>
@@ -142,7 +124,7 @@ const currentYear = new Date().getFullYear();
 
         <div class="header-box">
 			<h1>Brand Assets</h1>
-			<p class="subtitle">Logos, Banners & Official Fonts</p>
+			<p class="subtitle">Logos & Banners</p>
 			<div class="nav-links">
                 <a href="/">← Back</a>
                 <a href="https://lite.pngu.info/brand">Lite Version</a>
@@ -150,54 +132,42 @@ const currentYear = new Date().getFullYear();
 		</div>
 
         <div class="search-container">
-            <input type="text" id="brand-search" placeholder="Search logos or font names..." />
+            <input type="text" id="brand-search" placeholder="Search assets..." />
         </div>
 
         <div id="results-container">
             {sortedLetters.map((letter) => (
                 <div class="letter-group" data-letter={letter}>
                     <div class="letter-header">{letter}</div>
-                    {grouped[letter].map((project: any) => (
-                        <div class="content-box project-card" data-title={project.displayName.toLowerCase()}>
-                            <h2>{project.displayName}</h2>
-                            <div class="file-list">
-                                {project.files.map((fileName: string) => {
-                                    const fullUrl = `${R2_BRAND_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`;
-                                    const isImage = /\.(svg|png|jpg|jpeg|webp)$/i.test(fileName);
-
-                                    return (
-                                        <details class="file-dropdown" data-filename={fileName.toLowerCase()}>
-                                            <summary>
-                                                <div class="summary-header">
-                                                    <span class="file-name">{fileName}</span>
-                                                    <span class="preview-text">PREVIEW ▼</span>
-                                                </div>
-                                                <a 
-                                                  href={fullUrl} 
-                                                  class="download-btn" 
-                                                  download 
-                                                  onclick="event.stopPropagation();"
-                                                >
-                                                  Download Asset
-                                                </a>
-                                            </summary>
-                                            <div class="preview-wrap">
-                                                {isImage ? (
-                                                    <div class="checkerboard">
-                                                        <img src={fullUrl} alt={fileName} loading="lazy" />
-                                                    </div>
-                                                ) : (
-                                                    <div class="no-preview">
-                                                        Preview not available for {fileName.split('.').pop().toUpperCase()} files.
-                                                    </div>
-                                                )}
+                    <div class="file-list">
+                        {grouped[letter].map((file: any) => {
+                            const isImage = /\.(svg|png|jpg|jpeg|webp)$/i.test(file.name);
+                            return (
+                                <details class="file-dropdown" data-filename={file.name.toLowerCase()}>
+                                    <summary>
+                                        <div class="summary-header">
+                                            <span class="file-name">{file.name}</span>
+                                            <span class="preview-text">PREVIEW ▼</span>
+                                        </div>
+                                        <a href={file.fullUrl} class="download-btn" download onclick="event.stopPropagation();">
+                                            Download Asset
+                                        </a>
+                                    </summary>
+                                    <div class="preview-wrap">
+                                        {isImage ? (
+                                            <div class="checkerboard">
+                                                <img src={file.fullUrl} alt={file.name} loading="lazy" />
                                             </div>
-                                        </details>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))}
+                                        ) : (
+                                            <div style="text-align:center; color:#555; font-style:italic;">
+                                                Preview not available for this file type.
+                                            </div>
+                                        )}
+                                    </div>
+                                </details>
+                            );
+                        })}
+                    </div>
                 </div>
             ))}
         </div>
@@ -210,35 +180,19 @@ const currentYear = new Date().getFullYear();
 
             searchInput.addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase();
-                
                 letterGroups.forEach(group => {
-                    let hasVisibleProject = false;
-                    const cards = group.querySelectorAll('.project-card');
-                    
-                    cards.forEach(card => {
-                        const title = card.dataset.title;
-                        const files = card.querySelectorAll('.file-dropdown');
-                        let hasVisibleFile = false;
-
-                        files.forEach(file => {
-                            const name = file.dataset.filename;
-                            if (name.includes(term) || title.includes(term)) {
-                                file.style.display = 'block';
-                                hasVisibleFile = true;
-                            } else {
-                                file.style.display = 'none';
-                            }
-                        });
-
-                        if (hasVisibleFile) {
-                            card.style.display = 'block';
-                            hasVisibleProject = true;
+                    let hasVisibleFile = false;
+                    const files = group.querySelectorAll('.file-dropdown');
+                    files.forEach(file => {
+                        const name = file.dataset.filename;
+                        if (name.includes(term)) {
+                            file.style.display = 'block';
+                            hasVisibleFile = true;
                         } else {
-                            card.style.display = 'none';
+                            file.style.display = 'none';
                         }
                     });
-
-                    group.style.display = hasVisibleProject ? 'block' : 'none';
+                    group.style.display = hasVisibleFile ? 'block' : 'none';
                 });
             });
         </script>
