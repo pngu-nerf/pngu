@@ -48,6 +48,11 @@ import IndexIntro from '../components/IndexIntro.astro';
 </MainLayout>
 
 <style>
+  /* Global Reset for this page */
+  * {
+    -webkit-tap-highlight-color: transparent; /* Kills the blue highlight box */
+  }
+
   /* Visibility handled by IndexIntro script */
   .index-header, .content-box, .separator-small {
     opacity: 1; 
@@ -99,11 +104,14 @@ import IndexIntro from '../components/IndexIntro.astro';
     transition: all 0.3s ease;
   }
 
-  .lite-button:hover {
-    color: rgba(255, 255, 255, 1);
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
+  /* --- FIXED: Hover logic wrapped to prevent expanding/sticking on mobile --- */
+  @media (hover: hover) {
+    .lite-button:hover {
+      color: rgba(255, 255, 255, 1);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px); /* Only happens with a mouse */
+    }
   }
 
   .separator-small { margin: 2rem 0; height: 1px; }
