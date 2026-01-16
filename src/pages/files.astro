@@ -140,23 +140,38 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
                 display: inline-block; width: fit-content;
             }
 
-            /* NAMESPACED PROJECT DETAILS STYLING */
+            /* --- UPDATED PROJECT DETAILS STYLING --- */
             details.meta-dropdown {
-                background: rgba(0, 0, 0, 0.2); border-radius: 12px; 
-                border: 1px dashed rgba(255, 255, 255, 0.1); margin-top: 5px;
+                /* Match file-dropdown background and solid border */
+                background-color: rgba(30, 30, 30, 0.4); 
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 12px; 
+                margin-top: 10px;
+                overflow: hidden;
             }
             details.meta-dropdown summary {
-                padding: 12px; color: rgba(255, 255, 255, 0.3); font-size: 0.65rem; 
+                /* Increased padding to 24px vertical make it twice as tall */
+                padding: 24px 12px; 
+                color: rgba(255, 255, 255, 0.5); 
+                font-size: 0.7rem; 
                 font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase;
                 cursor: pointer; list-style: none; text-align: center;
+                transition: background-color 0.2s ease, color 0.2s ease;
             }
-            .description-content { padding: 0 20px 20px 20px; text-align: left; }
+            /* Add hover state for better interactivity on the big button */
+            details.meta-dropdown summary:hover {
+                background-color: rgba(255,255,255,0.02);
+                color: rgba(255, 255, 255, 0.8);
+            }
+            
+            .description-content { padding: 0 25px 25px 25px; text-align: left; }
             .description-content p { font-size: 0.85rem; line-height: 1.6; color: #aaa; white-space: pre-wrap; margin: 0; }
             .printables-btn {
                 display: inline-block; margin-top: 15px; color: #0df; 
                 text-decoration: none; font-size: 0.75rem; font-weight: 700;
             }
             .printables-btn:hover { text-decoration: underline; }
+            /* --------------------------------------- */
 
             .preview-wrap { padding: 0; background: #111; }
             .viewer-container { height: 400px; width: 100%; position: relative; background: #0a0a0a; }
