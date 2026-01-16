@@ -7,21 +7,55 @@ const currentYear = new Date().getFullYear();
 
 let projects: any[] = [];
 try {
-    // Correctly fetching from the 3D Files root
     const rawProjects = await getR2Data("PNGU-3D-Files-main/");
     
-    projects = rawProjects.map(project => ({
-        title: project.displayName,
-        files: project.files.map((fileName: string) => ({
-            name: fileName,
-            // Using R2_FILES_BASE which already contains the folder path
-            url: `${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`
-        }))
-    })).sort((a, b) => a.title.localeCompare(b.title));
+    projects = await Promise.all(rawProjects.map(async (project) => {
+        // Filter out the meta files from the main download list
+        const assetFiles = project.files.filter((f: string) => f !== 'description' && f !== 'link');
+        
+        // Check for meta files
+        const hasDescription = project.files.includes('description');
+        const hasLink = project.files.includes('link');
+
+        // Construct URLs for meta files
+        const descUrl = hasDescription ? `${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/description` : null;
+        const linkUrl = hasLink ? `${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/link` : null;
+
+        // Fetch description content during build for instant loading
+        let descriptionText = "";
+        let externalLink = "";
+
+        if (descUrl) {
+            try {
+                const res = await fetch(descUrl);
+                descriptionText = await res.text();
+            } catch (e) { descriptionText = "Description currently unavailable."; }
+        }
+
+        if (linkUrl) {
+            try {
+                const res = await fetch(linkUrl);
+                externalLink = await res.text();
+            } catch (e) { externalLink = ""; }
+        }
+
+        return {
+            title: project.displayName,
+            description: descriptionText,
+            printablesLink: externalLink.trim(),
+            files: assetFiles.map((fileName: string) => ({
+                name: fileName,
+                url: `${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`
+            }))
+        };
+    }));
+    
+    projects.sort((a, b) => a.title.localeCompare(b.title));
 } catch (e) {
     console.error("R2 Fetch Error:", e);
 }
 
+// ... (Keep the existing grouped and sortedLetters logic)
 const grouped = projects.reduce((acc, project) => {
     const char = project.title[0].toUpperCase();
     const key = /[A-Z]/.test(char) ? char : "#";
@@ -38,108 +72,42 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<title>3D Files | PNGU</title>
+    <style>
+        /* Add these new styles to your existing <style> block */
+        .meta-dropdown {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 15px;
+        }
+        .meta-dropdown summary {
+            padding: 10px 0;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .description-content {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #ccc;
+            white-space: pre-wrap; /* Preserves line breaks from the file */
+        }
+        .printables-btn {
+            display: block;
+            margin-top: 15px;
+            color: #0df; /* Abyssal blue highlight */
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+        .printables-btn:hover { text-decoration: underline; }
+    </style>
 
-		<style>
-            * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-			body {
-				font-family: sans-serif; padding: 2rem; text-align: center;
-				max-width: 900px; margin: 0 auto; color: #ffffff; background-color: #0f0f0f;
-			}
-            #bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f0f0f; z-index: -2; }
-			.header-box { text-align: center; margin-bottom: 2rem; }
-			h1 { color: #ffffff; font-size: 2.5rem; margin: 0 0 0.5rem 0; }
-			.subtitle { color: #a0a0a0; font-size: 1.1rem; }
-
-            .search-container { margin: 2rem auto; width: 100%; max-width: 500px; position: relative; }
-            #file-search {
-                width: 100%; padding: 14px 20px; border-radius: 30px;
-                background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-                color: #fff; font-size: 1rem; outline: none; transition: all 0.3s ease;
-                backdrop-filter: blur(10px);
-            }
-            #file-search:focus { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); }
-
-			.nav-links { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-			.nav-links a {
-				text-decoration: none; display: inline-block; font-size: 0.75rem; font-weight: 600;
-				text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.4);
-				padding: 12px 28px; border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 25px; background: rgba(255, 255, 255, 0.03);
-				backdrop-filter: blur(4px); transition: all 0.3s ease; width: 240px;
-			}
-            
-            @media (hover: hover) {
-                .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
-                .download-btn:hover { background: #fff; color: #000; transform: scale(1.02); }
-            }
-
-            .letter-header { 
-                font-size: 2rem; font-weight: 800; color: rgba(255,255,255,0.1); 
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05); margin: 3rem 0 1rem 0; text-align: left; padding-left: 10px;
-            }
-
-			.content-box {
-				background-color: rgba(40, 40, 40, 0.4); backdrop-filter: blur(20px) saturate(120%);
-                border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
-				padding: 1.5rem; width: 100%; margin: 1.5rem auto; text-align: left;
-			}
-            h2 { margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 25px; }
-
-            .file-list { display: flex; flex-direction: column; gap: 12px; }
-            details.file-dropdown { background-color: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
-            
-            summary { padding: 18px 20px; cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 12px; user-select: none; }
-            summary::-webkit-details-marker { display: none; }
-            
-            .summary-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-            .file-name { font-weight: 600; font-size: 1rem; color: #fff; }
-            .preview-text { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; color: #555; }
-            details[open] .preview-text { color: #fff; }
-
-            .download-btn {
-                color: #ffffff; text-decoration: none; font-size: 0.75rem; font-weight: 700;
-                padding: 10px 24px; border: 1px solid #ffffff; border-radius: 8px;
-                background: rgba(255,255,255,0.05); transition: all 0.2s ease;
-                display: inline-block; width: fit-content;
-            }
-
-            .preview-wrap { padding: 0; background: #111; }
-            .viewer-container { height: 400px; width: 100%; position: relative; background: #0a0a0a; }
-            .loading-text { position: absolute; color: #444; font-size: 0.75rem; z-index: 10; width: 100%; text-align: center; padding-top: 180px; }
-
-            .footer-meta { margin-top: 5rem; opacity: 0.3; font-size: 0.7rem; letter-spacing: 0.15em; padding-bottom: 4rem; text-transform: uppercase; }
-
-			@media (max-width: 600px) {
-				body { padding: 1rem; }
-				h1 { font-size: 2rem; }
-                .nav-links a { width: 100%; }
-                .download-btn { width: fit-content; margin: 0 auto; }
-                .viewer-container { height: 300px; }
-			}
-		</style>
-	</head>
-	<body>
-        <div id="bg-layer"></div>
-        <BackgroundEffects />
-
-        <div class="header-box">
-			<h1>3D Files</h1>
-			<p class="subtitle">Component & Blaster Models</p>
-			<div class="nav-links">
-                <a href="/">← Back Home</a>
-                <a href="https://lite.pngu.info/files">Switch to Lite Version</a>
-            </div>
-		</div>
-
-        <div class="search-container">
-            <input type="text" id="file-search" placeholder="Search projects or files..." />
-        </div>
-
+    <body>
         <div id="results-container">
             {sortedLetters.map((letter) => (
                 <div class="letter-group" data-letter={letter}>
@@ -167,95 +135,25 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
                                     </details>
                                 ))}
                             </div>
+
+                            {/* New Description & Link Section */}
+                            {(project.description || project.printablesLink) && (
+                                <details class="meta-dropdown">
+                                    <summary>Project Details ▼</summary>
+                                    <div class="description-content">
+                                        {project.description && <p>{project.description}</p>}
+                                        {project.printablesLink && (
+                                            <a href={project.printablesLink} target="_blank" class="printables-btn">
+                                                View on Printables →
+                                            </a>
+                                        )}
+                                    </div>
+                                </details>
+                            )}
                         </div>
                     ))}
                 </div>
             ))}
         </div>
-
-        <footer class="footer-meta">© {currentYear} pngu</footer>
-
-        <script type="importmap">
-            { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
-        </script>
-
-        <script type="module">
-            import * as THREE from 'three';
-            import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-            const searchInput = document.getElementById('file-search');
-            const letterGroups = document.querySelectorAll('.letter-group');
-
-            searchInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                letterGroups.forEach(group => {
-                    let hasVisibleProject = false;
-                    const cards = group.querySelectorAll('.project-card');
-                    cards.forEach(card => {
-                        const title = card.dataset.title;
-                        const files = card.querySelectorAll('.file-dropdown');
-                        let hasVisibleFile = false;
-                        files.forEach(file => {
-                            const name = file.dataset.filename;
-                            if (name.includes(term) || title.includes(term)) {
-                                file.style.display = 'block';
-                                hasVisibleFile = true;
-                            } else {
-                                file.style.display = 'none';
-                            }
-                        });
-                        card.style.display = hasVisibleFile ? 'block' : 'none';
-                        if (hasVisibleFile) hasVisibleProject = true;
-                    });
-                    group.style.display = hasVisibleProject ? 'block' : 'none';
-                });
-            });
-
-            const activeViewers = new WeakSet();
-            function initViewer(container, url) {
-                if (activeViewers.has(container)) return;
-                activeViewers.add(container);
-                
-                const scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x0a0a0a);
-                const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-                const renderer = new THREE.WebGLRenderer({ antialias: true });
-                renderer.setSize(container.clientWidth, container.clientHeight);
-                container.appendChild(renderer.domElement);
-                
-                const controls = new OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-                
-                scene.add(new THREE.AmbientLight(0xffffff, 1));
-                const dirLight = new THREE.DirectionalLight(0xffffff, 2);
-                dirLight.position.set(1, 1, 1);
-                scene.add(dirLight);
-
-                new STLLoader().load(url, (geo) => {
-                    const loadingText = container.querySelector('.loading-text');
-                    if (loadingText) loadingText.style.display = 'none';
-                    geo.center();
-                    const mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x111111, shininess: 100 }));
-                    mesh.rotation.x = -Math.PI / 2;
-                    scene.add(mesh);
-                    geo.computeBoundingBox();
-                    const size = Math.max(geo.boundingBox.max.x - geo.boundingBox.min.x, geo.boundingBox.max.y - geo.boundingBox.min.y);
-                    camera.position.z = size * 2.5;
-                    const animate = () => { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
-                    animate();
-                }, undefined, (err) => {
-                    const loadingText = container.querySelector('.loading-text');
-                    if (loadingText) loadingText.innerText = 'Error loading 3D model (Check CORS)';
-                });
-            }
-
-            document.addEventListener('toggle', (e) => {
-                if (e.target.open && e.target.classList.contains('file-dropdown')) {
-                    const viewer = e.target.querySelector('.viewer-container');
-                    if (viewer) setTimeout(() => initViewer(viewer, viewer.dataset.stlUrl), 50);
-                }
-            }, true);
-        </script>
-	</body>
+        </body>
 </html>
