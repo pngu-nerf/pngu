@@ -1,3 +1,29 @@
 ---
 ---
-<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:;base64,iVBOR="><title>Contact | Lite</title><style>body{font:13px sans-serif;background:#333;color:#fff;text-align:center;padding:5vh 1rem}b{display:block;font-size:11px;color:#888;margin-bottom:2rem;text-transform:uppercase}p{font-size:11px;color:#888;margin:2rem 0 0.5rem}button{display:block;width:200px;margin:0 auto;background:#fff;border:0;color:#000;padding:12px 0;font-weight:bold;cursor:pointer}button:active{background:#0df}.reg{display:block;color:#555;font-size:11px;text-decoration:underline;margin-bottom:1rem}.main-site{margin-bottom:3rem}</style><b>CONTACT</b><a href="/" class="reg">Back to home</a><a href="https://pngu.info/contact" class="reg main-site">Back to regular site</a><p>EMAIL</p><button onclick="c('contact@pngu.info',this)">contact@pngu.info</button><p>DISCORD</p><button onclick="c('penguinnoly',this)">penguinnoly</button><script is:inline>function c(v,b){navigator.clipboard.writeText(v);const o=b.innerText;b.innerText='COPIED';setTimeout(()=>{b.innerText=o},1000)}</script>
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:;base64,iVBOR="><title>Contact | Lite</title><style>
+  body{font:13px sans-serif;background:#333;color:#fff;text-align:center;padding:5vh 1rem}
+  b{display:block;font-size:11px;color:#888;margin-bottom:2rem;text-transform:uppercase}
+  p{font-size:11px;color:#888;margin:2rem 0 0.5rem}
+  button{display:block;width:200px;margin:0 auto;background:#fff;border:0;color:#000;padding:12px 0;font-weight:bold;cursor:pointer}
+  button:active{background:#0df}
+  /* Matching the exact style and spacing from the Files page */
+  .reg{display:block;color:#555;font-size:11px;text-decoration:underline;margin-bottom:1rem}
+  .main-site{margin-bottom:3rem}
+</style>
+<b>CONTACT</b>
+<a href="/" class="reg">Back to home</a>
+<a href="https://pngu.info/contact" class="reg main-site">Back to regular site</a>
+
+<p>EMAIL</p>
+<button onclick="c('contact@pngu.info',this)">contact@pngu.info</button>
+<p>DISCORD</p>
+<button onclick="c('penguinnoly',this)">penguinnoly</button>
+
+<script is:inline>
+  function c(v,b){
+    navigator.clipboard.writeText(v);
+    const o=b.innerText;
+    b.innerText='COPIED';
+    setTimeout(()=>{b.innerText=o},1000)
+  }
+</script>
