@@ -1,11 +1,24 @@
 ---
+/**
+ * ContactItem.astro — Clickable contact info button with copy-to-clipboard
+ *
+ * Renders a glass-surface button displaying a value (email, Discord, etc.)
+ * with a status label. Clicking copies the value to clipboard and briefly
+ * flashes the label text to a success message in red.
+ *
+ * Props:
+ *   label      — Status text shown on the right (e.g. "DISCORD", "EMAIL")
+ *   value      — The text to display and copy (e.g. "user@example.com")
+ *   buttonId   — Unique DOM ID for the button element
+ *   copyMessage— Text shown after successful copy (default: "Copied")
+ */
 interface Props {
   label: string;
   value: string;
   buttonId: string;
   copyMessage?: string;
 }
-const { label, value, buttonId, copyMessage = "✓ Copied!" } = Astro.props;
+const { label, value, buttonId, copyMessage = "Copied" } = Astro.props;
 ---
 
 <div class="contact-item-wrapper">
@@ -17,45 +30,61 @@ const { label, value, buttonId, copyMessage = "✓ Copied!" } = Astro.props;
 
 <style>
   .contact-item-wrapper { margin-bottom: 12px; }
-  
+
+  /* Glass-surface button matching the site's frosted glass design language */
   .contact-btn {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #1a1a1a;
-    padding: 16px 20px;
-    border-radius: 12px;
+    background: rgba(51, 51, 51, 0.35);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--glass-radius-sm);
     width: 100%;
     border: 1px solid var(--glass-border);
     cursor: pointer;
-    transition: all var(--transition-bounce);
-    /* Mobile tap fix inherited from Layout, but added here for safety */
-    -webkit-tap-highlight-color: transparent;
+    transition: all var(--transition-smooth);
+    font-family: var(--font-display);
+    box-shadow: var(--glass-shadow), var(--glass-highlight);
   }
 
-  .contact-btn:hover {
-    background-color: #252525;
-    transform: translateY(-2px);
-    border-color: rgba(255,255,255,0.2);
+  @media (hover: hover) {
+    .contact-btn:hover {
+      background: var(--glass-bg-hover);
+      border-color: var(--glass-border-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--glass-shadow-hover), var(--glass-highlight);
+    }
+
+    .contact-btn:hover .status-label {
+      color: var(--accent);
+    }
   }
 
-  .contact-value { 
-    font-weight: 500; 
-    color: #fff; 
-    font-family: 'Courier New', monospace; 
+  .contact-value {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
   }
 
   .status-label {
     color: var(--text-muted);
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: color 0.2s;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color var(--transition-fast);
   }
-
-  .contact-btn:hover .status-label { color: #fff; }
 </style>
 
 <script>
+  /**
+   * Set up click-to-copy behavior on a contact button.
+   * Uses the Clipboard API to copy the data-value attribute,
+   * then temporarily shows a success message for 2 seconds.
+   */
   function setupCopy(btnId: string) {
     const btn = document.getElementById(btnId);
     if (!btn) return;
@@ -68,7 +97,7 @@ const { label, value, buttonId, copyMessage = "✓ Copied!" } = Astro.props;
 
       navigator.clipboard.writeText(val).then(() => {
         labelSpan.innerText = successMsg;
-        labelSpan.style.color = '#10b981'; // Green success feedback
+        labelSpan.style.color = '#C11111';
 
         setTimeout(() => {
           labelSpan.innerText = originalMsg;
@@ -78,6 +107,5 @@ const { label, value, buttonId, copyMessage = "✓ Copied!" } = Astro.props;
     });
   }
 
-  // Initialize for all buttons
   document.querySelectorAll('.contact-btn').forEach(btn => setupCopy(btn.id));
 </script>

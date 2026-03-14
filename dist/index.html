@@ -1,0 +1,480 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="PNGU — Open-source blaster files, data, and brand assets"><title>Home | PNGU</title><!-- Fonts: Jumps Winter (display/titles) + Sora (body) + JetBrains Mono --><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><style>#bg-canvas[data-astro-cid-tw3ctjfb]{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;background:#000}#grain-overlay[data-astro-cid-tw3ctjfb]{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.015;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");mix-blend-mode:overlay}@font-face{font-family:Jumps Winter;src:url(/fonts/JumpsWinter.woff) format("woff");font-weight:400;font-style:normal;font-display:swap}:root{--bg-primary: #000000;--bg-surface: #1a1a1a;--bg-surface-elevated: #222222;--bg-grey: #333333;--accent: #C11111;--accent-soft: rgba(193, 17, 17, .12);--accent-glow: rgba(193, 17, 17, .25);--accent-bright: #e01b1b;--glass-bg: rgba(255, 255, 255, .03);--glass-bg-hover: rgba(255, 255, 255, .06);--glass-bg-strong: rgba(255, 255, 255, .05);--glass-border: rgba(255, 255, 255, .07);--glass-border-hover: rgba(255, 255, 255, .14);--glass-blur: 20px;--glass-radius: 20px;--glass-radius-sm: 14px;--glass-radius-xs: 10px;--glass-shadow: 0 8px 32px rgba(0, 0, 0, .25), 0 2px 8px rgba(0, 0, 0, .15);--glass-shadow-hover: 0 12px 40px rgba(0, 0, 0, .35), 0 4px 12px rgba(0, 0, 0, .2);--glass-highlight: inset 0 1px 0 rgba(255, 255, 255, .05);--text-primary: #ffffff;--text-secondary: #a0a0a0;--text-muted: #666666;--font-title: "Jumps Winter", "Sora", system-ui, sans-serif;--font-display: "Sora", system-ui, sans-serif;--font-mono: "JetBrains Mono", "Fira Code", monospace;--ease-out-expo: cubic-bezier(.16, 1, .3, 1);--ease-out-back: cubic-bezier(.34, 1.56, .64, 1);--transition-fast: .2s var(--ease-out-expo);--transition-smooth: .5s var(--ease-out-expo);--transition-slow: .8s var(--ease-out-expo);--max-width: 980px;--nav-height: 72px}*,*:before,*:after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html{background-color:var(--bg-primary);scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}body{font-family:var(--font-display);color:var(--text-primary);line-height:1.6;min-height:100vh;overflow-x:hidden}:focus:not(:focus-visible){outline:none!important}:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}.site-nav{position:fixed;top:12px;left:50%;transform:translate(-50%);width:min(94%,960px);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;background:#1e1e1e8c;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);border:1px solid rgba(255,255,255,.08);border-radius:100px;z-index:1000;box-shadow:0 4px 24px #0000004d,inset 0 1px #ffffff0a}.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text-primary)}.nav-logo-mark{width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:transform var(--transition-fast)}.nav-logo-mark svg{width:32px;height:32px;fill:var(--accent);filter:drop-shadow(0 2px 8px var(--accent-glow));transition:filter var(--transition-fast)}@media(hover:hover){.nav-logo:hover .nav-logo-mark{transform:scale(1.08) rotate(-2deg)}.nav-logo:hover .nav-logo-mark svg{filter:drop-shadow(0 4px 16px var(--accent-glow))}}.nav-logo-text{font-family:var(--font-display);font-weight:700;font-size:1.15rem;letter-spacing:.12em;text-transform:uppercase}.nav-links-bar{display:flex;align-items:center;gap:4px}.nav-links-bar a{font-family:var(--font-display);font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);text-decoration:none;padding:8px 16px;border-radius:var(--glass-radius-xs);transition:all var(--transition-fast);position:relative}@media(hover:hover){.nav-links-bar a:hover{color:var(--text-primary);background:var(--glass-bg)}}.nav-links-bar a.active{color:var(--accent);background:var(--accent-soft)}.nav-mobile-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px;color:var(--text-secondary)}.nav-mobile-toggle svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none}.main-content{max-width:var(--max-width);margin:0 auto;padding:calc(var(--nav-height) + 2.5rem) 2rem 4rem}.glass-card{background:#33333359;backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));border:1px solid var(--glass-border);border-radius:var(--glass-radius);padding:2rem;box-shadow:var(--glass-shadow),var(--glass-highlight);transition:all var(--transition-smooth)}@media(hover:hover){.glass-card:hover{border-color:var(--glass-border-hover);box-shadow:var(--glass-shadow-hover),var(--glass-highlight);transform:translateY(-2px)}}h1{font-family:var(--font-title);font-size:3rem;font-weight:400;letter-spacing:.02em;line-height:1.1;margin-bottom:.5rem}h2{font-family:var(--font-title);font-size:1.35rem;font-weight:400;letter-spacing:.01em;margin-bottom:1rem;color:var(--text-primary)}p{color:var(--text-secondary);margin-bottom:1rem}.label-tag{font-family:var(--font-mono);font-size:.7rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:6px 14px;border-radius:100px;display:inline-block;margin-bottom:1rem}.btn-primary{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:.82rem;font-weight:600;letter-spacing:.04em;text-decoration:none;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-bright));padding:12px 28px;border-radius:100px;border:none;transition:all var(--transition-fast);cursor:pointer;box-shadow:0 4px 16px var(--accent-glow)}@media(hover:hover){.btn-primary:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 8px 28px var(--accent-glow)}}.btn-glass{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:.82rem;font-weight:500;letter-spacing:.04em;text-decoration:none;color:var(--text-secondary);background:#3336;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:12px 28px;border-radius:100px;border:1px solid var(--glass-border);transition:all var(--transition-fast);cursor:pointer}@media(hover:hover){.btn-glass:hover{color:var(--text-primary);background:#3339;border-color:var(--glass-border-hover);transform:translateY(-1px)}}.scroll-reveal{opacity:0;transform:translateY(40px);transition:opacity .7s var(--ease-out-expo),transform .7s var(--ease-out-expo)}.scroll-reveal.revealed{opacity:1;transform:translateY(0)}.scroll-reveal-stagger>*{opacity:0;transform:translateY(30px);transition:opacity .6s var(--ease-out-expo),transform .6s var(--ease-out-expo)}.scroll-reveal-stagger.revealed>*:nth-child(1){transition-delay:0s}.scroll-reveal-stagger.revealed>*:nth-child(2){transition-delay:.06s}.scroll-reveal-stagger.revealed>*:nth-child(3){transition-delay:.12s}.scroll-reveal-stagger.revealed>*:nth-child(4){transition-delay:.18s}.scroll-reveal-stagger.revealed>*:nth-child(5){transition-delay:.24s}.scroll-reveal-stagger.revealed>*:nth-child(6){transition-delay:.3s}.scroll-reveal-stagger.revealed>*:nth-child(7){transition-delay:.36s}.scroll-reveal-stagger.revealed>*:nth-child(8){transition-delay:.42s}.scroll-reveal-stagger.revealed>*:nth-child(9){transition-delay:.48s}.scroll-reveal-stagger.revealed>*:nth-child(10){transition-delay:.54s}.scroll-reveal-stagger.revealed>*{opacity:1;transform:translateY(0)}.site-footer{margin:4rem auto 2rem;max-width:min(94%,960px);background:#1e1e1e66;backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);border:1px solid rgba(255,255,255,.06);border-radius:24px;padding:2rem 2.5rem;box-shadow:0 4px 20px #0003,inset 0 1px #ffffff08}.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}.footer-brand{font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted);letter-spacing:.04em}.footer-links{display:flex;gap:1.5rem}.footer-links a{font-family:var(--font-display);font-size:.75rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;transition:color var(--transition-fast)}@media(hover:hover){.footer-links a:hover{color:var(--text-primary)}}@keyframes fadeUp{0%{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.main-content>*{animation:fadeUp .7s var(--ease-out-expo) both}.main-content>*:nth-child(1){animation-delay:.05s}.main-content>*:nth-child(2){animation-delay:.12s}.main-content>*:nth-child(3){animation-delay:.19s}.main-content>*:nth-child(4){animation-delay:.26s}.main-content>*:nth-child(5){animation-delay:.33s}.main-content>*:nth-child(6){animation-delay:.4s}.hero{padding:6rem 0 3rem;text-align:center}.hero-title{font-family:var(--font-title);font-size:5.5rem;font-weight:400;line-height:1;letter-spacing:.02em;margin-bottom:1.5rem;display:inline-flex;align-items:baseline;position:relative;justify-content:center}.hero-get{color:var(--text-primary);margin-right:.3em;flex-shrink:0;position:relative}.hero-word-wrap{display:inline-block;text-align:left;position:relative;height:1.1em;overflow:hidden;vertical-align:baseline}.hero-reel{display:flex;flex-direction:column;will-change:transform}.reel-word{display:block;color:var(--accent);height:1.1em;line-height:1.1}.reel-final{color:var(--accent-bright)}.hero-question{font-family:var(--font-display);font-size:1.15rem;font-weight:400;color:var(--text-secondary);letter-spacing:.02em;margin-bottom:0}.nav-section{padding:2rem 0}.nav-cards{display:flex;flex-wrap:wrap;gap:1.2rem;justify-content:center}.nav-pill{display:flex;align-items:center;gap:14px;background:#33333359;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--glass-border);padding:1.2rem 2rem;border-radius:50px;text-decoration:none;box-shadow:var(--glass-shadow),var(--glass-highlight);transition:border-color .5s var(--ease-out-expo),background .5s var(--ease-out-expo),box-shadow .5s var(--ease-out-expo);position:relative;overflow:hidden;will-change:transform}.nav-pill:before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(193,17,17,.08),transparent 60%);opacity:0;transition:opacity .5s var(--ease-out-expo);border-radius:inherit}@media(hover:hover){.nav-pill:hover{border-color:#c1111140;background:#33333380;box-shadow:var(--glass-shadow-hover),var(--glass-highlight),0 0 20px #c111111a}.nav-pill:hover:before{opacity:1}.nav-pill:hover .pill-label{color:var(--accent)}.nav-pill:hover .pill-arrow{color:var(--accent);transform:translate(4px)}.nav-pill:hover .pill-icon{color:var(--accent)}}.pill-icon{font-size:1.2rem;color:var(--text-muted);transition:color .3s;position:relative;z-index:1}.pill-label{font-weight:600;font-size:1.05rem;color:var(--text-primary);transition:color .3s;position:relative;z-index:1}.pill-arrow{color:var(--text-muted);font-size:1.1rem;transition:all .3s;position:relative;z-index:1;margin-left:8px}.links-section{padding:3rem 0 2rem;text-align:center}.ext-row{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center}.ext-chip{display:inline-flex;align-items:center;font-family:var(--font-display);font-size:.92rem;font-weight:500;color:var(--text-secondary);text-decoration:none;background:#33333340;border:1px solid var(--glass-border);padding:12px 28px;border-radius:100px;transition:border-color .4s var(--ease-out-expo),color .4s var(--ease-out-expo),background .4s var(--ease-out-expo);will-change:transform}@media(hover:hover){.ext-chip:hover{color:var(--accent);border-color:#c1111133;background:#3336}}.highlight-section{padding:5rem 0 2rem;position:relative}.highlight-section:before{content:"";position:absolute;top:0;left:50%;transform:translate(-50%);width:120px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.4}.highlight-label{text-align:center;margin-bottom:2rem}.highlight-grid{display:grid;grid-template-columns:1fr;gap:1.5rem;perspective:1200px}.highlight-card{background:linear-gradient(145deg,#1e1e1e99,#140a0a66);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(193,17,17,.12);border-radius:24px;overflow:hidden;position:relative;box-shadow:0 8px 48px #0000004d,0 0 60px #c111110a,inset 0 1px #ffffff0d}.highlight-card:before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 10%,rgba(193,17,17,.3) 50%,transparent 90%)}.highlight-main{opacity:0;transform:translateY(80px) perspective(800px) rotateX(6deg) scale(.96);transition:opacity 1s var(--ease-out-expo),transform 1s var(--ease-out-expo)}.highlight-main.in-view{opacity:1;transform:translateY(0) perspective(800px) rotateX(0) scale(1)}.highlight-card-inner{display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:320px}.highlight-media{position:relative;overflow:hidden;background:#14141499;min-height:280px}.highlight-photo{width:100%;height:100%;object-fit:cover;display:none}.highlight-photo[src]:not([src=""]){display:block}.highlight-photo[src]:not([src=""])+.highlight-photo-placeholder{display:none}.highlight-photo-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;color:var(--text-muted)}.highlight-photo-placeholder svg{width:48px;height:48px;opacity:.3}.highlight-photo-placeholder span{font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;opacity:.4}.highlight-content{padding:2.5rem;display:flex;flex-direction:column;justify-content:center}.highlight-badge{font-family:var(--font-mono);font-size:.65rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:5px 12px;border-radius:100px;display:inline-block;margin-bottom:1.2rem;width:fit-content}.highlight-title{font-family:var(--font-title);font-size:2rem;font-weight:400;letter-spacing:.01em;margin-bottom:.8rem;color:var(--text-primary)}.highlight-desc{font-size:.95rem;color:var(--text-secondary);line-height:1.7;margin-bottom:1.8rem;max-width:440px}.highlight-actions{display:flex;gap:.8rem;flex-wrap:wrap}.highlight-side{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}.highlight-stat-card{background:#1e1e1e66;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.05);border-radius:16px;padding:1.5rem;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 16px #00000026,inset 0 1px #ffffff08;opacity:0;transform:translateY(30px) scale(.95);transition:opacity .6s var(--ease-out-expo),transform .6s var(--ease-out-expo)}.highlight-stat-card.in-view{opacity:1;transform:translateY(0) scale(1)}#stat-1.in-view{transition-delay:.15s}#stat-2.in-view{transition-delay:.3s}#stat-3.in-view{transition-delay:.45s}.stat-num{font-family:var(--font-title);font-size:1.8rem;font-weight:400;color:var(--accent);letter-spacing:.02em}.stat-label{font-size:.75rem;color:var(--text-muted);margin-top:.3rem;letter-spacing:.03em;font-family:var(--font-mono);text-transform:uppercase}@media(max-width:768px){.highlight-card-inner{grid-template-columns:1fr}.highlight-media{min-height:200px}.highlight-side{grid-template-columns:1fr}.highlight-stat-card{transform:translateY(20px) scale(.95)}}@media(max-width:640px){.site-nav{padding:0 1.25rem;width:96%}.nav-links-bar{display:none}.nav-mobile-toggle{display:block}.main-content{padding:calc(var(--nav-height) + 1.5rem) 1.25rem 3rem}h1{font-size:2.25rem}.hero{padding:4rem 0 2.5rem}.hero-title{font-size:3rem}.nav-cards{flex-direction:column;align-items:center}.nav-pill{width:100%;max-width:340px}.ext-row{flex-direction:column;align-items:center}.highlight-title{font-size:1.4rem}.glass-card{padding:1.5rem;border-radius:16px}.footer-inner{flex-direction:column;align-items:flex-start}}
+</style></head> <body> <canvas id="bg-canvas" data-astro-cid-tw3ctjfb></canvas> <div id="grain-overlay" data-astro-cid-tw3ctjfb></div>  <script>
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const isHome = window.location.pathname === '/' || window.location.pathname === '';
+
+  let W, H;
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // --- Exact PNGU logo SVG path ---
+  const LOGO_PATH = 'M740.999,478.013 C732.574,479.445 726.913,485.562 720.161,489.579 C712.414,494.187 704.845,499.102 697.298,504.036 C692.012,507.492 686.547,510.801 681.777,514.892 C674.551,521.090 667.873,527.928 660.935,534.464 C654.627,540.404 648.340,546.368 641.928,552.195 C639.013,554.844 635.485,556.876 632.823,559.735 C627.664,565.276 622.951,571.231 617.999,576.966 C611.902,584.025 605.341,590.729 599.758,598.169 C595.680,603.603 591.923,609.316 589.345,615.895 C586.196,623.934 581.278,631.263 577.628,639.132 C575.564,643.581 574.522,648.502 572.996,653.202 C571.465,657.920 569.905,662.628 568.356,667.339 C568.256,667.642 568.004,667.957 568.045,668.234 C569.180,675.956 563.976,674.825 559.098,675.090 C545.363,675.834 531.422,675.836 518.020,678.466 C510.688,679.905 503.644,679.769 496.516,679.888 C461.607,680.469 426.579,679.030 391.812,681.458 C356.639,683.914 321.572,682.024 286.473,682.919 C257.736,683.651 228.980,683.617 200.234,684.019 C184.150,684.245 168.069,684.716 151.986,684.988 C129.572,685.368 107.157,685.739 84.741,685.946 C79.477,685.995 75.828,682.500 72.505,678.891 C71.964,678.304 71.809,676.901 72.095,676.095 C73.272,672.776 74.624,669.514 76.028,666.282 C79.981,657.187 83.997,648.119 87.978,639.036 C92.523,628.667 97.115,618.317 101.567,607.908 C103.141,604.229 104.237,600.347 105.774,596.651 C109.775,587.026 113.968,577.481 117.948,567.847 C120.196,562.404 122.038,556.792 124.309,551.358 C127.095,544.691 130.291,538.194 133.020,531.504 C134.939,526.798 136.209,521.830 138.071,517.098 C139.877,512.507 141.862,507.960 144.139,503.587 C147.600,496.940 151.181,490.338 155.090,483.949 C158.234,478.810 162.091,474.112 165.357,469.042 C169.395,462.771 172.954,456.189 177.079,449.979 C181.603,443.167 186.668,436.715 191.241,429.934 C194.070,425.740 196.243,421.106 199.027,416.879 C203.584,409.962 208.472,403.264 213.075,396.376 C215.326,393.009 216.687,388.884 219.421,386.033 C229.376,375.650 239.777,365.698 249.936,355.509 C256.358,349.067 262.390,342.209 269.107,336.098 C272.430,333.075 276.849,331.217 280.868,329.007 C290.026,323.972 299.206,318.976 308.446,314.095 C316.772,309.695 324.964,304.916 333.647,301.360 C339.508,298.959 346.158,298.540 352.385,296.958 C359.025,295.271 365.667,293.512 372.154,291.330 C382.317,287.911 392.847,287.437 403.361,287.054 C426.521,286.213 449.703,285.931 472.853,284.882 C483.476,284.400 493.720,285.910 504.024,287.915 C507.539,288.599 511.188,288.584 514.769,288.950 C521.210,289.609 527.711,289.960 534.066,291.113 C539.058,292.019 543.933,293.752 548.738,295.463 C553.265,297.075 557.640,299.117 562.066,301.007 C566.924,303.081 571.821,305.076 576.597,307.327 C582.149,309.943 587.534,312.913 593.089,315.523 C600.764,319.129 609.275,321.490 616.071,326.301 C624.695,332.407 634.338,336.107 643.456,341.000 C654.417,346.882 665.312,352.890 676.352,358.620 C681.614,361.350 687.229,363.394 692.531,366.053 C698.779,369.185 704.857,372.654 711.020,375.957 C711.783,376.366 712.597,376.916 713.411,376.959 C721.158,377.360 728.908,377.735 736.662,377.984 C748.910,378.377 761.167,378.531 773.410,379.040 C785.084,379.525 796.741,380.404 808.412,380.978 C817.490,381.424 826.582,381.588 835.662,382.019 C848.105,382.610 860.547,383.264 872.977,384.082 C874.690,384.195 876.413,385.251 877.992,386.124 C884.449,389.693 890.880,393.313 897.263,397.013 C899.923,398.555 902.505,400.252 905.010,402.037 C910.838,406.190 917.701,408.722 922.423,414.653 C927.559,421.104 933.497,426.916 939.744,433.723 C930.994,434.880 922.980,435.952 914.962,436.997 C907.107,438.020 898.921,437.982 891.489,440.334 C885.024,442.380 878.619,442.033 872.225,442.975 C864.687,444.085 857.104,444.899 849.573,446.050 C844.327,446.852 839.135,448.016 833.916,448.999 C828.536,450.013 823.152,451.007 817.768,452.002 C812.061,453.055 806.188,453.567 800.686,455.277 C793.217,457.600 786.012,460.787 778.730,463.693 C771.333,466.646 764.039,469.867 756.587,472.669 C751.510,474.578 746.238,475.968 740.999,478.013 Z';
+
+  // Sample points from SVG path, normalize to bounding box 0-1
+  function sampleSVGPath(pathD, numSamples) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 1000 1000');
+    svg.style.position = 'absolute';
+    svg.style.width = '0';
+    svg.style.height = '0';
+    svg.style.overflow = 'hidden';
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', pathD);
+    svg.appendChild(path);
+    document.body.appendChild(svg);
+
+    const totalLen = path.getTotalLength();
+    const raw = [];
+    for (let i = 0; i < numSamples; i++) {
+      const pt = path.getPointAtLength((i / numSamples) * totalLen);
+      raw.push({ x: pt.x, y: pt.y });
+    }
+    document.body.removeChild(svg);
+
+    // Compute bounding box and normalize to 0-1
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    raw.forEach(p => {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    });
+    const bw = maxX - minX || 1;
+    const bh = maxY - minY || 1;
+    return raw.map(p => ({
+      x: (p.x - minX) / bw,
+      y: (p.y - minY) / bh
+    }));
+  }
+
+  // Scale bounding-box-normalized path to screen
+  function scalePath(normPts, cx, cy, scaleW, scaleH) {
+    return normPts.map(p => ({
+      x: cx + (p.x - 0.5) * scaleW,
+      y: cy + (p.y - 0.5) * scaleH
+    }));
+  }
+
+  // --- Minimalist Aurora Strand (no blur for performance) ---
+  class AuroraBand {
+    constructor(y, color, width, speed, amp, freq, offset) {
+      this.baseY = y;
+      this.color = color;
+      this.width = width;
+      this.speed = speed;
+      this.amp = amp;
+      this.freq = freq;
+      this.offset = offset;
+      this.opacity = 0;
+      this.targetOpacity = 0.12 + Math.random() * 0.1;
+    }
+
+    update(time) {
+      if (this.opacity < this.targetOpacity) {
+        this.opacity += 0.002;
+      }
+    }
+
+    draw(ctx, time, W, H) {
+      if (this.opacity < 0.01) return;
+
+      ctx.beginPath();
+      const steps = 40;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const x = t * W;
+        const wave = Math.sin(t * this.freq + time * this.speed * 0.0008 + this.offset) * this.amp;
+        const y = this.baseY + wave;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+
+      ctx.strokeStyle = this.color.replace('ALPHA', this.opacity.toFixed(3));
+      ctx.lineWidth = this.width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
+  }
+
+  // --- Fading/tapering trace (devin.ai style) ---
+  class Trace {
+    constructor(pathPoints, speed, delay, color, width) {
+      this.pathPoints = pathPoints;
+      this.pathLen = pathPoints.length;
+      this.speed = speed;
+      this.delay = delay;
+      this.color = color;
+      this.baseWidth = width;
+      this.progress = Math.random() * pathPoints.length;
+      this.tailLen = 60 + Math.random() * 40;
+      this.active = false;
+      this.opacity = 1;
+    }
+
+    update(time) {
+      if (time < this.delay) return;
+      this.active = true;
+      this.progress += this.speed;
+      if (this.progress >= this.pathLen) this.progress -= this.pathLen;
+    }
+
+    fadeOut() {
+      this.opacity -= 0.02;
+      if (this.opacity < 0) this.opacity = 0;
+    }
+
+    draw(ctx) {
+      if (!this.active || this.opacity < 0.01) return;
+      const headIdx = Math.floor(this.progress) % this.pathLen;
+      const segments = 8;
+      const segLen = Math.floor(this.tailLen / segments);
+
+      // Draw tapering segments from tail to head — each segment fades and thins
+      for (let s = segments - 1; s >= 0; s--) {
+        const tFade = 1 - (s / segments); // 0 at tail, 1 at head
+        const alpha = tFade * tFade * 0.55 * this.opacity; // quadratic fade
+        const width = this.baseWidth * (0.2 + tFade * 0.8); // thin tail, full head
+
+        ctx.beginPath();
+        const startI = s * segLen;
+        const endI = Math.min((s + 1) * segLen + 1, this.tailLen);
+        for (let i = startI; i < endI; i++) {
+          const idx = (headIdx - i + this.pathLen) % this.pathLen;
+          const pt = this.pathPoints[idx];
+          if (i === startI) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.strokeStyle = this.color.replace('ALPHA', alpha.toFixed(3));
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      }
+    }
+  }
+
+  // --- Setup (reduced sample count for performance) ---
+  const normPoints = sampleSVGPath(LOGO_PATH, 300);
+  const redColor = 'rgba(193, 17, 17, ALPHA)';
+  const whiteColor = 'rgba(255, 255, 255, ALPHA)';
+  const softRed = 'rgba(220, 60, 60, ALPHA)';
+  const dimRed = 'rgba(160, 30, 30, ALPHA)';
+
+  let traces = [];
+  let auroraBands = [];
+  let pathPoints;
+
+  // Subtle dot grid drawn once to offscreen canvas for performance
+  let gridCanvas = null;
+  function buildGridTexture() {
+    gridCanvas = document.createElement('canvas');
+    gridCanvas.width = W;
+    gridCanvas.height = H;
+    const gc = gridCanvas.getContext('2d');
+    gc.fillStyle = 'rgba(255, 255, 255, 0.015)';
+    const spacing = 40;
+    for (let x = spacing; x < W; x += spacing) {
+      for (let y = spacing; y < H; y += spacing) {
+        gc.beginPath();
+        gc.arc(x, y, 0.6, 0, Math.PI * 2);
+        gc.fill();
+      }
+    }
+  }
+
+  function buildPath() {
+    const aspect = 2.16;
+    const targetH = H * 0.5;
+    const targetW = targetH * aspect;
+    const finalW = Math.min(targetW, W * 0.85);
+    const finalH = finalW / aspect;
+    // Shift right so the top of the penguin head is centered
+    const cx = W * 0.5 + finalW * 0.2;
+    const cy = H * 0.36;
+    pathPoints = scalePath(normPoints, cx, cy, finalW, finalH);
+    return pathPoints;
+  }
+
+  function buildAurora() {
+    auroraBands = [];
+    // Only 4 minimalist strands — cleaner, less busy
+    // Bottom strand pushed further down
+    const colors = [redColor, softRed, dimRed, whiteColor];
+    const yPositions = [0.12, 0.30, 0.50, 0.82];
+    for (let i = 0; i < 4; i++) {
+      const y = H * yPositions[i];
+      const w = 1 + Math.random() * 1.5;
+      const spd = 0.2 + Math.random() * 0.3;
+      const amp = 10 + Math.random() * 15;
+      const freq = 1.5 + Math.random() * 2;
+      const off = i * 1.5;
+      auroraBands.push(new AuroraBand(y, colors[i], w, spd, amp, freq, off));
+    }
+  }
+
+  pathPoints = buildPath();
+  buildGridTexture();
+
+  if (isHome) {
+    // Fewer traces for performance — 6 instead of 10
+    traces.push(new Trace(pathPoints, 2.0, 100, redColor, 2.0));
+    traces.push(new Trace(pathPoints, 1.5, 500, redColor, 1.6));
+    traces.push(new Trace(pathPoints, 2.3, 1000, softRed, 1.4));
+    traces.push(new Trace(pathPoints, 1.8, 1500, dimRed, 1.2));
+    traces.push(new Trace(pathPoints, 1.3, 300, whiteColor, 0.8));
+    traces.push(new Trace(pathPoints, 1.6, 800, whiteColor, 0.6));
+  }
+
+  if (!isHome) {
+    buildAurora();
+  }
+
+  const SPREAD_START = isHome ? 5000 : 0;
+  let spreadTriggered = !isHome;
+  let fadingOut = false;
+  const startTime = performance.now();
+  let lastFrame = 0;
+  const TARGET_FPS = 30; // Cap at 30fps for performance
+  const FRAME_TIME = 1000 / TARGET_FPS;
+
+  function animate(now) {
+    requestAnimationFrame(animate);
+
+    // Throttle to target FPS
+    if (now - lastFrame < FRAME_TIME) return;
+    lastFrame = now;
+
+    const elapsed = now - startTime;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Draw subtle dot grid background
+    if (gridCanvas) {
+      ctx.drawImage(gridCanvas, 0, 0);
+    }
+
+    // Trigger transition to aurora
+    if (isHome && !spreadTriggered && elapsed > SPREAD_START) {
+      spreadTriggered = true;
+      fadingOut = true;
+      buildAurora();
+    }
+
+    // Draw logo traces (homepage only)
+    if (isHome && traces.length > 0) {
+      if (fadingOut) {
+        traces.forEach(t => t.fadeOut());
+      }
+      traces.forEach(t => {
+        t.update(elapsed);
+        t.draw(ctx);
+      });
+
+      // Ambient glow during logo phase (subtle)
+      if (!spreadTriggered) {
+        const glowAlpha = Math.min(1, elapsed / 2000) * 0.025;
+        const cx = W * 0.5, cy = H * 0.38;
+        const r = Math.min(W, H) * 0.25;
+        const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        grd.addColorStop(0, 'rgba(193, 17, 17, ' + glowAlpha + ')');
+        grd.addColorStop(1, 'rgba(193, 17, 17, 0)');
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, W, H);
+      }
+    }
+
+    // Draw aurora bands
+    if (spreadTriggered) {
+      auroraBands.forEach(b => {
+        b.update(elapsed);
+        b.draw(ctx, elapsed, W, H);
+      });
+    }
+  }
+
+  requestAnimationFrame(animate);
+
+  window.addEventListener('resize', () => {
+    pathPoints = buildPath();
+    buildGridTexture();
+    traces.forEach(t => {
+      t.pathPoints = pathPoints;
+      t.pathLen = pathPoints.length;
+    });
+    if (spreadTriggered) buildAurora();
+  });
+})();
+</script> <!-- Glass Navigation --> <nav class="site-nav"> <a href="/" class="nav-logo"> <div class="nav-logo-mark"><svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg"><path d="M740.999,478.013 C732.574,479.445 726.913,485.562 720.161,489.579 C712.414,494.187 704.845,499.102 697.298,504.036 C692.012,507.492 686.547,510.801 681.777,514.892 C674.551,521.090 667.873,527.928 660.935,534.464 C654.627,540.404 648.340,546.368 641.928,552.195 C639.013,554.844 635.485,556.876 632.823,559.735 C627.664,565.276 622.951,571.231 617.999,576.966 C611.902,584.025 605.341,590.729 599.758,598.169 C595.680,603.603 591.923,609.316 589.345,615.895 C586.196,623.934 581.278,631.263 577.628,639.132 C575.564,643.581 574.522,648.502 572.996,653.202 C571.465,657.920 569.905,662.628 568.356,667.339 C568.256,667.642 568.004,667.957 568.045,668.234 C569.180,675.956 563.976,674.825 559.098,675.090 C545.363,675.834 531.422,675.836 518.020,678.466 C510.688,679.905 503.644,679.769 496.516,679.888 C461.607,680.469 426.579,679.030 391.812,681.458 C356.639,683.914 321.572,682.024 286.473,682.919 C257.736,683.651 228.980,683.617 200.234,684.019 C184.150,684.245 168.069,684.716 151.986,684.988 C129.572,685.368 107.157,685.739 84.741,685.946 C79.477,685.995 75.828,682.500 72.505,678.891 C71.964,678.304 71.809,676.901 72.095,676.095 C73.272,672.776 74.624,669.514 76.028,666.282 C79.981,657.187 83.997,648.119 87.978,639.036 C92.523,628.667 97.115,618.317 101.567,607.908 C103.141,604.229 104.237,600.347 105.774,596.651 C109.775,587.026 113.968,577.481 117.948,567.847 C120.196,562.404 122.038,556.792 124.309,551.358 C127.095,544.691 130.291,538.194 133.020,531.504 C134.939,526.798 136.209,521.830 138.071,517.098 C139.877,512.507 141.862,507.960 144.139,503.587 C147.600,496.940 151.181,490.338 155.090,483.949 C158.234,478.810 162.091,474.112 165.357,469.042 C169.395,462.771 172.954,456.189 177.079,449.979 C181.603,443.167 186.668,436.715 191.241,429.934 C194.070,425.740 196.243,421.106 199.027,416.879 C203.584,409.962 208.472,403.264 213.075,396.376 C215.326,393.009 216.687,388.884 219.421,386.033 C229.376,375.650 239.777,365.698 249.936,355.509 C256.358,349.067 262.390,342.209 269.107,336.098 C272.430,333.075 276.849,331.217 280.868,329.007 C290.026,323.972 299.206,318.976 308.446,314.095 C316.772,309.695 324.964,304.916 333.647,301.360 C339.508,298.959 346.158,298.540 352.385,296.958 C359.025,295.271 365.667,293.512 372.154,291.330 C382.317,287.911 392.847,287.437 403.361,287.054 C426.521,286.213 449.703,285.931 472.853,284.882 C483.476,284.400 493.720,285.910 504.024,287.915 C507.539,288.599 511.188,288.584 514.769,288.950 C521.210,289.609 527.711,289.960 534.066,291.113 C539.058,292.019 543.933,293.752 548.738,295.463 C553.265,297.075 557.640,299.117 562.066,301.007 C566.924,303.081 571.821,305.076 576.597,307.327 C582.149,309.943 587.534,312.913 593.089,315.523 C600.764,319.129 609.275,321.490 616.071,326.301 C624.695,332.407 634.338,336.107 643.456,341.000 C654.417,346.882 665.312,352.890 676.352,358.620 C681.614,361.350 687.229,363.394 692.531,366.053 C698.779,369.185 704.857,372.654 711.020,375.957 C711.783,376.366 712.597,376.916 713.411,376.959 C721.158,377.360 728.908,377.735 736.662,377.984 C748.910,378.377 761.167,378.531 773.410,379.040 C785.084,379.525 796.741,380.404 808.412,380.978 C817.490,381.424 826.582,381.588 835.662,382.019 C848.105,382.610 860.547,383.264 872.977,384.082 C874.690,384.195 876.413,385.251 877.992,386.124 C884.449,389.693 890.880,393.313 897.263,397.013 C899.923,398.555 902.505,400.252 905.010,402.037 C910.838,406.190 917.701,408.722 922.423,414.653 C927.559,421.104 933.497,426.916 939.744,433.723 C930.994,434.880 922.980,435.952 914.962,436.997 C907.107,438.020 898.921,437.982 891.489,440.334 C885.024,442.380 878.619,442.033 872.225,442.975 C864.687,444.085 857.104,444.899 849.573,446.050 C844.327,446.852 839.135,448.016 833.916,448.999 C828.536,450.013 823.152,451.007 817.768,452.002 C812.061,453.055 806.188,453.567 800.686,455.277 C793.217,457.600 786.012,460.787 778.730,463.693 C771.333,466.646 764.039,469.867 756.587,472.669 C751.510,474.578 746.238,475.968 740.999,478.013z"></path></svg></div> <span class="nav-logo-text">PNGU</span> </a> <div class="nav-links-bar"> <a href="/files">Files</a> <a href="/data">Data</a> <a href="/brand">Brand</a> <a href="/contact">Contact</a> </div> <button class="nav-mobile-toggle" aria-label="Toggle navigation"> <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round"></path></svg> </button> </nav> <!-- Main Content --> <div class="main-content">   <section class="hero"> <h1 class="hero-title"> <span class="hero-get">Get</span> <span class="hero-word-wrap"> <span class="hero-reel" id="hero-reel"> <span class="reel-word">files</span> <span class="reel-word">data</span> <span class="reel-word">assets</span> <span class="reel-word">models</span> <span class="reel-word">prints</span> <span class="reel-word">files</span> <span class="reel-word">data</span> <span class="reel-word">assets</span> <span class="reel-word">models</span> <span class="reel-word">prints</span> <span class="reel-word">files</span> <span class="reel-word">data</span> <span class="reel-word">assets</span> <span class="reel-word reel-final">info</span> </span> </span> </h1> <p class="hero-question">What do you need?</p> </section>  <section class="nav-section scroll-reveal"> <div class="nav-cards" id="nav-cards"> <a href="/files" class="nav-pill" data-phase="0"> <span class="pill-icon">◇</span> <span class="pill-label">3D Files</span> <span class="pill-arrow">→</span> </a> <a href="/data" class="nav-pill" data-phase="0.7"> <span class="pill-icon">◈</span> <span class="pill-label">Blaster Data</span> <span class="pill-arrow">→</span> </a> <a href="/brand" class="nav-pill" data-phase="1.4"> <span class="pill-icon">○</span> <span class="pill-label">Brand Assets</span> <span class="pill-arrow">→</span> </a> <a href="/contact" class="nav-pill" data-phase="2.1"> <span class="pill-icon">◎</span> <span class="pill-label">Contact</span> <span class="pill-arrow">→</span> </a> </div> </section>  <section class="links-section scroll-reveal"> <div class="label-tag" id="explore-tag" data-phase="0.5">explore</div> <div class="ext-row" id="ext-row"> <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">
+YouTube ↗
+</a> <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">
+GitHub ↗
+</a> <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">
+Printables ↗
+</a> </div> </section>  <section class="highlight-section" id="highlight-section"> <div class="highlight-label scroll-reveal"> <div class="label-tag">featured</div> </div> <div class="highlight-grid" id="highlight-grid"> <div class="highlight-card highlight-main" id="highlight-main"> <div class="highlight-card-inner"> <div class="highlight-media"> <img src="" alt="Project photo" class="highlight-photo" id="highlight-photo"> <div class="highlight-photo-placeholder"> <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"> <rect x="6" y="10" width="36" height="28" rx="4"></rect> <circle cx="18" cy="22" r="4"></circle> <path d="M6 34l10-10 8 8 6-6 12 12" stroke-linejoin="round"></path> </svg> <span>Add project photo</span> </div> </div> <div class="highlight-content"> <div class="highlight-badge">Current Project</div> <h2 class="highlight-title">Customize this section</h2> <p class="highlight-desc">
+Add your latest project here — link to your featured blaster build, 
+              data experiment, or 3D model. This section transforms as you scroll into view.
+</p> <div class="highlight-actions"> <a href="/files" class="btn-primary">View Project →</a> <a href="/data" class="btn-glass">See Data →</a> </div> </div> </div> </div> <div class="highlight-side" id="highlight-side"> <div class="highlight-stat-card" id="stat-1"> <span class="stat-num">3D</span> <span class="stat-label">Files Available</span> </div> <div class="highlight-stat-card" id="stat-2"> <span class="stat-num">Data</span> <span class="stat-label">Performance Logs</span> </div> <div class="highlight-stat-card" id="stat-3"> <span class="stat-num">Open</span> <span class="stat-label">Source Everything</span> </div> </div> </div> </section>  </div> <!-- Footer --> <footer class="site-footer"> <div class="footer-inner"> <span class="footer-brand">© 2026 PNGU</span> <div class="footer-links"> <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener">YouTube</a> <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener">GitHub</a> <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener">Printables</a> <a href="https://lite.pngu.info" rel="noopener">Lite</a> </div> </div> </footer> <!-- Scroll Reveal Observer --> <script>
+      (function() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('revealed');
+            }
+          });
+        }, {
+          threshold: 0.1,
+          rootMargin: '0px 0px -33% 0px'
+        });
+
+        document.querySelectorAll('.scroll-reveal, .scroll-reveal-stagger').forEach(el => {
+          observer.observe(el);
+        });
+      })();
+    </script> </body> </html> <script>
+  // --- Slot machine reel: vertical scroll like a real slot machine ---
+  (function() {
+    const reel = document.getElementById('hero-reel');
+    if (!reel) return;
+    const words = reel.querySelectorAll('.reel-word');
+    const totalWords = words.length;
+    if (totalWords === 0) return;
+
+    // Measure single word height
+    const wordH = words[0].offsetHeight;
+    let currentIdx = 0;
+    const lastIdx = totalWords - 1;
+
+    // Speed ramp: sine wave — medium → fast → slow → stop
+    function getDelay(idx) {
+      const t = idx / lastIdx;
+      // Cosine curve: starts medium, goes fast in middle, slows at end
+      const curve = 0.5 + 0.5 * Math.cos(Math.PI * t);
+      const minDelay = 50;  // fastest (middle)
+      const maxDelay = 500; // slowest (start/end)
+      return minDelay + curve * (maxDelay - minDelay);
+    }
+
+    function scrollToWord(idx) {
+      const offset = idx * wordH;
+      reel.style.transition = 'transform ' + Math.max(getDelay(idx) * 0.8, 80) + 'ms cubic-bezier(0.23, 1, 0.32, 1)';
+      reel.style.transform = 'translateY(-' + offset + 'px)';
+
+      if (idx < lastIdx) {
+        setTimeout(function() {
+          scrollToWord(idx + 1);
+        }, getDelay(idx));
+      } else {
+        // Final word — add a small bounce
+        setTimeout(function() {
+          reel.style.transition = 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+          reel.style.transform = 'translateY(-' + (offset + 4) + 'px)';
+          setTimeout(function() {
+            reel.style.transition = 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)';
+            reel.style.transform = 'translateY(-' + offset + 'px)';
+          }, 200);
+        }, 100);
+      }
+    }
+
+    // Start after a brief pause
+    setTimeout(function() {
+      scrollToWord(1);
+    }, 800);
+  })();
+
+  // --- Floating sine wave on nav pills, ext chips, AND explore tag ---
+  // Settles down after a few seconds
+  (function() {
+    const pills = document.querySelectorAll('#nav-cards .nav-pill');
+    const chips = document.querySelectorAll('#ext-row .ext-chip');
+    const exploreTag = document.getElementById('explore-tag');
+    const all = [...pills, ...chips];
+    if (exploreTag) all.push(exploreTag);
+
+    const startTime = performance.now();
+    const SETTLE_DURATION = 6000; // settle over 6 seconds
+    const MIN_AMP = 0.4; // settle to small residual wave
+
+    function animateFloat(time) {
+      const elapsed = time - startTime;
+      // Amplitude decays from 5 to MIN_AMP over SETTLE_DURATION
+      const decay = Math.max(MIN_AMP / 5, 1 - (elapsed / SETTLE_DURATION));
+      const amplitude = 5 * decay;
+
+      all.forEach(el => {
+        const phase = parseFloat(el.dataset.phase || '0');
+        const y = Math.sin(time * 0.0015 + phase) * amplitude;
+        el.style.transform = 'translateY(' + y.toFixed(2) + 'px)';
+      });
+      requestAnimationFrame(animateFloat);
+    }
+    requestAnimationFrame(animateFloat);
+  })();
+
+  // --- Highlight section scroll-triggered transformation ---
+  (function() {
+    const mainCard = document.getElementById('highlight-main');
+    const statCards = document.querySelectorAll('.highlight-stat-card');
+    if (!mainCard) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          mainCard.classList.add('in-view');
+          statCards.forEach(card => card.classList.add('in-view'));
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: '0px 0px -20% 0px'
+    });
+
+    observer.observe(document.getElementById('highlight-section'));
+  })();
+
+  // --- Scroll-driven background color shift ---
+  (function() {
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
+
+    function updateScrollColor() {
+      const scrollY = window.scrollY;
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      const t = docH > 0 ? scrollY / docH : 0;
+
+      // Color zones: black → deep navy → dark crimson → dark charcoal
+      let r, g, b;
+      if (t < 0.33) {
+        const s = t / 0.33;
+        r = Math.round(s * 8);
+        g = Math.round(s * 12);
+        b = Math.round(s * 28);
+      } else if (t < 0.66) {
+        const s = (t - 0.33) / 0.33;
+        r = Math.round(8 + s * 22);
+        g = Math.round(12 - s * 8);
+        b = Math.round(28 - s * 18);
+      } else {
+        const s = (t - 0.66) / 0.34;
+        r = Math.round(30 - s * 18);
+        g = Math.round(4 + s * 8);
+        b = Math.round(10 - s * 4);
+      }
+
+      canvas.style.background = 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+
+    window.addEventListener('scroll', updateScrollColor, { passive: true });
+    updateScrollColor();
+  })();
+</script>

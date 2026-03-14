@@ -1,126 +1,419 @@
 ---
+/**
+ * index.astro — PNGU homepage
+ *
+ * Layout sections (top to bottom):
+ *   1. Hero — "Get ____" slot machine reel cycling through words, landing on "info"
+ *   2. Nav Cards — Floating pill links to Files, Data, Brand, Contact
+ *   3. External Links — YouTube, GitHub, Printables with floating animation
+ *   4. Scroll Resistance Zone — Sticky container with star flood wipe effect
+ *   5. Featured Project Highlight — Split card with photo placeholder + stat cards
+ *
+ * Interactive behaviors (via inline scripts at bottom):
+ *   - Slot machine: vertical reel with cosine speed ramp + bounce finish
+ *   - Floating pills: sine-wave bobbing that settles over 6 seconds
+ *   - Highlight entrance: IntersectionObserver triggers slide-in
+ *   - Scroll color shift: background transitions black → white → crimson → charcoal
+ *   - Star flood: canvas star field wipes upward inside scroll resistance zone
+ */
 import MainLayout from '../layouts/MainLayout.astro';
-import NavLink from '../components/NavLink.astro';
-import IndexIntro from '../components/IndexIntro.astro';
 ---
 
 <MainLayout title="Home">
-  <IndexIntro />
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1 class="hero-title">
+      <span class="hero-get">Get</span>
+      <span class="hero-word-wrap">
+        <span class="hero-reel" id="hero-reel">
+          <span class="reel-word">files</span>
+          <span class="reel-word">data</span>
+          <span class="reel-word">assets</span>
+          <span class="reel-word">models</span>
+          <span class="reel-word">prints</span>
+          <span class="reel-word">files</span>
+          <span class="reel-word">data</span>
+          <span class="reel-word">assets</span>
+          <span class="reel-word">models</span>
+          <span class="reel-word">prints</span>
+          <span class="reel-word">files</span>
+          <span class="reel-word">data</span>
+          <span class="reel-word">assets</span>
+          <span class="reel-word reel-final">info</span>
+        </span>
+      </span>
+    </h1>
+    <p class="hero-question">What do you need?</p>
+  </section>
 
-  <header class="index-header">
-    <div class="banner-wrapper">
-      <img 
-        src="/site-assets/banner.png" 
-        alt="PNGU Banner"
-        class="banner-image"
-        loading="eager"
-        decoding="sync"
-      />
-    </div>
-    <div class="lite-switch-container">
-      <a href="https://lite.pngu.info" class="lite-button">
-        Switch to Lite Mode
+  <!-- Navigation Cards -->
+  <section class="nav-section scroll-reveal">
+    <div class="nav-cards" id="nav-cards">
+      <a href="/files" class="nav-pill" data-phase="0">
+        <span class="pill-icon">◇</span>
+        <span class="pill-label">3D Files</span>
+        <span class="pill-arrow">→</span>
+      </a>
+      <a href="/data" class="nav-pill" data-phase="0.7">
+        <span class="pill-icon">◈</span>
+        <span class="pill-label">Blaster Data</span>
+        <span class="pill-arrow">→</span>
+      </a>
+      <a href="/brand" class="nav-pill" data-phase="1.4">
+        <span class="pill-icon">○</span>
+        <span class="pill-label">Brand Assets</span>
+        <span class="pill-arrow">→</span>
+      </a>
+      <a href="/contact" class="nav-pill" data-phase="2.1">
+        <span class="pill-icon">◎</span>
+        <span class="pill-label">Contact</span>
+        <span class="pill-arrow">→</span>
       </a>
     </div>
-  </header>
-
-  <section class="content-box">
-    <ul class="nav-list">
-      <NavLink href="/files" title="3D Files" description="STL files for 3D printing" />
-      <NavLink href="/data" title="Blaster Data" description="Performance spreadsheets & docs" />
-      <NavLink href="/brand" title="Brand Assets" description="Logos, fonts, and branding" />
-      <NavLink href="/contact" title="Contact" description="Email & Discord info" />
-    </ul>
   </section>
 
-  <div class="separator-small"></div>
-
-  <section class="content-box">
-    <h2>External Links</h2>
-    <ul class="nav-list">
-      <NavLink href="https://www.youtube.com/@PnguNerf" title="YouTube" external />
-      <NavLink href="https://github.com/pngu-nerf" title="GitHub" external />
-      <NavLink href="https://www.printables.com/@PnguNerf_3188348" title="Printables" external />
-    </ul>
+  <!-- External Links -->
+  <section class="links-section scroll-reveal">
+    <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
+    <div class="ext-row" id="ext-row">
+      <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">
+        YouTube ↗
+      </a>
+      <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">
+        GitHub ↗
+      </a>
+      <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">
+        Printables ↗
+      </a>
+    </div>
   </section>
 
-  <div class="spacer-bottom"></div>
+  <!-- Scroll resistance zone — sticky container that "holds" the user's scroll,
+       then fills with a rising star field canvas before releasing into the highlight section -->
+  <div class="scroll-resist-zone" id="scroll-resist-zone">
+    <div class="resist-inner" id="resist-inner">
+      <div class="resist-star-flood" id="resist-star-flood"></div>
+    </div>
+  </div>
+
+  <!-- Featured Project Highlight -->
+  <section class="highlight-section" id="highlight-section">
+    <div class="highlight-label scroll-reveal">
+      <div class="label-tag">featured</div>
+    </div>
+    <div class="highlight-grid" id="highlight-grid">
+      <div class="highlight-card highlight-main" id="highlight-main">
+        <div class="highlight-card-inner">
+          <div class="highlight-media">
+            <img src="" alt="Project photo" class="highlight-photo" id="highlight-photo" />
+            <div class="highlight-photo-placeholder">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="6" y="10" width="36" height="28" rx="4" />
+                <circle cx="18" cy="22" r="4" />
+                <path d="M6 34l10-10 8 8 6-6 12 12" stroke-linejoin="round" />
+              </svg>
+              <span>Add project photo</span>
+            </div>
+          </div>
+          <div class="highlight-content">
+            <div class="highlight-badge">Current Project</div>
+            <h2 class="highlight-title">Customize this section</h2>
+            <p class="highlight-desc">
+              Add your latest project here — link to your featured blaster build, 
+              data experiment, or 3D model. This section transforms as you scroll into view.
+            </p>
+            <div class="highlight-actions">
+              <a href="/files" class="btn-primary">View Project →</a>
+              <a href="/data" class="btn-glass">See Data →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="highlight-side" id="highlight-side">
+        <div class="highlight-stat-card" id="stat-1">
+          <span class="stat-num">3D</span>
+          <span class="stat-label">Files Available</span>
+        </div>
+        <div class="highlight-stat-card" id="stat-2">
+          <span class="stat-num">Data</span>
+          <span class="stat-label">Performance Logs</span>
+        </div>
+        <div class="highlight-stat-card" id="stat-3">
+          <span class="stat-num">Open</span>
+          <span class="stat-label">Source Everything</span>
+        </div>
+      </div>
+    </div>
+  </section>
 </MainLayout>
 
-<style>
-  /* Global Reset for this page */
-  * {
-    -webkit-tap-highlight-color: transparent; /* Kills the blue highlight box */
-  }
+<script is:inline>
+  // ============================================
+  //  SLOT MACHINE REEL — Vertical word scroll
+  //  Words cycle: files → data → assets → ... → "info" (final)
+  //  Speed follows a cosine curve: medium start → fast middle → slow end
+  // ============================================
+  (function() {
+    const reel = document.getElementById('hero-reel');
+    if (!reel) return;
+    const words = reel.querySelectorAll('.reel-word');
+    const totalWords = words.length;
+    if (totalWords === 0) return;
 
-  /* Visibility handled by IndexIntro script */
-  .index-header, .content-box, .separator-small {
-    opacity: 1; 
-    transition: opacity 0.5s ease;
-  }
+    // Measure single word height
+    const wordH = words[0].offsetHeight;
+    let currentIdx = 0;
+    const lastIdx = totalWords - 1;
 
-  .index-header { 
-    width: 100%; 
-    margin-bottom: 2.5rem; 
-    position: relative;
-    z-index: 10;
-  }
-
-  .banner-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 30px 10px 10px 10px;
-  }
-  
-  .banner-image {
-    width: 100%;
-    max-width: 1200px; 
-    height: auto;
-    display: block;
-    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
-    pointer-events: none;
-  }
-
-  /* Button Container & Styling */
-  .lite-switch-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 0.5rem;
-  }
-
-  .lite-button {
-    text-decoration: none;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: rgba(255, 255, 255, 0.4);
-    padding: 8px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(4px);
-    transition: all 0.3s ease;
-  }
-
-  /* --- FIXED: Hover logic wrapped to prevent expanding/sticking on mobile --- */
-  @media (hover: hover) {
-    .lite-button:hover {
-      color: rgba(255, 255, 255, 1);
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.3);
-      transform: translateY(-1px); /* Only happens with a mouse */
+    // Speed ramp: sine wave — medium → fast → slow → stop
+    function getDelay(idx) {
+      const t = idx / lastIdx;
+      // Cosine curve: starts medium, goes fast in middle, slows at end
+      const curve = 0.5 + 0.5 * Math.cos(Math.PI * t);
+      const minDelay = 50;  // fastest (middle)
+      const maxDelay = 500; // slowest (start/end)
+      return minDelay + curve * (maxDelay - minDelay);
     }
-  }
 
-  .separator-small { margin: 2rem 0; height: 1px; }
-  .nav-list { list-style: none; padding: 0; margin: 0; }
-  .spacer-bottom { height: 80px; }
+    function scrollToWord(idx) {
+      const offset = idx * wordH;
+      reel.style.transition = 'transform ' + Math.max(getDelay(idx) * 0.8, 80) + 'ms cubic-bezier(0.23, 1, 0.32, 1)';
+      reel.style.transform = 'translateY(-' + offset + 'px)';
 
-  @media (max-width: 600px) {
-    .banner-wrapper { padding: 20px 0 5px 0; }
-    .banner-image { width: 90%; }
-    .lite-button { font-size: 0.65rem; padding: 6px 12px; }
-  }
-</style>
+      if (idx < lastIdx) {
+        setTimeout(function() {
+          scrollToWord(idx + 1);
+        }, getDelay(idx));
+      } else {
+        // Final word — add a small bounce
+        setTimeout(function() {
+          reel.style.transition = 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+          reel.style.transform = 'translateY(-' + (offset + 4) + 'px)';
+          setTimeout(function() {
+            reel.style.transition = 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)';
+            reel.style.transform = 'translateY(-' + offset + 'px)';
+          }, 200);
+        }, 100);
+      }
+    }
+
+    // Start after a brief pause
+    setTimeout(function() {
+      scrollToWord(1);
+    }, 800);
+  })();
+
+  // ============================================
+  //  FLOATING SINE WAVE — Nav pills, external chips, label tag
+  //  Each element has a data-phase attribute for wave offset.
+  //  Amplitude decays from 5px to 0.4px over 6 seconds (settling effect).
+  // ============================================
+  (function() {
+    const pills = document.querySelectorAll('#nav-cards .nav-pill');
+    const chips = document.querySelectorAll('#ext-row .ext-chip');
+    const exploreTag = document.getElementById('explore-tag');
+    const all = [...pills, ...chips];
+    if (exploreTag) all.push(exploreTag);
+
+    const startTime = performance.now();
+    const SETTLE_DURATION = 6000; // settle over 6 seconds
+    const MIN_AMP = 0.4; // settle to small residual wave
+
+    function animateFloat(time) {
+      const elapsed = time - startTime;
+      // Amplitude decays from 5 to MIN_AMP over SETTLE_DURATION
+      const decay = Math.max(MIN_AMP / 5, 1 - (elapsed / SETTLE_DURATION));
+      const amplitude = 5 * decay;
+
+      all.forEach(el => {
+        const phase = parseFloat(el.dataset.phase || '0');
+        const y = Math.sin(time * 0.0015 + phase) * amplitude;
+        el.style.transform = 'translateY(' + y.toFixed(2) + 'px)';
+      });
+      requestAnimationFrame(animateFloat);
+    }
+    requestAnimationFrame(animateFloat);
+  })();
+
+  // ============================================
+  //  HIGHLIGHT SECTION ENTRANCE — IntersectionObserver
+  //  Adds .in-view class to main card and stat cards when scrolled into view.
+  //  Triggers perspective rotation + slide-up animations defined in MainLayout CSS.
+  // ============================================
+  (function() {
+    const mainCard = document.getElementById('highlight-main');
+    const statCards = document.querySelectorAll('.highlight-stat-card');
+    if (!mainCard) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          mainCard.classList.add('in-view');
+          statCards.forEach(card => card.classList.add('in-view'));
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: '0px 0px -20% 0px'
+    });
+
+    observer.observe(document.getElementById('highlight-section'));
+  })();
+
+  // ============================================
+  //  SCROLL-DRIVEN BACKGROUND COLOR — Canvas bg shift
+  //  Smoothly transitions the bg-canvas background color based on scroll position.
+  //  Zones: black (top) → warm white (⅓) → dark crimson (⅔) → charcoal (bottom)
+  // ============================================
+  (function() {
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
+
+    function updateScrollColor() {
+      const scrollY = window.scrollY;
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      const t = docH > 0 ? scrollY / docH : 0;
+
+      // Color zones: black → warm white → dark crimson → dark charcoal
+      let r, g, b;
+      if (t < 0.33) {
+        const s = t / 0.33;
+        r = Math.round(s * 18);
+        g = Math.round(s * 17);
+        b = Math.round(s * 16);
+      } else if (t < 0.66) {
+        const s = (t - 0.33) / 0.33;
+        r = Math.round(18 + s * 14);
+        g = Math.round(17 - s * 12);
+        b = Math.round(16 - s * 10);
+      } else {
+        const s = (t - 0.66) / 0.34;
+        r = Math.round(32 - s * 20);
+        g = Math.round(5 + s * 7);
+        b = Math.round(6 - s * 2);
+      }
+
+      canvas.style.background = 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+
+    window.addEventListener('scroll', updateScrollColor, { passive: true });
+    updateScrollColor();
+  })();
+
+  // ============================================
+  //  STAR FLOOD — Canvas star field in scroll resistance zone
+  //  Creates a grid of white dots that "wipe" upward as the user scrolls
+  //  through the sticky resistance container. Stars have mouse repulsion.
+  //  Performance: all visible stars batched into single beginPath/fill.
+  // ============================================
+  (function() {
+    var container = document.getElementById('resist-star-flood');
+    var zone = document.getElementById('scroll-resist-zone');
+    if (!container || !zone) return;
+
+    var canvas = document.createElement('canvas');
+    container.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+
+    var W, H;
+    function resize() {
+      W = canvas.width = container.clientWidth || window.innerWidth;
+      H = canvas.height = container.clientHeight || window.innerHeight;
+      buildFloodStars();
+    }
+
+    // Build a uniform grid of stars for the flood effect
+    var floodStars = [];
+    function buildFloodStars() {
+      floodStars = [];
+      var spacing = 28;
+      for (var x = spacing / 2; x < W; x += spacing) {
+        for (var y = spacing / 2; y < H; y += spacing) {
+          floodStars.push({
+            baseX: x, baseY: y,
+            x: x, y: y,
+            size: 0.7 + Math.random() * 0.9,
+            twinkle: Math.random() * Math.PI * 2
+          });
+        }
+      }
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    var mouseX = -1000, mouseY = -1000;
+    window.addEventListener('mousemove', function(e) {
+      var rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+
+    var startTime = performance.now();
+    var lastFrame = 0;
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      if (now - lastFrame < 33) return; // ~30fps cap
+      lastFrame = now;
+
+      var elapsed = now - startTime;
+
+      // Calculate scroll progress within the resistance zone (0 = top, 1 = fully scrolled through)
+      var zoneTop = zone.offsetTop;
+      var zoneH = zone.offsetHeight;
+      var scrollY = window.scrollY || window.pageYOffset;
+      var progress = Math.max(0, Math.min(1, (scrollY - zoneTop) / (zoneH - window.innerHeight)));
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Flood rises from bottom: wipeY goes from H (no stars) to 0 (full stars)
+      var wipeY = H * (1 - progress);
+
+      if (progress <= 0) return;
+
+      // Dark gradient behind the star wipe edge
+      var fadeH = H * 0.12;
+      if (wipeY > fadeH) {
+        var grad = ctx.createLinearGradient(0, wipeY - fadeH, 0, wipeY);
+        grad.addColorStop(0, 'rgba(15, 15, 18, 0)');
+        grad.addColorStop(1, 'rgba(15, 15, 18, 0.9)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, wipeY - fadeH, W, fadeH);
+      }
+      ctx.fillStyle = 'rgba(15, 15, 18, 0.9)';
+      ctx.fillRect(0, Math.max(0, wipeY), W, H - wipeY);
+
+      // Performance: batch all visible stars into a single draw call
+      var mouseInf = 80;
+      var mouseInfSq = mouseInf * mouseInf;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.beginPath();
+      for (var i = 0; i < floodStars.length; i++) {
+        var s = floodStars[i];
+        if (s.baseY < wipeY) continue;
+
+        var sx = s.baseX;
+        var sy = s.baseY;
+
+        // Mouse repulsion — uses squared distance to avoid sqrt when possible
+        var mdx = sx - mouseX;
+        var mdy = sy - mouseY;
+        var mDistSq = mdx * mdx + mdy * mdy;
+        if (mDistSq < mouseInfSq && mDistSq > 0) {
+          var mDist = Math.sqrt(mDistSq);
+          var force = (1 - mDist / mouseInf) * 15;
+          sx += (mdx / mDist) * force;
+          sy += (mdy / mDist) * force;
+        }
+
+        ctx.moveTo(sx + s.size, sy);
+        ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
+      }
+      ctx.fill();
+    }
+
+    requestAnimationFrame(animate);
+  })();
+</script>

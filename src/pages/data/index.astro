@@ -1,0 +1,96 @@
+---
+/**
+ * Blaster Data listing page — fetches data folders from R2 storage,
+ * groups them alphabetically, and renders a searchable tile grid.
+ * Each tile links to the individual data detail page (/data/[slug]).
+ */
+import MainLayout from '../../layouts/MainLayout.astro';
+import { getR2Data } from '../../lib/r2';
+import { slugify } from '../../lib/slugify';
+
+const rawProjects = await getR2Data("PNGU-Blaster-Data-main/");
+
+const projects = rawProjects.map((project) => ({
+  title: project.displayName || "General Assets",
+  slug: slugify(project.folderName),
+  folderName: project.folderName,
+  fileCount: project.files.length,
+})).sort((a, b) => a.title.localeCompare(b.title));
+
+// Group projects alphabetically by first character
+const grouped = projects.reduce((acc, project) => {
+  const firstChar = project.title[0].toUpperCase();
+  const char = /[A-Z]/.test(firstChar) ? firstChar : "#";
+  if (!acc[char]) acc[char] = [];
+  acc[char].push(project);
+  return acc;
+}, {} as Record<string, typeof projects>);
+
+// Sort letter groups with "#" (non-alpha) at the end
+const sortedLetters = Object.keys(grouped).sort((a, b) => {
+  if (a === "#") return 1;
+  if (b === "#") return -1;
+  return a.localeCompare(b);
+});
+---
+
+<MainLayout title="Blaster Data">
+  <div class="page-header">
+    <div class="label-tag">blaster data</div>
+    <h1>Blaster Data</h1>
+    <p class="header-subtitle">Documentation & Spreadsheets</p>
+    <div class="header-nav">
+      <a href="/" class="btn-glass">← Back</a>
+      <a href="https://lite.pngu.info/data" class="btn-glass">Lite Version</a>
+    </div>
+  </div>
+
+  <!-- Search filter -->
+  <div class="search-container">
+    <input type="text" id="data-search" placeholder="Search blaster data..." class="glass-input" />
+  </div>
+
+  <!-- Alphabetically grouped data tiles -->
+  <div id="results-container">
+    {sortedLetters.map((letter) => (
+      <div class="letter-group scroll-reveal" data-letter={letter}>
+        <div class="letter-header">{letter}</div>
+        <div class="project-grid scroll-reveal-stagger">
+          {grouped[letter].map((project) => (
+            <a href={`/data/${project.slug}`} class="project-tile" data-title={project.title.toLowerCase()}>
+              <div class="tile-top">
+                <span class="tile-title">{project.title}</span>
+                <span class="tile-count">{project.fileCount} file{project.fileCount !== 1 ? 's' : ''}</span>
+              </div>
+              <span class="tile-arrow">View data →</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+</MainLayout>
+
+<!-- Client-side search: filters data tiles by title -->
+<script is:inline>
+  var searchInput = document.getElementById('data-search');
+  var letterGroups = document.querySelectorAll('.letter-group');
+
+  searchInput.addEventListener('input', function(e) {
+    var term = e.target.value.toLowerCase();
+    letterGroups.forEach(function(group) {
+      var hasVisible = false;
+      var tiles = group.querySelectorAll('.project-tile');
+      tiles.forEach(function(tile) {
+        var title = tile.dataset.title;
+        if (title.includes(term)) {
+          tile.style.display = 'flex';
+          hasVisible = true;
+        } else {
+          tile.style.display = 'none';
+        }
+      });
+      group.style.display = hasVisible ? 'block' : 'none';
+    });
+  });
+</script>

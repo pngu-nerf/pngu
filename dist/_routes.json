@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "include": [
+    "/_server-islands/*"
+  ],
+  "exclude": [
+    "/",
+    "/_astro/*",
+    "/.assetsignore",
+    "/blog-placeholder-1.jpg",
+    "/blog-placeholder-2.jpg",
+    "/blog-placeholder-3.jpg",
+    "/blog-placeholder-4.jpg",
+    "/blog-placeholder-5.jpg",
+    "/blog-placeholder-about.jpg",
+    "/favicon.svg",
+    "/blaster-data/*",
+    "/brand-assets/*",
+    "/fonts/*",
+    "/site-assets/*",
+    "/404",
+    "/brand",
+    "/contact",
+    "/data",
+    "/files",
+    "/lite/*"
+  ]
+}
