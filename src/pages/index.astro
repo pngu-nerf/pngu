@@ -3,24 +3,16 @@
  * index.astro — PNGU homepage
  *
  * Layout sections (top to bottom):
- *   1. Hero — "Get ____" slot machine reel cycling through words, landing on "info"
- *   2. Nav Cards — Floating pill links to Files, Data, Brand, Contact
- *   3. External Links — YouTube, GitHub, Printables with floating animation
- *   4. Scroll Resistance Zone — Sticky container with star flood wipe effect
- *   5. Featured Project Highlight — Split card with photo placeholder + stat cards
- *
- * Interactive behaviors (via inline scripts at bottom):
- *   - Slot machine: vertical reel with cosine speed ramp + bounce finish
- *   - Floating pills: sine-wave bobbing that settles over 6 seconds
- *   - Highlight entrance: IntersectionObserver triggers slide-in
- *   - Scroll color shift: background transitions black → white → crimson → charcoal
- *   - Star flood: canvas star field wipes upward inside scroll resistance zone
+ * 1. Hero — "Get ____" slot machine reel cycling through words, landing on "info"
+ * 2. Nav Cards — Floating pill links to Files, Data, Brand, Contact
+ * 3. External Links — YouTube, GitHub, Printables with floating animation
+ * 4. Scroll Resistance Zone — Sticky container with star flood wipe effect
+ * 5. Featured Project Highlight — Split card with photo placeholder + stat cards
  */
 import MainLayout from '../layouts/MainLayout.astro';
 ---
 
 <MainLayout title="Home">
-  <!-- Hero Section -->
   <section class="hero">
     <h1 class="hero-title">
       <span class="hero-get">Get</span>
@@ -46,7 +38,6 @@ import MainLayout from '../layouts/MainLayout.astro';
     <p class="hero-question">What do you need?</p>
   </section>
 
-  <!-- Navigation Cards -->
   <section class="nav-section scroll-reveal">
     <div class="nav-cards" id="nav-cards">
       <a href="/files" class="nav-pill" data-phase="0">
@@ -72,7 +63,6 @@ import MainLayout from '../layouts/MainLayout.astro';
     </div>
   </section>
 
-  <!-- External Links -->
   <section class="links-section scroll-reveal">
     <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
     <div class="ext-row" id="ext-row">
@@ -88,15 +78,12 @@ import MainLayout from '../layouts/MainLayout.astro';
     </div>
   </section>
 
-  <!-- Scroll resistance zone — sticky container that "holds" the user's scroll,
-       then fills with a rising star field canvas before releasing into the highlight section -->
   <div class="scroll-resist-zone" id="scroll-resist-zone">
     <div class="resist-inner" id="resist-inner">
       <div class="resist-star-flood" id="resist-star-flood"></div>
     </div>
   </div>
 
-  <!-- Featured Project Highlight -->
   <section class="highlight-section" id="highlight-section">
     <div class="highlight-label scroll-reveal">
       <div class="label-tag">featured</div>
@@ -117,11 +104,8 @@ import MainLayout from '../layouts/MainLayout.astro';
           </div>
           <div class="highlight-content">
             <div class="highlight-badge">Current Project</div>
-            <h2 class="highlight-title">Customize this section</h2>
-            <p class="highlight-desc">
-              Add your latest project here — link to your featured blaster build, 
-              data experiment, or 3D model. This section transforms as you scroll into view.
-            </p>
+            <h2 class="highlight-title">-</h2>
+            <p class="highlight-desc">-</p>
             <div class="highlight-actions">
               <a href="/files" class="btn-primary">View Project →</a>
               <a href="/data" class="btn-glass">See Data →</a>
@@ -147,11 +131,25 @@ import MainLayout from '../layouts/MainLayout.astro';
   </section>
 </MainLayout>
 
+<style>
+  /* Local overrides specifically requested for the index page */
+  .hero-word-wrap {
+    display: inline-block;
+    text-align: left;
+    position: relative;
+    height: 1.1em;
+    overflow: hidden;
+    vertical-align: baseline;
+    width: 2.2em;
+    /* Softens the top and bottom bounds into a gradient blur rather than a hard cut */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  }
+</style>
+
 <script is:inline>
   // ============================================
   //  SLOT MACHINE REEL — Vertical word scroll
-  //  Words cycle: files → data → assets → ... → "info" (final)
-  //  Speed follows a cosine curve: medium start → fast middle → slow end
   // ============================================
   (function() {
     const reel = document.getElementById('hero-reel');
@@ -160,53 +158,42 @@ import MainLayout from '../layouts/MainLayout.astro';
     const totalWords = words.length;
     if (totalWords === 0) return;
 
-    // Measure single word height
     const wordH = words[0].offsetHeight;
     let currentIdx = 0;
     const lastIdx = totalWords - 1;
 
-    // Speed ramp: sine wave — medium → fast → slow → stop
     function getDelay(idx) {
       const t = idx / lastIdx;
-      // Cosine curve: starts medium, goes fast in middle, slows at end
       const curve = 0.5 + 0.5 * Math.cos(Math.PI * t);
-      const minDelay = 50;  // fastest (middle)
-      const maxDelay = 500; // slowest (start/end)
+      const minDelay = 45;  
+      const maxDelay = 450; 
       return minDelay + curve * (maxDelay - minDelay);
     }
 
     function scrollToWord(idx) {
       const offset = idx * wordH;
-      reel.style.transition = 'transform ' + Math.max(getDelay(idx) * 0.8, 80) + 'ms cubic-bezier(0.23, 1, 0.32, 1)';
-      reel.style.transform = 'translateY(-' + offset + 'px)';
-
+      
       if (idx < lastIdx) {
+        // Standard rapid scroll step
+        reel.style.transition = 'transform ' + Math.max(getDelay(idx) * 0.8, 80) + 'ms cubic-bezier(0.23, 1, 0.32, 1)';
+        reel.style.transform = 'translateY(-' + offset + 'px)';
         setTimeout(function() {
           scrollToWord(idx + 1);
         }, getDelay(idx));
       } else {
-        // Final word — add a small bounce
-        setTimeout(function() {
-          reel.style.transition = 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)';
-          reel.style.transform = 'translateY(-' + (offset + 4) + 'px)';
-          setTimeout(function() {
-            reel.style.transition = 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)';
-            reel.style.transform = 'translateY(-' + offset + 'px)';
-          }, 200);
-        }, 100);
+        // Final smooth elastic settle (zero-debt, pure CSS)
+        reel.style.transition = 'transform 800ms cubic-bezier(0.25, 1.2, 0.5, 1)';
+        reel.style.transform = 'translateY(-' + offset + 'px)';
       }
     }
 
-    // Start after a brief pause
     setTimeout(function() {
       scrollToWord(1);
     }, 800);
   })();
 
   // ============================================
-  //  FLOATING SINE WAVE — Nav pills, external chips, label tag
-  //  Each element has a data-phase attribute for wave offset.
-  //  Amplitude decays from 5px to 0.4px over 6 seconds (settling effect).
+  //  FLOATING SINE WAVE
   // ============================================
   (function() {
     const pills = document.querySelectorAll('#nav-cards .nav-pill');
@@ -216,12 +203,11 @@ import MainLayout from '../layouts/MainLayout.astro';
     if (exploreTag) all.push(exploreTag);
 
     const startTime = performance.now();
-    const SETTLE_DURATION = 6000; // settle over 6 seconds
-    const MIN_AMP = 0.4; // settle to small residual wave
+    const SETTLE_DURATION = 6000;
+    const MIN_AMP = 0.4;
 
     function animateFloat(time) {
       const elapsed = time - startTime;
-      // Amplitude decays from 5 to MIN_AMP over SETTLE_DURATION
       const decay = Math.max(MIN_AMP / 5, 1 - (elapsed / SETTLE_DURATION));
       const amplitude = 5 * decay;
 
@@ -236,9 +222,7 @@ import MainLayout from '../layouts/MainLayout.astro';
   })();
 
   // ============================================
-  //  HIGHLIGHT SECTION ENTRANCE — IntersectionObserver
-  //  Adds .in-view class to main card and stat cards when scrolled into view.
-  //  Triggers perspective rotation + slide-up animations defined in MainLayout CSS.
+  //  HIGHLIGHT SECTION ENTRANCE
   // ============================================
   (function() {
     const mainCard = document.getElementById('highlight-main');
@@ -262,9 +246,7 @@ import MainLayout from '../layouts/MainLayout.astro';
   })();
 
   // ============================================
-  //  SCROLL-DRIVEN BACKGROUND COLOR — Canvas bg shift
-  //  Smoothly transitions the bg-canvas background color based on scroll position.
-  //  Zones: black (top) → warm white (⅓) → dark crimson (⅔) → charcoal (bottom)
+  //  SCROLL-DRIVEN BACKGROUND COLOR
   // ============================================
   (function() {
     const canvas = document.getElementById('bg-canvas');
@@ -275,7 +257,6 @@ import MainLayout from '../layouts/MainLayout.astro';
       const docH = document.documentElement.scrollHeight - window.innerHeight;
       const t = docH > 0 ? scrollY / docH : 0;
 
-      // Color zones: black → warm white → dark crimson → dark charcoal
       let r, g, b;
       if (t < 0.33) {
         const s = t / 0.33;
@@ -302,10 +283,7 @@ import MainLayout from '../layouts/MainLayout.astro';
   })();
 
   // ============================================
-  //  STAR FLOOD — Canvas star field in scroll resistance zone
-  //  Creates a grid of white dots that "wipe" upward as the user scrolls
-  //  through the sticky resistance container. Stars have mouse repulsion.
-  //  Performance: all visible stars batched into single beginPath/fill.
+  //  STAR FLOOD (Updated)
   // ============================================
   (function() {
     var container = document.getElementById('resist-star-flood');
@@ -323,11 +301,10 @@ import MainLayout from '../layouts/MainLayout.astro';
       buildFloodStars();
     }
 
-    // Build a uniform grid of stars for the flood effect
     var floodStars = [];
     function buildFloodStars() {
       floodStars = [];
-      var spacing = 28;
+      var spacing = 40; 
       for (var x = spacing / 2; x < W; x += spacing) {
         for (var y = spacing / 2; y < H; y += spacing) {
           floodStars.push({
@@ -355,25 +332,22 @@ import MainLayout from '../layouts/MainLayout.astro';
 
     function animate(now) {
       requestAnimationFrame(animate);
-      if (now - lastFrame < 33) return; // ~30fps cap
+      if (now - lastFrame < 33) return; 
       lastFrame = now;
 
-      var elapsed = now - startTime;
-
-      // Calculate scroll progress within the resistance zone (0 = top, 1 = fully scrolled through)
-      var zoneTop = zone.offsetTop;
-      var zoneH = zone.offsetHeight;
-      var scrollY = window.scrollY || window.pageYOffset;
-      var progress = Math.max(0, Math.min(1, (scrollY - zoneTop) / (zoneH - window.innerHeight)));
+      var zoneRect = zone.getBoundingClientRect();
+      var scrollableDist = zone.offsetHeight - window.innerHeight;
+      
+      var progress = 0;
+      if (scrollableDist > 0) {
+          progress = Math.max(0, Math.min(1, -zoneRect.top / scrollableDist));
+      }
 
       ctx.clearRect(0, 0, W, H);
-
-      // Flood rises from bottom: wipeY goes from H (no stars) to 0 (full stars)
       var wipeY = H * (1 - progress);
 
       if (progress <= 0) return;
 
-      // Dark gradient behind the star wipe edge
       var fadeH = H * 0.12;
       if (wipeY > fadeH) {
         var grad = ctx.createLinearGradient(0, wipeY - fadeH, 0, wipeY);
@@ -385,7 +359,6 @@ import MainLayout from '../layouts/MainLayout.astro';
       ctx.fillStyle = 'rgba(15, 15, 18, 0.9)';
       ctx.fillRect(0, Math.max(0, wipeY), W, H - wipeY);
 
-      // Performance: batch all visible stars into a single draw call
       var mouseInf = 80;
       var mouseInfSq = mouseInf * mouseInf;
       ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
@@ -397,7 +370,6 @@ import MainLayout from '../layouts/MainLayout.astro';
         var sx = s.baseX;
         var sy = s.baseY;
 
-        // Mouse repulsion — uses squared distance to avoid sqrt when possible
         var mdx = sx - mouseX;
         var mdy = sy - mouseY;
         var mDistSq = mdx * mdx + mdy * mdy;
