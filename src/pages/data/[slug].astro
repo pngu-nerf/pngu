@@ -1,0 +1,91 @@
+---
+/**
+ * Individual Blaster Data page — dynamically generated at build time.
+ * Shows all data files (spreadsheets, docs) with Office Online preview
+ * in expandable dropdowns and download links.
+ */
+import MainLayout from '../../layouts/MainLayout.astro';
+import { getR2Data } from '../../lib/r2';
+import { R2_DATA_BASE } from '../../constants';
+import { slugify } from '../../lib/slugify';
+
+export async function getStaticPaths() {
+  const rawProjects = await getR2Data("PNGU-Blaster-Data-main/");
+
+  return rawProjects.map((project) => ({
+    params: { slug: slugify(project.folderName) },
+    props: {
+      title: project.displayName || "General Assets",
+      folderName: project.folderName,
+      files: project.files.map((fileName: string) => ({
+        name: fileName,
+        rawUrl: `${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`,
+        // Office Online viewer URL for spreadsheet/doc preview
+        previewUrl: `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(`${R2_DATA_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`)}`,
+      })),
+    },
+  }));
+}
+
+const { title, files } = Astro.props;
+---
+
+<MainLayout title={title}>
+  <div class="page-header">
+    <a href="/data" class="back-link">← All Data</a>
+    <div class="label-tag">blaster data</div>
+    <h1>{title}</h1>
+  </div>
+
+  <!-- Expandable file list with Office Online preview -->
+  <div class="file-list">
+    {files.map((file: { name: string; rawUrl: string; previewUrl: string }) => (
+      <details class="glass-dropdown">
+        <summary>
+          <div class="summary-header">
+            <span class="file-name">{file.name}</span>
+            <span class="preview-text">Preview</span>
+          </div>
+          <a href={file.rawUrl} class="download-pill" download onclick="event.stopPropagation();">
+            Download
+          </a>
+        </summary>
+        <div class="preview-wrap">
+          <div class="iframe-container">
+            <iframe
+              src={file.previewUrl}
+              title={`Preview of ${file.name}`}
+              loading="lazy"
+            ></iframe>
+          </div>
+        </div>
+      </details>
+    ))}
+  </div>
+</MainLayout>
+
+<style>
+  /* Page-specific styles for data detail pages */
+  .file-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .preview-wrap {
+    padding: 0 1.25rem 1.25rem;
+    animation: slideReveal 0.4s var(--ease-out-expo);
+  }
+
+  /* Office Online iframe container */
+  .iframe-container {
+    width: 100%;
+    height: 600px;
+    border-radius: var(--glass-radius-xs);
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--glass-border);
+  }
+
+  iframe { width: 100%; height: 100%; border: none; }
+
+  @media (max-width: 640px) {
+    .iframe-container { height: 400px; }
+  }
+</style>

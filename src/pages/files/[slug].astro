@@ -1,0 +1,199 @@
+---
+/**
+ * Individual 3D Files project page — dynamically generated at build time.
+ * Shows all STL files in the project with expandable 3D previews (Three.js)
+ * and download links. Uses getStaticPaths for static site generation.
+ */
+import MainLayout from '../../layouts/MainLayout.astro';
+import { getR2Data } from '../../lib/r2';
+import { R2_FILES_BASE } from '../../constants';
+import { slugify } from '../../lib/slugify';
+
+export async function getStaticPaths() {
+  const rawProjects = await getR2Data("PNGU-3D-Files-main/");
+
+  const paths = await Promise.all(rawProjects.map(async (project) => {
+    // Filter out metadata files (description, link) to get only asset files
+    const assetFiles = project.files.filter((f: string) => f !== 'description' && f !== 'link');
+
+    // Fetch optional project description from R2
+    let descriptionText = "";
+    if (project.files.includes('description')) {
+      try {
+        const res = await fetch(`${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/description`);
+        if (res.ok) descriptionText = await res.text();
+      } catch { descriptionText = ""; }
+    }
+
+    // Fetch optional external link (e.g. Printables) from R2
+    let externalLink = "";
+    if (project.files.includes('link')) {
+      try {
+        const res = await fetch(`${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/link`);
+        if (res.ok) externalLink = await res.text();
+      } catch { externalLink = ""; }
+    }
+
+    return {
+      params: { slug: slugify(project.folderName) },
+      props: {
+        title: project.displayName,
+        folderName: project.folderName,
+        description: descriptionText.trim(),
+        printablesLink: externalLink.trim(),
+        files: assetFiles.map((fileName: string) => ({
+          name: fileName,
+          url: `${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`
+        })),
+      },
+    };
+  }));
+
+  return paths;
+}
+
+const { title, description, printablesLink, files } = Astro.props;
+---
+
+<MainLayout title={title}>
+  <div class="page-header">
+    <a href="/files" class="back-link">← All Files</a>
+    <div class="label-tag">3d project</div>
+    <h1>{title}</h1>
+    {description && <p class="project-desc">{description}</p>}
+    {printablesLink && (
+      <a href={printablesLink} target="_blank" rel="noopener" class="btn-glass printables-link">
+        View on Printables ↗
+      </a>
+    )}
+  </div>
+
+  <!-- Expandable STL file list with 3D preview -->
+  <div class="file-list">
+    {files.map((file: { name: string; url: string }) => (
+      <details class="glass-dropdown" data-stl-url={file.url}>
+        <summary>
+          <div class="summary-header">
+            <span class="file-name">{file.name}</span>
+            <span class="preview-text">3D Preview</span>
+          </div>
+          <a href={file.url} class="download-pill" download onclick="event.stopPropagation();">
+            Download STL
+          </a>
+        </summary>
+        <div class="preview-wrap">
+          <div class="viewer-container" data-stl-url={file.url}>
+            <span class="loading-text">Initializing 3D Engine...</span>
+          </div>
+        </div>
+      </details>
+    ))}
+  </div>
+</MainLayout>
+
+<style>
+  /* Page-specific styles for 3D file detail pages */
+  .project-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 600px;
+    margin-bottom: 1.5rem;
+    white-space: pre-wrap;
+  }
+
+  .printables-link { margin-bottom: 1rem; }
+
+  .file-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .preview-wrap { padding: 0; }
+
+  /* Three.js 3D viewer container */
+  .viewer-container {
+    height: 450px;
+    width: 100%;
+    position: relative;
+    background: #1a1a1a;
+    border-radius: 0 0 var(--glass-radius-sm) var(--glass-radius-sm);
+  }
+  .loading-text {
+    position: absolute;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    z-index: 10;
+    width: 100%;
+    text-align: center;
+    padding-top: 200px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 640px) {
+    .viewer-container { height: 300px; }
+  }
+</style>
+
+<!-- Three.js import map for browser-side STL loading -->
+<script is:inline type="importmap">
+  { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+</script>
+
+<!-- 3D viewer initialization: lazy-loads STL when dropdown is opened -->
+<script is:inline type="module">
+  import * as THREE from 'three';
+  import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  // Track initialized viewers to prevent double-init
+  const activeViewers = new WeakSet();
+
+  /**
+   * Initialize a Three.js STL viewer inside a container element.
+   * Sets up scene, camera, lights, orbit controls, and loads the STL model.
+   */
+  function initViewer(container, url) {
+    if (activeViewers.has(container)) return;
+    activeViewers.add(container);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // Lighting: ambient fill + directional key light
+    scene.add(new THREE.AmbientLight(0xffffff, 1));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(1, 1, 1);
+    scene.add(dirLight);
+
+    new STLLoader().load(url, function(geo) {
+      var loadingText = container.querySelector('.loading-text');
+      if (loadingText) loadingText.style.display = 'none';
+      geo.center();
+      var mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ color: 0xc11111, specular: 0x222222, shininess: 80 }));
+      mesh.rotation.x = -Math.PI / 2;
+      scene.add(mesh);
+      geo.computeBoundingBox();
+      var size = Math.max(geo.boundingBox.max.x - geo.boundingBox.min.x, geo.boundingBox.max.y - geo.boundingBox.min.y);
+      camera.position.z = size * 2.5;
+      var animate = function() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
+      animate();
+    }, undefined, function(err) {
+      var loadingText = container.querySelector('.loading-text');
+      if (loadingText) loadingText.innerText = 'Error loading 3D model';
+    });
+  }
+
+  // Listen for <details> toggle to lazy-init the 3D viewer
+  document.addEventListener('toggle', function(e) {
+    if (e.target.open && e.target.classList.contains('glass-dropdown')) {
+      var viewer = e.target.querySelector('.viewer-container');
+      if (viewer) setTimeout(function() { initViewer(viewer, viewer.dataset.stlUrl); }, 50);
+    }
+  }, true);
+</script>
