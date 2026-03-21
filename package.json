@@ -19,6 +19,7 @@
     "@astrojs/sitemap": "3.4.1",
     "@aws-sdk/client-s3": "^3.965.0",
     "astro": "^5.16.7",
+    "three": "^0.183.2",
     "typescript": "5.8.3"
   },
   "devDependencies": {

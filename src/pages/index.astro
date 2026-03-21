@@ -7,12 +7,62 @@
  * 2. Nav Cards — Floating pill links to Files, Data, Brand, Contact
  * 3. External Links — YouTube, GitHub, Printables with floating animation
  * 4. Scroll Resistance Zone — Sticky container with star flood wipe effect
- * 5. Featured Project Highlight — Split card with photo placeholder + stat cards
+ * 5. Highlight — Dynamic project showcase with scrolling animation, pulled from R2
  */
 import MainLayout from '../layouts/MainLayout.astro';
+import { getR2Data } from '../lib/r2';
+import { R2_HIGHLIGHT_BASE } from '../constants';
+
+// ── Fetch highlight data from R2 bucket (dynamic, like the brand page) ──
+let highlightTitle = "";
+let highlightDescription = "";
+let renderUrl = "";
+
+try {
+  const highlightProjects = await getR2Data("highlight/");
+
+  for (const project of highlightProjects) {
+    const folder = project.folderName === "."
+      ? ""
+      : `/${encodeURIComponent(project.folderName)}`;
+    const base = `${R2_HIGHLIGHT_BASE}${folder}`;
+    const files = project.files as string[];
+
+    if (files.includes("title")) {
+      try {
+        const res = await fetch(`${base}/title`);
+        if (res.ok) highlightTitle = (await res.text()).trim();
+      } catch { /* title fetch failed, use fallback */ }
+    }
+
+    if (files.includes("description")) {
+      try {
+        const res = await fetch(`${base}/description`);
+        if (res.ok) highlightDescription = (await res.text()).trim();
+      } catch { /* description fetch failed, use fallback */ }
+    }
+
+    // Locate the scrolling animation render file
+    const renderExtensions = [".mp4", ".webm", ".mov", ".webp", ".png", ".jpg", ".jpeg", ".gif"];
+    const renderFile = files.find((f) =>
+      renderExtensions.some((ext) => f.toLowerCase().endsWith(ext))
+    );
+    if (renderFile) {
+      renderUrl = `${base}/${encodeURIComponent(renderFile)}`;
+    }
+  }
+} catch (e) {
+  console.error("[Highlight] R2 fetch error:", e);
+}
+
+const descriptionLines = highlightDescription
+  ? highlightDescription.split("\n").filter(Boolean)
+  : [];
+const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 ---
 
 <MainLayout title="Home">
+  <!-- 1. HERO -->
   <section class="hero">
     <h1 class="hero-title">
       <span class="hero-get">Get</span>
@@ -38,6 +88,7 @@ import MainLayout from '../layouts/MainLayout.astro';
     <p class="hero-question">What do you need?</p>
   </section>
 
+  <!-- 2. NAV CARDS -->
   <section class="nav-section scroll-reveal">
     <div class="nav-cards" id="nav-cards">
       <a href="/files" class="nav-pill" data-phase="0">
@@ -63,6 +114,7 @@ import MainLayout from '../layouts/MainLayout.astro';
     </div>
   </section>
 
+  <!-- 3. EXTERNAL LINKS -->
   <section class="links-section scroll-reveal">
     <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
     <div class="ext-row" id="ext-row">
@@ -78,53 +130,72 @@ import MainLayout from '../layouts/MainLayout.astro';
     </div>
   </section>
 
+  <!-- 4. SCROLL RESISTANCE ZONE — star flood wipe transition -->
   <div class="scroll-resist-zone" id="scroll-resist-zone">
     <div class="resist-inner" id="resist-inner">
       <div class="resist-star-flood" id="resist-star-flood"></div>
     </div>
   </div>
 
+  <!-- 5. HIGHLIGHT — dynamic project showcase from R2 -->
   <section class="highlight-section" id="highlight-section">
-    <div class="highlight-label scroll-reveal">
-      <div class="label-tag">featured</div>
-    </div>
-    <div class="highlight-grid" id="highlight-grid">
-      <div class="highlight-card highlight-main" id="highlight-main">
-        <div class="highlight-card-inner">
-          <div class="highlight-media">
-            <img src="" alt="Project photo" class="highlight-photo" id="highlight-photo" />
-            <div class="highlight-photo-placeholder">
-              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="6" y="10" width="36" height="28" rx="4" />
-                <circle cx="18" cy="22" r="4" />
-                <path d="M6 34l10-10 8 8 6-6 12 12" stroke-linejoin="round" />
-              </svg>
-              <span>Add project photo</span>
-            </div>
+    <!-- Gray terrain decorative shape — sits behind dot grid -->
+    <svg class="highlight-terrain" viewBox="0 0 1440 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,300 L0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135 L1440,300 Z" fill="#b0b0b0"/>
+      <path d="M0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2.5"/>
+    </svg>
+
+    <!-- Dot grid overlay — white dots visible on gray terrain -->
+    <div class="highlight-dot-grid" aria-hidden="true"></div>
+
+    <div class="highlight-content">
+      <h2 class="highlight-heading scroll-reveal">Highlight</h2>
+
+      <div class="highlight-render-card scroll-reveal" id="highlight-render">
+        {isVideo ? (
+          <video
+            src={renderUrl}
+            muted
+            playsinline
+            preload="auto"
+            class="highlight-render-media"
+            id="highlight-video"
+          />
+        ) : renderUrl ? (
+          <img
+            src={renderUrl}
+            alt={highlightTitle || "Project highlight"}
+            class="highlight-render-media"
+            loading="lazy"
+          />
+        ) : (
+          <div class="highlight-render-placeholder">
+            <span>Scrolling Animation</span>
           </div>
-          <div class="highlight-content">
-            <div class="highlight-badge">Current Project</div>
-            <h2 class="highlight-title">-</h2>
-            <p class="highlight-desc">-</p>
-            <div class="highlight-actions">
-              <a href="/files" class="btn-primary">View Project →</a>
-              <a href="/data" class="btn-glass">See Data →</a>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-      <div class="highlight-side" id="highlight-side">
-        <div class="highlight-stat-card" id="stat-1">
-          <span class="stat-num">3D</span>
-          <span class="stat-label">Files Available</span>
-        </div>
-        <div class="highlight-stat-card" id="stat-2">
-          <span class="stat-num">Data</span>
-          <span class="stat-label">Performance Logs</span>
-        </div>
-        <div class="highlight-stat-card" id="stat-3">
-          <span class="stat-num">Open</span>
-          <span class="stat-label">Source Everything</span>
+    </div>
+
+    <!-- White zone — project info on clean white background -->
+    <div class="highlight-white-zone">
+      <div class="highlight-white-inner">
+        <div class="highlight-info scroll-reveal">
+          <h2 class="highlight-project-title">
+            {highlightTitle || "Project Title"}
+          </h2>
+          {descriptionLines.length > 0
+            ? descriptionLines.map((line) => (
+                <p class="highlight-project-desc">{line}</p>
+              ))
+            : (
+              <>
+                <p class="highlight-project-desc">Project Description</p>
+                <p class="highlight-project-desc">Project Description</p>
+                <p class="highlight-project-desc">Project Description</p>
+                <p class="highlight-project-desc">Project Description</p>
+              </>
+            )
+          }
         </div>
       </div>
     </div>
@@ -132,18 +203,156 @@ import MainLayout from '../layouts/MainLayout.astro';
 </MainLayout>
 
 <style>
-  /* Local overrides specifically requested for the index page */
+  /* ── Hero word-wrap mask (overrides MainLayout clip-path for homepage) ── */
   .hero-word-wrap {
     display: inline-block;
     text-align: left;
     position: relative;
     height: 1.1em;
-    overflow: hidden;
+    overflow: visible;
+    clip-path: inset(-2% -50vw -2% 0);
     vertical-align: baseline;
-    width: 2.2em;
-    /* Softens the top and bottom bounds into a gradient blur rather than a hard cut */
+    width: 4.5em;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  }
+
+  /* ── Highlight Section — dark bg, gray terrain, dots, white bottom ── */
+  .highlight-section {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    padding: 0;
+    margin-top: -2rem;
+  }
+
+  .highlight-terrain {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 72%;
+    z-index: 0;
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
+  }
+
+  .highlight-dot-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.6) 2px, transparent 2px);
+    background-size: 22px 22px;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
+  }
+
+  .highlight-content {
+    position: relative;
+    z-index: 2;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 1rem 2rem 2rem;
+  }
+
+  .highlight-heading {
+    font-family: var(--font-title);
+    font-size: clamp(3.5rem, 8vw, 6rem);
+    font-weight: normal;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    line-height: 1;
+  }
+
+  .highlight-render-card {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 24px;
+    overflow: hidden;
+    background: var(--accent);
+    position: relative;
+  }
+
+  .highlight-render-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .highlight-render-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .highlight-render-placeholder span {
+    font-family: var(--font-title);
+    font-size: clamp(1.5rem, 4vw, 3rem);
+    color: rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── White zone at bottom ── */
+  .highlight-white-zone {
+    position: relative;
+    z-index: 2;
+    background: #ffffff;
+    padding: 2.5rem 0 3rem;
+  }
+
+  .highlight-white-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .highlight-info {
+    padding: 0;
+  }
+
+  .highlight-project-title {
+    font-family: var(--font-title);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: normal;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #111;
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+  }
+
+  .highlight-project-desc {
+    font-family: var(--font-title);
+    font-size: clamp(0.85rem, 2vw, 1.15rem);
+    font-weight: normal;
+    color: var(--accent);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+    line-height: 1.5;
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+    .highlight-heading {
+      font-size: 2.5rem;
+    }
+    .highlight-render-card {
+      border-radius: 16px;
+    }
+    .highlight-project-title {
+      font-size: 1.8rem;
+    }
   }
 </style>
 
@@ -152,68 +361,57 @@ import MainLayout from '../layouts/MainLayout.astro';
   //  SLOT MACHINE REEL — Vertical word scroll
   // ============================================
   (function() {
-    const reel = document.getElementById('hero-reel');
+    var reel = document.getElementById('hero-reel');
     if (!reel) return;
-    const words = reel.querySelectorAll('.reel-word');
-    const totalWords = words.length;
+    var words = reel.querySelectorAll('.reel-word');
+    var totalWords = words.length;
     if (totalWords === 0) return;
 
-    const wordH = words[0].offsetHeight;
-    let currentIdx = 0;
-    const lastIdx = totalWords - 1;
+    var wordH = words[0].offsetHeight;
+    var lastIdx = totalWords - 1;
 
     function getDelay(idx) {
-      const t = idx / lastIdx;
-      const curve = 0.5 + 0.5 * Math.cos(Math.PI * t);
-      const minDelay = 45;  
-      const maxDelay = 450; 
-      return minDelay + curve * (maxDelay - minDelay);
+      var t = idx / lastIdx;
+      var curve = 0.5 + 0.5 * Math.cos(Math.PI * t);
+      return 45 + curve * 405;
     }
 
     function scrollToWord(idx) {
-      const offset = idx * wordH;
-      
+      var offset = idx * wordH;
       if (idx < lastIdx) {
-        // Standard rapid scroll step
         reel.style.transition = 'transform ' + Math.max(getDelay(idx) * 0.8, 80) + 'ms cubic-bezier(0.23, 1, 0.32, 1)';
         reel.style.transform = 'translateY(-' + offset + 'px)';
-        setTimeout(function() {
-          scrollToWord(idx + 1);
-        }, getDelay(idx));
+        setTimeout(function() { scrollToWord(idx + 1); }, getDelay(idx));
       } else {
-        // Final smooth elastic settle (zero-debt, pure CSS)
         reel.style.transition = 'transform 800ms cubic-bezier(0.25, 1.2, 0.5, 1)';
         reel.style.transform = 'translateY(-' + offset + 'px)';
       }
     }
 
-    setTimeout(function() {
-      scrollToWord(1);
-    }, 800);
+    setTimeout(function() { scrollToWord(1); }, 800);
   })();
 
   // ============================================
-  //  FLOATING SINE WAVE
+  //  FLOATING SINE WAVE — nav pills & link chips
   // ============================================
   (function() {
-    const pills = document.querySelectorAll('#nav-cards .nav-pill');
-    const chips = document.querySelectorAll('#ext-row .ext-chip');
-    const exploreTag = document.getElementById('explore-tag');
-    const all = [...pills, ...chips];
+    var pills = document.querySelectorAll('#nav-cards .nav-pill');
+    var chips = document.querySelectorAll('#ext-row .ext-chip');
+    var exploreTag = document.getElementById('explore-tag');
+    var all = [].slice.call(pills).concat([].slice.call(chips));
     if (exploreTag) all.push(exploreTag);
 
-    const startTime = performance.now();
-    const SETTLE_DURATION = 6000;
-    const MIN_AMP = 0.4;
+    var startTime = performance.now();
+    var SETTLE = 6000;
+    var MIN_AMP = 0.4;
 
     function animateFloat(time) {
-      const elapsed = time - startTime;
-      const decay = Math.max(MIN_AMP / 5, 1 - (elapsed / SETTLE_DURATION));
-      const amplitude = 5 * decay;
-
-      all.forEach(el => {
-        const phase = parseFloat(el.dataset.phase || '0');
-        const y = Math.sin(time * 0.0015 + phase) * amplitude;
+      var elapsed = time - startTime;
+      var decay = Math.max(MIN_AMP / 5, 1 - elapsed / SETTLE);
+      var amplitude = 5 * decay;
+      all.forEach(function(el) {
+        var phase = parseFloat(el.dataset.phase || '0');
+        var y = Math.sin(time * 0.0015 + phase) * amplitude;
         el.style.transform = 'translateY(' + y.toFixed(2) + 'px)';
       });
       requestAnimationFrame(animateFloat);
@@ -222,59 +420,33 @@ import MainLayout from '../layouts/MainLayout.astro';
   })();
 
   // ============================================
-  //  HIGHLIGHT SECTION ENTRANCE
-  // ============================================
-  (function() {
-    const mainCard = document.getElementById('highlight-main');
-    const statCards = document.querySelectorAll('.highlight-stat-card');
-    if (!mainCard) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          mainCard.classList.add('in-view');
-          statCards.forEach(card => card.classList.add('in-view'));
-          observer.unobserve(entry.target);
-        }
-      });
-    }, {
-      threshold: 0.15,
-      rootMargin: '0px 0px -20% 0px'
-    });
-
-    observer.observe(document.getElementById('highlight-section'));
-  })();
-
-  // ============================================
   //  SCROLL-DRIVEN BACKGROUND COLOR
   // ============================================
   (function() {
-    const canvas = document.getElementById('bg-canvas');
+    var canvas = document.getElementById('bg-canvas');
     if (!canvas) return;
 
     function updateScrollColor() {
-      const scrollY = window.scrollY;
-      const docH = document.documentElement.scrollHeight - window.innerHeight;
-      const t = docH > 0 ? scrollY / docH : 0;
-
-      let r, g, b;
+      var scrollY = window.scrollY;
+      var docH = document.documentElement.scrollHeight - window.innerHeight;
+      var t = docH > 0 ? scrollY / docH : 0;
+      var r, g, b;
       if (t < 0.33) {
-        const s = t / 0.33;
+        var s = t / 0.33;
         r = Math.round(s * 18);
         g = Math.round(s * 17);
         b = Math.round(s * 16);
       } else if (t < 0.66) {
-        const s = (t - 0.33) / 0.33;
-        r = Math.round(18 + s * 14);
-        g = Math.round(17 - s * 12);
-        b = Math.round(16 - s * 10);
+        var s2 = (t - 0.33) / 0.33;
+        r = Math.round(18 + s2 * 14);
+        g = Math.round(17 - s2 * 12);
+        b = Math.round(16 - s2 * 10);
       } else {
-        const s = (t - 0.66) / 0.34;
-        r = Math.round(32 - s * 20);
-        g = Math.round(5 + s * 7);
-        b = Math.round(6 - s * 2);
+        var s3 = (t - 0.66) / 0.34;
+        r = Math.round(32 - s3 * 20);
+        g = Math.round(5 + s3 * 7);
+        b = Math.round(6 - s3 * 2);
       }
-
       canvas.style.background = 'rgb(' + r + ',' + g + ',' + b + ')';
     }
 
@@ -283,7 +455,7 @@ import MainLayout from '../layouts/MainLayout.astro';
   })();
 
   // ============================================
-  //  STAR FLOOD (Updated)
+  //  STAR FLOOD — Scroll-driven wipe effect
   // ============================================
   (function() {
     var container = document.getElementById('resist-star-flood');
@@ -304,12 +476,11 @@ import MainLayout from '../layouts/MainLayout.astro';
     var floodStars = [];
     function buildFloodStars() {
       floodStars = [];
-      var spacing = 40; 
+      var spacing = 40;
       for (var x = spacing / 2; x < W; x += spacing) {
         for (var y = spacing / 2; y < H; y += spacing) {
           floodStars.push({
             baseX: x, baseY: y,
-            x: x, y: y,
             size: 0.7 + Math.random() * 0.9,
             twinkle: Math.random() * Math.PI * 2
           });
@@ -327,25 +498,21 @@ import MainLayout from '../layouts/MainLayout.astro';
       mouseY = e.clientY - rect.top;
     });
 
-    var startTime = performance.now();
     var lastFrame = 0;
-
     function animate(now) {
       requestAnimationFrame(animate);
-      if (now - lastFrame < 33) return; 
+      if (now - lastFrame < 33) return;
       lastFrame = now;
 
       var zoneRect = zone.getBoundingClientRect();
       var scrollableDist = zone.offsetHeight - window.innerHeight;
-      
       var progress = 0;
       if (scrollableDist > 0) {
-          progress = Math.max(0, Math.min(1, -zoneRect.top / scrollableDist));
+        progress = Math.max(0, Math.min(1, -zoneRect.top / scrollableDist));
       }
 
       ctx.clearRect(0, 0, W, H);
       var wipeY = H * (1 - progress);
-
       if (progress <= 0) return;
 
       var fadeH = H * 0.12;
@@ -366,10 +533,8 @@ import MainLayout from '../layouts/MainLayout.astro';
       for (var i = 0; i < floodStars.length; i++) {
         var s = floodStars[i];
         if (s.baseY < wipeY) continue;
-
         var sx = s.baseX;
         var sy = s.baseY;
-
         var mdx = sx - mouseX;
         var mdy = sy - mouseY;
         var mDistSq = mdx * mdx + mdy * mdy;
@@ -379,7 +544,6 @@ import MainLayout from '../layouts/MainLayout.astro';
           sx += (mdx / mDist) * force;
           sy += (mdy / mDist) * force;
         }
-
         ctx.moveTo(sx + s.size, sy);
         ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
       }
@@ -387,5 +551,33 @@ import MainLayout from '../layouts/MainLayout.astro';
     }
 
     requestAnimationFrame(animate);
+  })();
+
+  // ============================================
+  //  SCROLL-DRIVEN VIDEO — highlight render
+  //  Syncs video playback position to scroll
+  //  progress through the render card viewport.
+  // ============================================
+  (function() {
+    var video = document.getElementById('highlight-video');
+    var card = document.getElementById('highlight-render');
+    if (!video || !card) return;
+
+    video.pause();
+
+    function syncScroll() {
+      var rect = card.getBoundingClientRect();
+      var viewH = window.innerHeight;
+      // 0 when card enters bottom of viewport, 1 when card exits top
+      var progress = 1 - rect.bottom / (viewH + rect.height);
+      progress = Math.max(0, Math.min(1, progress));
+
+      if (video.duration && video.readyState >= 2) {
+        video.currentTime = progress * video.duration;
+      }
+    }
+
+    window.addEventListener('scroll', syncScroll, { passive: true });
+    video.addEventListener('loadedmetadata', syncScroll);
   })();
 </script>

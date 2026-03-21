@@ -421,7 +421,7 @@
   function drawPenguinGlow(ctx, elapsed, parallaxY) {
     const pc = getPathCenter();
     const pulseScale = 1 + Math.sin(elapsed * 0.0005) * 0.08;
-    const r = Math.min(W, H) * 0.32 * pulseScale;
+    const r = Math.min(W, H) * 1.6 * pulseScale;
     const gy = pc.y + parallaxY;
     const glow = ctx.createRadialGradient(pc.x, gy, 0, pc.x, gy, r);
     glow.addColorStop(0, 'rgba(193, 17, 17, 0.12)');
