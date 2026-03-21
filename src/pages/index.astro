@@ -3,10 +3,11 @@
  * index.astro — PNGU homepage
  *
  * Layout sections (top to bottom):
- * 1. Hero — "Get ____" slot machine reel cycling through words, landing on "info"
- * 2. Nav Cards — Floating pill links to Files, Data, Brand, Contact
- * 3. External Links — YouTube, GitHub, Printables with floating animation
- * 4. Highlight — Dynamic project showcase with scrolling animation, pulled from R2 (with interactive stars)
+ * 1. Landing Fold (100vh wrapper)
+ * a. Hero — "Get ____" slot machine reel
+ * b. Nav Cards — Floating pill links
+ * c. External Links — YouTube, GitHub, Printables
+ * 2. Highlight — Dynamic project showcase with scrolling animation and animated terrain
  */
 import MainLayout from '../layouts/MainLayout.astro';
 import { getR2Data } from '../lib/r2';
@@ -61,70 +62,77 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 ---
 
 <MainLayout title="Home">
-  <section class="hero">
-    <h1 class="hero-title">
-      <span class="hero-get">Get</span>
-      <span class="hero-word-wrap">
-        <span class="hero-reel" id="hero-reel">
-          <span class="reel-word">files</span>
-          <span class="reel-word">data</span>
-          <span class="reel-word">assets</span>
-          <span class="reel-word">models</span>
-          <span class="reel-word">prints</span>
-          <span class="reel-word">files</span>
-          <span class="reel-word">data</span>
-          <span class="reel-word">assets</span>
-          <span class="reel-word">models</span>
-          <span class="reel-word">prints</span>
-          <span class="reel-word">files</span>
-          <span class="reel-word">data</span>
-          <span class="reel-word">assets</span>
-          <span class="reel-word reel-final">info</span>
+  
+  <div class="landing-fold">
+    <section class="hero">
+      <h1 class="hero-title">
+        <span class="hero-get">Get</span>
+        <span class="hero-word-wrap">
+          <span class="hero-reel" id="hero-reel">
+            <span class="reel-word">files</span>
+            <span class="reel-word">data</span>
+            <span class="reel-word">cad</span>
+            <span class="reel-word">stls</span>
+            <span class="reel-word">code</span>
+            <span class="reel-word">mods</span>
+            <span class="reel-word">parts</span>
+            <span class="reel-word">specs</span>
+            <span class="reel-word">plans</span>
+            <span class="reel-word">ideas</span>
+            <span class="reel-word">tools</span>
+            <span class="reel-word">props</span>
+            <span class="reel-word">assets</span>
+            <span class="reel-word">models</span>
+            <span class="reel-word">prints</span>
+            <span class="reel-word">guides</span>
+            <span class="reel-word">stuff</span>
+            <span class="reel-word reel-final">info</span>
+          </span>
         </span>
-      </span>
-    </h1>
-    <p class="hero-question">What do you need?</p>
-  </section>
+      </h1>
+      <p class="hero-question">What do you need?</p>
+    </section>
 
-  <section class="nav-section scroll-reveal">
-    <div class="nav-cards" id="nav-cards">
-      <a href="/files" class="nav-pill" data-phase="0">
-        <span class="pill-icon">◇</span>
-        <span class="pill-label">3D Files</span>
-        <span class="pill-arrow">→</span>
-      </a>
-      <a href="/data" class="nav-pill" data-phase="0.7">
-        <span class="pill-icon">◈</span>
-        <span class="pill-label">Blaster Data</span>
-        <span class="pill-arrow">→</span>
-      </a>
-      <a href="/brand" class="nav-pill" data-phase="1.4">
-        <span class="pill-icon">○</span>
-        <span class="pill-label">Brand Assets</span>
-        <span class="pill-arrow">→</span>
-      </a>
-      <a href="/contact" class="nav-pill" data-phase="2.1">
-        <span class="pill-icon">◎</span>
-        <span class="pill-label">Contact</span>
-        <span class="pill-arrow">→</span>
-      </a>
-    </div>
-  </section>
+    <section class="nav-section scroll-reveal">
+      <div class="nav-cards" id="nav-cards">
+        <a href="/files" class="nav-pill" data-phase="0">
+          <span class="pill-icon">◇</span>
+          <span class="pill-label">3D Files</span>
+          <span class="pill-arrow">→</span>
+        </a>
+        <a href="/data" class="nav-pill" data-phase="0.7">
+          <span class="pill-icon">◈</span>
+          <span class="pill-label">Blaster Data</span>
+          <span class="pill-arrow">→</span>
+        </a>
+        <a href="/brand" class="nav-pill" data-phase="1.4">
+          <span class="pill-icon">○</span>
+          <span class="pill-label">Brand Assets</span>
+          <span class="pill-arrow">→</span>
+        </a>
+        <a href="/contact" class="nav-pill" data-phase="2.1">
+          <span class="pill-icon">◎</span>
+          <span class="pill-label">Contact</span>
+          <span class="pill-arrow">→</span>
+        </a>
+      </div>
+    </section>
 
-  <section class="links-section scroll-reveal">
-    <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
-    <div class="ext-row" id="ext-row">
-      <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">
-        YouTube ↗
-      </a>
-      <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">
-        GitHub ↗
-      </a>
-      <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">
-        Printables ↗
-      </a>
-    </div>
-  </section>
+    <section class="links-section scroll-reveal">
+      <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
+      <div class="ext-row" id="ext-row">
+        <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">
+          YouTube ↗
+        </a>
+        <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">
+          GitHub ↗
+        </a>
+        <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">
+          Printables ↗
+        </a>
+      </div>
+    </section>
+  </div>
 
   <section class="highlight-section" id="highlight-section">
     <svg class="highlight-terrain" viewBox="0 0 1440 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -188,44 +196,61 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 </MainLayout>
 
 <style>
+  /* ── Landing Fold Wrapper ── */
+  .landing-fold {
+    /* 100vh minus the padding and nav height defined in MainLayout */
+    min-height: calc(100vh - var(--nav-height) - 6.5rem); 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: -2rem; /* Pulls the block up slightly to optically balance the nav bar */
+  }
+
   /* ── Hero word-wrap mask ── */
+  .hero {
+    padding: 0 0 3rem; /* Removed the 6rem top padding since flexbox centers it now */
+    text-align: center;
+  }
+
   .hero-word-wrap {
     display: inline-block;
     text-align: left;
     position: relative;
     height: 1.1em;
     overflow: visible;
+    /* Permits overflow on the right side (-50vw) so longer words spill out gracefully */
     clip-path: inset(-2% -50vw -2% 0);
     vertical-align: baseline;
-    width: 4.5em; /* Default width to fit the longest words */
-    transition: width 0.8s cubic-bezier(0.25, 1.2, 0.5, 1);
+    /* Locked to the exact width of the final word "info" so the centering never shifts */
+    width: 2.7em; 
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* Applied via JS on the final reel stop to center the shorter word "info" */
-  .hero-word-wrap.final-width {
-    width: 2.6em; 
-  }
-
-  /* ── Highlight Section — dark bg, gray terrain, stars, white bottom ── */
+  /* ── Highlight Section — dark bg, animated gray terrain, stars, white bottom ── */
   .highlight-section {
     position: relative;
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     padding: 0;
-    margin-top: 4rem; /* Adjusted margin to accommodate removed scroll block */
   }
 
   .highlight-terrain {
     position: absolute;
     top: 0;
-    left: 0;
-    width: 100%;
+    left: -10vw; /* Shift left to hide edge during scaling */
+    width: 120vw; /* Make it wider so we can pan/breathe without seeing the edge */
     height: 72%;
     z-index: 0;
+    transform-origin: bottom center;
+    animation: terrainBreathe 16s ease-in-out infinite alternate;
     -webkit-mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
     mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
+  }
+
+  @keyframes terrainBreathe {
+    0% { transform: translateY(0) scale(1) rotate(-0.5deg); }
+    100% { transform: translateY(12px) scale(1.04) rotate(0.8deg); }
   }
 
   .highlight-star-flood {
@@ -363,7 +388,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
       var t = idx / lastIdx;
       // Sine wave mapping: starts at 0 (fast), curves up to 1 (slow)
       var curve = Math.sin(t * (Math.PI / 2));
-      return 20 + curve * 380; // duration maps from 20ms to 400ms per tick
+      return 15 + curve * 280; // adjusted for slightly longer word list
     }
 
     function scrollToWord(idx) {
@@ -378,10 +403,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
         // Final word snap with standard easing
         reel.style.transition = 'transform 800ms cubic-bezier(0.25, 1.2, 0.5, 1)';
         reel.style.transform = 'translateY(-' + offset + 'px)';
-        
-        // Shrink wrapper to perfectly center the final "Get info" text block
-        var wrap = document.querySelector('.hero-word-wrap');
-        if (wrap) wrap.classList.add('final-width');
       }
     }
 
