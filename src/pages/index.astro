@@ -6,8 +6,7 @@
  * 1. Hero — "Get ____" slot machine reel cycling through words, landing on "info"
  * 2. Nav Cards — Floating pill links to Files, Data, Brand, Contact
  * 3. External Links — YouTube, GitHub, Printables with floating animation
- * 4. Scroll Resistance Zone — Sticky container with star flood wipe effect
- * 5. Highlight — Dynamic project showcase with scrolling animation, pulled from R2
+ * 4. Highlight — Dynamic project showcase with scrolling animation, pulled from R2 (with interactive stars)
  */
 import MainLayout from '../layouts/MainLayout.astro';
 import { getR2Data } from '../lib/r2';
@@ -20,7 +19,6 @@ let renderUrl = "";
 
 try {
   const highlightProjects = await getR2Data("highlight/");
-
   for (const project of highlightProjects) {
     const folder = project.folderName === "."
       ? ""
@@ -47,6 +45,7 @@ try {
     const renderFile = files.find((f) =>
       renderExtensions.some((ext) => f.toLowerCase().endsWith(ext))
     );
+
     if (renderFile) {
       renderUrl = `${base}/${encodeURIComponent(renderFile)}`;
     }
@@ -62,7 +61,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 ---
 
 <MainLayout title="Home">
-  <!-- 1. HERO -->
   <section class="hero">
     <h1 class="hero-title">
       <span class="hero-get">Get</span>
@@ -88,7 +86,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     <p class="hero-question">What do you need?</p>
   </section>
 
-  <!-- 2. NAV CARDS -->
   <section class="nav-section scroll-reveal">
     <div class="nav-cards" id="nav-cards">
       <a href="/files" class="nav-pill" data-phase="0">
@@ -114,7 +111,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     </div>
   </section>
 
-  <!-- 3. EXTERNAL LINKS -->
   <section class="links-section scroll-reveal">
     <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
     <div class="ext-row" id="ext-row">
@@ -130,23 +126,13 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     </div>
   </section>
 
-  <!-- 4. SCROLL RESISTANCE ZONE — star flood wipe transition -->
-  <div class="scroll-resist-zone" id="scroll-resist-zone">
-    <div class="resist-inner" id="resist-inner">
-      <div class="resist-star-flood" id="resist-star-flood"></div>
-    </div>
-  </div>
-
-  <!-- 5. HIGHLIGHT — dynamic project showcase from R2 -->
   <section class="highlight-section" id="highlight-section">
-    <!-- Gray terrain decorative shape — sits behind dot grid -->
     <svg class="highlight-terrain" viewBox="0 0 1440 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M0,300 L0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135 L1440,300 Z" fill="#b0b0b0"/>
       <path d="M0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2.5"/>
     </svg>
 
-    <!-- Dot grid overlay — white dots visible on gray terrain -->
-    <div class="highlight-dot-grid" aria-hidden="true"></div>
+    <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
 
     <div class="highlight-content">
       <h2 class="highlight-heading scroll-reveal">Highlight</h2>
@@ -176,7 +162,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
       </div>
     </div>
 
-    <!-- White zone — project info on clean white background -->
     <div class="highlight-white-zone">
       <div class="highlight-white-inner">
         <div class="highlight-info scroll-reveal">
@@ -203,7 +188,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 </MainLayout>
 
 <style>
-  /* ── Hero word-wrap mask (overrides MainLayout clip-path for homepage) ── */
+  /* ── Hero word-wrap mask ── */
   .hero-word-wrap {
     display: inline-block;
     text-align: left;
@@ -212,18 +197,24 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     overflow: visible;
     clip-path: inset(-2% -50vw -2% 0);
     vertical-align: baseline;
-    width: 4.5em;
+    width: 4.5em; /* Default width to fit the longest words */
+    transition: width 0.8s cubic-bezier(0.25, 1.2, 0.5, 1);
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* ── Highlight Section — dark bg, gray terrain, dots, white bottom ── */
+  /* Applied via JS on the final reel stop to center the shorter word "info" */
+  .hero-word-wrap.final-width {
+    width: 2.6em; 
+  }
+
+  /* ── Highlight Section — dark bg, gray terrain, stars, white bottom ── */
   .highlight-section {
     position: relative;
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     padding: 0;
-    margin-top: -2rem;
+    margin-top: 4rem; /* Adjusted margin to accommodate removed scroll block */
   }
 
   .highlight-terrain {
@@ -237,15 +228,13 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
   }
 
-  .highlight-dot-grid {
+  .highlight-star-flood {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 1;
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.6) 2px, transparent 2px);
-    background-size: 22px 22px;
     pointer-events: none;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
@@ -372,23 +361,32 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 
     function getDelay(idx) {
       var t = idx / lastIdx;
-      var curve = 0.5 + 0.5 * Math.cos(Math.PI * t);
-      return 45 + curve * 405;
+      // Sine wave mapping: starts at 0 (fast), curves up to 1 (slow)
+      var curve = Math.sin(t * (Math.PI / 2));
+      return 20 + curve * 380; // duration maps from 20ms to 400ms per tick
     }
 
     function scrollToWord(idx) {
       var offset = idx * wordH;
       if (idx < lastIdx) {
-        reel.style.transition = 'transform ' + Math.max(getDelay(idx) * 0.8, 80) + 'ms cubic-bezier(0.23, 1, 0.32, 1)';
+        var delay = getDelay(idx);
+        // Linear easing ensures a continuous speed sweep without stop-start stuttering
+        reel.style.transition = 'transform ' + delay + 'ms linear';
         reel.style.transform = 'translateY(-' + offset + 'px)';
-        setTimeout(function() { scrollToWord(idx + 1); }, getDelay(idx));
+        setTimeout(function() { scrollToWord(idx + 1); }, delay);
       } else {
+        // Final word snap with standard easing
         reel.style.transition = 'transform 800ms cubic-bezier(0.25, 1.2, 0.5, 1)';
         reel.style.transform = 'translateY(-' + offset + 'px)';
+        
+        // Shrink wrapper to perfectly center the final "Get info" text block
+        var wrap = document.querySelector('.hero-word-wrap');
+        if (wrap) wrap.classList.add('final-width');
       }
     }
 
-    setTimeout(function() { scrollToWord(1); }, 800);
+    // Delay start slightly
+    setTimeout(function() { scrollToWord(1); }, 600);
   })();
 
   // ============================================
@@ -409,6 +407,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
       var elapsed = time - startTime;
       var decay = Math.max(MIN_AMP / 5, 1 - elapsed / SETTLE);
       var amplitude = 5 * decay;
+      
       all.forEach(function(el) {
         var phase = parseFloat(el.dataset.phase || '0');
         var y = Math.sin(time * 0.0015 + phase) * amplitude;
@@ -431,6 +430,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
       var docH = document.documentElement.scrollHeight - window.innerHeight;
       var t = docH > 0 ? scrollY / docH : 0;
       var r, g, b;
+      
       if (t < 0.33) {
         var s = t / 0.33;
         r = Math.round(s * 18);
@@ -455,21 +455,22 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
   })();
 
   // ============================================
-  //  STAR FLOOD — Scroll-driven wipe effect
+  //  INTERACTIVE STAR FLOOD — Highlight Background
   // ============================================
   (function() {
-    var container = document.getElementById('resist-star-flood');
-    var zone = document.getElementById('scroll-resist-zone');
-    if (!container || !zone) return;
+    var container = document.getElementById('highlight-star-flood');
+    if (!container) return;
 
     var canvas = document.createElement('canvas');
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
     container.appendChild(canvas);
     var ctx = canvas.getContext('2d');
 
     var W, H;
     function resize() {
-      W = canvas.width = container.clientWidth || window.innerWidth;
-      H = canvas.height = container.clientHeight || window.innerHeight;
+      W = canvas.width = container.clientWidth;
+      H = canvas.height = container.clientHeight;
       buildFloodStars();
     }
 
@@ -490,7 +491,8 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 
     resize();
     window.addEventListener('resize', resize);
-
+    
+    // Track mouse over the window to ensure it works even if pointer-events: none
     var mouseX = -1000, mouseY = -1000;
     window.addEventListener('mousemove', function(e) {
       var rect = canvas.getBoundingClientRect();
@@ -504,48 +506,34 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
       if (now - lastFrame < 33) return;
       lastFrame = now;
 
-      var zoneRect = zone.getBoundingClientRect();
-      var scrollableDist = zone.offsetHeight - window.innerHeight;
-      var progress = 0;
-      if (scrollableDist > 0) {
-        progress = Math.max(0, Math.min(1, -zoneRect.top / scrollableDist));
-      }
-
       ctx.clearRect(0, 0, W, H);
-      var wipeY = H * (1 - progress);
-      if (progress <= 0) return;
-
-      var fadeH = H * 0.12;
-      if (wipeY > fadeH) {
-        var grad = ctx.createLinearGradient(0, wipeY - fadeH, 0, wipeY);
-        grad.addColorStop(0, 'rgba(15, 15, 18, 0)');
-        grad.addColorStop(1, 'rgba(15, 15, 18, 0.9)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, wipeY - fadeH, W, fadeH);
-      }
-      ctx.fillStyle = 'rgba(15, 15, 18, 0.9)';
-      ctx.fillRect(0, Math.max(0, wipeY), W, H - wipeY);
 
       var mouseInf = 80;
       var mouseInfSq = mouseInf * mouseInf;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
       ctx.beginPath();
+      
       for (var i = 0; i < floodStars.length; i++) {
         var s = floodStars[i];
-        if (s.baseY < wipeY) continue;
         var sx = s.baseX;
         var sy = s.baseY;
+        
         var mdx = sx - mouseX;
         var mdy = sy - mouseY;
         var mDistSq = mdx * mdx + mdy * mdy;
+        
+        // Push stars away from cursor
         if (mDistSq < mouseInfSq && mDistSq > 0) {
           var mDist = Math.sqrt(mDistSq);
           var force = (1 - mDist / mouseInf) * 15;
           sx += (mdx / mDist) * force;
           sy += (mdy / mDist) * force;
         }
+        
+        // Dynamic twinkle pulse
+        var alpha = 0.5 + 0.5 * Math.sin(now * 0.002 + s.twinkle);
         ctx.moveTo(sx + s.size, sy);
-        ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
+        ctx.arc(sx, sy, s.size * alpha, 0, Math.PI * 2);
       }
       ctx.fill();
     }
@@ -555,8 +543,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 
   // ============================================
   //  SCROLL-DRIVEN VIDEO — highlight render
-  //  Syncs video playback position to scroll
-  //  progress through the render card viewport.
   // ============================================
   (function() {
     var video = document.getElementById('highlight-video');
@@ -568,7 +554,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     function syncScroll() {
       var rect = card.getBoundingClientRect();
       var viewH = window.innerHeight;
-      // 0 when card enters bottom of viewport, 1 when card exits top
       var progress = 1 - rect.bottom / (viewH + rect.height);
       progress = Math.max(0, Math.min(1, progress));
 
