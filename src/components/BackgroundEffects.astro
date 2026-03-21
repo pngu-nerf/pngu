@@ -3,8 +3,14 @@
  * BackgroundEffects.astro — Full-screen canvas animation layer
  *
  * Renders behind all page content to create the atmospheric environment.
- * Re-architected to allow the 2.5D portals on the homepage to sit 
+ * Re-architected to allow the 3D CSS portals on the homepage to sit 
  * seamlessly on top without causing "double-vision" rendering bugs.
+ *
+ * Layers:
+ * 1. Dot grid texture (cached offscreen)
+ * 2. Twinkling star field with mouse repulsion
+ * 3. Wavy aurora strands with parallax
+ * 4. Diagonal shooting stars
  */
 ---
 <canvas id="bg-canvas"></canvas>
@@ -105,9 +111,9 @@
       this.vx = Math.cos(angle) * this.speed;
       this.vy = Math.sin(angle) * this.speed;
       
-      // HUGE BOOST to Shooting Star Size & Trail
-      this.tailLen = (40 + Math.random() * 60) * 2.5; 
-      this.width = (0.6 + Math.random() * 1.8) * 2.5; 
+      // DOUBLED: Shooting Star Size & Trail
+      this.tailLen = (40 + Math.random() * 60) * 1.5; 
+      this.width = (0.6 + Math.random() * 1.8) * 2.0; 
       
       this.life = 1;
       this.decay = 0.004 + Math.random() * 0.006;
@@ -190,8 +196,8 @@
         stars.push({ 
           baseX: x, baseY: y, 
           x: x, y: y, 
-          // HUGE BOOST to Background Star Size
-          size: 1.8 + Math.random() * 2.0, 
+          // DOUBLED: Background Star Size
+          size: 1.6 + Math.random() * 1.6, 
           twinkle: Math.random() * Math.PI * 2 
         });
       }
@@ -230,8 +236,8 @@
     if (gridCanvas) ctx.drawImage(gridCanvas, 0, 0);
 
     // Interactive Starfield
-    // HUGE BOOST: Global Star Brightness Alpha
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    // DOUBLED: Global Star Brightness Alpha
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.beginPath();
     for (var si2 = 0; si2 < stars.length; si2++) {
       var s2 = stars[si2];
