@@ -4,9 +4,9 @@
  *
  * Layout sections (top to bottom):
  * 1. 3D Zoom Scene (450vh total scroll space)
- * - Front: Hero Section
- * - Middle: Frosted Glass Penguin Portal
- * - Back: Highlight White Zone (Cinematic Video)
+ * - Layer Front (Z=0): Hero Section
+ * - Layer Middle (Z=-1000px): Frosted Glass + Embedded 3D Canvas (Traces & Glow)
+ * - Layer Back (Z=-2000px): Highlight White Zone (Cinematic Video)
  * 2. Highlight Details (Flows seamlessly below the 3D scene)
  * 3. Fade to Aurora
  */
@@ -58,14 +58,8 @@ const descriptionLines = highlightDescription
           
           <div class="highlight-content">
             <h2 class="highlight-heading scroll-reveal">Highlight</h2>
-
             <div class="highlight-render-card cinematic-box" id="highlight-render">
-              <img
-                id="cinematic-sequence"
-                src=""
-                alt="Cinematic Scroll Animation"
-                class="highlight-render-media"
-              />
+              <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
               <div class="highlight-render-placeholder" id="cinematic-placeholder">
                 <span>60-Frame Sequence Loading</span>
               </div>
@@ -75,6 +69,7 @@ const descriptionLines = highlightDescription
 
         <div class="layer layer-window" id="layer-window">
           <div class="glass-wall" id="glass-wall"></div>
+          <canvas id="portal-canvas"></canvas>
         </div>
 
         <div class="layer layer-hero" id="layer-hero">
@@ -111,24 +106,16 @@ const descriptionLines = highlightDescription
             <section class="nav-section scroll-reveal">
               <div class="nav-cards" id="nav-cards">
                 <a href="/files" class="nav-pill" data-phase="0">
-                  <span class="pill-icon">◇</span>
-                  <span class="pill-label">3D Files</span>
-                  <span class="pill-arrow">→</span>
+                  <span class="pill-icon">◇</span><span class="pill-label">3D Files</span><span class="pill-arrow">→</span>
                 </a>
                 <a href="/data" class="nav-pill" data-phase="0.7">
-                  <span class="pill-icon">◈</span>
-                  <span class="pill-label">Blaster Data</span>
-                  <span class="pill-arrow">→</span>
+                  <span class="pill-icon">◈</span><span class="pill-label">Blaster Data</span><span class="pill-arrow">→</span>
                 </a>
                 <a href="/brand" class="nav-pill" data-phase="1.4">
-                  <span class="pill-icon">○</span>
-                  <span class="pill-label">Brand Assets</span>
-                  <span class="pill-arrow">→</span>
+                  <span class="pill-icon">○</span><span class="pill-label">Brand Assets</span><span class="pill-arrow">→</span>
                 </a>
                 <a href="/contact" class="nav-pill" data-phase="2.1">
-                  <span class="pill-icon">◎</span>
-                  <span class="pill-label">Contact</span>
-                  <span class="pill-arrow">→</span>
+                  <span class="pill-icon">◎</span><span class="pill-label">Contact</span><span class="pill-arrow">→</span>
                 </a>
               </div>
             </section>
@@ -136,15 +123,9 @@ const descriptionLines = highlightDescription
             <section class="links-section scroll-reveal">
               <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
               <div class="ext-row" id="ext-row">
-                <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">
-                  YouTube ↗
-                </a>
-                <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">
-                  GitHub ↗
-                </a>
-                <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">
-                  Printables ↗
-                </a>
+                <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">YouTube ↗</a>
+                <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">GitHub ↗</a>
+                <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">Printables ↗</a>
               </div>
             </section>
           </div>
@@ -182,7 +163,7 @@ const descriptionLines = highlightDescription
 <style>
   /* ── 3D Scene Architecture ── */
   .zoom-scene {
-    height: 450vh; /* Runway: 200vh zoom + 150vh scrub + 100vh view */
+    height: 450vh; 
     position: relative;
     z-index: 10;
   }
@@ -192,7 +173,7 @@ const descriptionLines = highlightDescription
     top: 0;
     height: 100vh;
     overflow: hidden;
-    perspective: 1000px; /* The camera lens */
+    perspective: 1000px; 
     z-index: 1;
   }
 
@@ -201,7 +182,7 @@ const descriptionLines = highlightDescription
     inset: 0;
     transform-style: preserve-3d;
     will-change: transform;
-    pointer-events: none; /* Let clicks pass through to layers */
+    pointer-events: none; 
   }
 
   .layer {
@@ -215,7 +196,7 @@ const descriptionLines = highlightDescription
   /* ── Front Layer: Hero ── */
   .layer-hero {
     transform: translateZ(0px);
-    pointer-events: auto; /* Clickable */
+    pointer-events: auto; 
     will-change: opacity;
   }
 
@@ -241,45 +222,52 @@ const descriptionLines = highlightDescription
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* ── Middle Layer: The Penguin Window ── */
+  /* ── Middle Layer: The Penguin Portal ── */
   .layer-window {
     transform: translateZ(-1000px);
     pointer-events: none;
+    will-change: opacity;
     display: flex;
     align-items: center;
     justify-content: center;
-    will-change: opacity;
   }
 
   .glass-wall {
     position: absolute;
-    left: -100vw;
-    top: -100vh;
-    width: 300vw;
-    height: 300vh;
-    background: rgba(10, 10, 15, 0.85); /* Deep dark frost */
-    backdrop-filter: blur(15px); /* Defrosts via JS */
-    will-change: backdrop-filter;
+    inset: -100vmax; /* Bleeds infinitely outside the viewport */
+    background: rgba(8, 8, 10, 0.85); /* Frost base */
+    backdrop-filter: blur(15px);
     
-    /* Perfect CSS Hole Punch using mask composites */
+    /* The exact viewport-relative size for perfect JS alignment */
     -webkit-mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
-    -webkit-mask-size: 25vmin, 100% 100%;
+    -webkit-mask-size: 55vw auto, 100% 100%;
     -webkit-mask-position: center, center;
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-composite: source-out;
     mask-composite: exclude;
   }
 
+  /* Embedded Canvas for Traces & Glow */
+  #portal-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2;
+    pointer-events: none;
+  }
+
   /* ── Back Layer: Highlight (The bright void inside the portal) ── */
   .layer-highlight {
     transform: translateZ(-2000px);
     background: #ffffff;
-    box-shadow: 0 0 0 50vw #ffffff; /* Fills extreme viewport edges during 3D travel */
+    box-shadow: 0 0 0 100vw #ffffff; 
     display: flex;
     flex-direction: column;
     justify-content: center;
     pointer-events: auto;
-    opacity: 0; /* Fades in during approach */
+    opacity: 0; 
     will-change: opacity;
   }
 
@@ -297,134 +285,218 @@ const descriptionLines = highlightDescription
     font-weight: normal;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    color: #000000; /* Black on white */
+    color: #000000; 
     margin-bottom: 2rem;
     line-height: 1;
     text-align: center;
   }
 
-  /* ── Cinematic Full Bleed Box ── */
   .highlight-render-card.cinematic-box {
     width: 100vw;
     aspect-ratio: 21 / 9;
-    border-radius: 0; /* Edge to edge */
+    border-radius: 0; 
     background: #e0e0e0;
     position: relative;
     overflow: hidden;
   }
 
   .highlight-render-media {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 2;
+    width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 2;
   }
-
   .highlight-render-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; z-index: 1;
   }
-
   .highlight-render-placeholder span {
-    font-family: var(--font-title);
-    font-size: clamp(1.5rem, 4vw, 3rem);
-    color: rgba(0, 0, 0, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-family: var(--font-title); font-size: clamp(1.5rem, 4vw, 3rem); color: rgba(0, 0, 0, 0.3); text-transform: uppercase; letter-spacing: 0.04em;
   }
 
-  /* ── Star Flood (Inside the Highlight Portal) ── */
   .highlight-star-flood {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
   }
 
   /* ── Bottom White Zone & Fade Out ── */
   .highlight-white-zone {
-    position: relative;
-    z-index: 10;
-    background: #ffffff;
-    padding: 1rem 0 3rem;
+    position: relative; z-index: 10; background: #ffffff; padding: 1rem 0 3rem;
   }
-
-  .highlight-white-inner {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 0 2rem;
-  }
-
+  .highlight-white-inner { max-width: 980px; margin: 0 auto; padding: 0 2rem; }
   .highlight-info { padding: 0; }
-  .highlight-project-title {
-    font-family: var(--font-title);
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    color: #000000;
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-    line-height: 1.1;
-  }
-  .highlight-project-desc {
-    font-family: var(--font-title);
-    font-size: clamp(0.85rem, 2vw, 1.15rem);
-    color: #444444;
-    text-transform: uppercase;
-    margin-bottom: 0.2rem;
-    line-height: 1.5;
-  }
+  .highlight-project-title { font-family: var(--font-title); font-size: clamp(2rem, 5vw, 3.5rem); color: #000000; text-transform: uppercase; margin-bottom: 0.5rem; line-height: 1.1; }
+  .highlight-project-desc { font-family: var(--font-title); font-size: clamp(0.85rem, 2vw, 1.15rem); color: #444444; text-transform: uppercase; margin-bottom: 0.2rem; line-height: 1.5; }
 
   .highlight-fade-out {
-    position: relative;
-    z-index: 10;
-    height: 30vh;
-    background: linear-gradient(to bottom, #ffffff 0%, transparent 100%);
+    position: relative; z-index: 10; height: 30vh; background: linear-gradient(to bottom, #ffffff 0%, transparent 100%);
   }
 
   @media (max-width: 640px) {
     .highlight-heading { font-size: 2.5rem; }
     .highlight-project-title { font-size: 1.8rem; }
+    .glass-wall { -webkit-mask-size: 85vw auto, 100% 100%; }
   }
 </style>
 
 <script is:inline>
   // ============================================
-  //  THE 3D CAMERA ENGINE (Zoom + Defrost + Scrub)
+  //  THE 3D CAMERA ENGINE & EMBEDDED CANVAS
   // ============================================
   (function() {
     var world = document.getElementById('world');
     var glassWall = document.getElementById('glass-wall');
     var layerHero = document.getElementById('layer-hero');
     var layerHighlight = document.getElementById('layer-highlight');
+    var canvas = document.getElementById('portal-canvas');
+    var ctx = canvas ? canvas.getContext('2d') : null;
     
+    // -- 1. Embedded Canvas Trace Engine --
+    const LOGO_PATH = 'M740.999,478.013 C732.574,479.445 726.913,485.562 720.161,489.579 C712.414,494.187 704.845,499.102 697.298,504.036 C692.012,507.492 686.547,510.801 681.777,514.892 C674.551,521.090 667.873,527.928 660.935,534.464 C654.627,540.404 648.340,546.368 641.928,552.195 C639.013,554.844 635.485,556.876 632.823,559.735 C627.664,565.276 622.951,571.231 617.999,576.966 C611.902,584.025 605.341,590.729 599.758,598.169 C595.680,603.603 591.923,609.316 589.345,615.895 C586.196,623.934 581.278,631.263 577.628,639.132 C575.564,643.581 574.522,648.502 572.996,653.202 C571.465,657.920 569.905,662.628 568.356,667.339 C568.256,667.642 568.004,667.957 568.045,668.234 C569.180,675.956 563.976,674.825 559.098,675.090 C545.363,675.834 531.422,675.836 518.020,678.466 C510.688,679.905 503.644,679.769 496.516,679.888 C461.607,680.469 426.579,679.030 391.812,681.458 C356.639,683.914 321.572,682.024 286.473,682.919 C257.736,683.651 228.980,683.617 200.234,684.019 C184.150,684.245 168.069,684.716 151.986,684.988 C129.572,685.368 107.157,685.739 84.741,685.946 C79.477,685.995 75.828,682.500 72.505,678.891 C71.964,678.304 71.809,676.901 72.095,676.095 C73.272,672.776 74.624,669.514 76.028,666.282 C79.981,657.187 83.997,648.119 87.978,639.036 C92.523,628.667 97.115,618.317 101.567,607.908 C103.141,604.229 104.237,600.347 105.774,596.651 C109.775,587.026 113.968,577.481 117.948,567.847 C120.196,562.404 122.038,556.792 124.309,551.358 C127.095,544.691 130.291,538.194 133.020,531.504 C134.939,526.798 136.209,521.830 138.071,517.098 C139.877,512.507 141.862,507.960 144.139,503.587 C147.600,496.940 151.181,490.338 155.090,483.949 C158.234,478.810 162.091,474.112 165.357,469.042 C169.395,462.771 172.954,456.189 177.079,449.979 C181.603,443.167 186.668,436.715 191.241,429.934 C194.070,425.740 196.243,421.106 199.027,416.879 C203.584,409.962 208.472,403.264 213.075,396.376 C215.326,393.009 216.687,388.884 219.421,386.033 C229.376,375.650 239.777,365.698 249.936,355.509 C256.358,349.067 262.390,342.209 269.107,336.098 C272.430,333.075 276.849,331.217 280.868,329.007 C290.026,323.972 299.206,318.976 308.446,314.095 C316.772,309.695 324.964,304.916 333.647,301.360 C339.508,298.959 346.158,298.540 352.385,296.958 C359.025,295.271 365.667,293.512 372.154,291.330 C382.317,287.911 392.847,287.437 403.361,287.054 C426.521,286.213 449.703,285.931 472.853,284.882 C483.476,284.400 493.720,285.910 504.024,287.915 C507.539,288.599 511.188,288.584 514.769,288.950 C521.210,289.609 527.711,289.960 534.066,291.113 C539.058,292.019 543.933,293.752 548.738,295.463 C553.265,297.075 557.640,299.117 562.066,301.007 C566.924,303.081 571.821,305.076 576.597,307.327 C582.149,309.943 587.534,312.913 593.089,315.523 C600.764,319.129 609.275,321.490 616.071,326.301 C624.695,332.407 634.338,336.107 643.456,341.000 C654.417,346.882 665.312,352.890 676.352,358.620 C681.614,361.350 687.229,363.394 692.531,366.053 C698.779,369.185 704.857,372.654 711.020,375.957 C711.783,376.366 712.597,376.916 713.411,376.959 C721.158,377.360 728.908,377.735 736.662,377.984 C748.910,378.377 761.167,378.531 773.410,379.040 C785.084,379.525 796.741,380.404 808.412,380.978 C817.490,381.424 826.582,381.588 835.662,382.019 C848.105,382.610 860.547,383.264 872.977,384.082 C874.690,384.195 876.413,385.251 877.992,386.124 C884.449,389.693 890.880,393.313 897.263,397.013 C899.923,398.555 902.505,400.252 905.010,402.037 C910.838,406.190 917.701,408.722 922.423,414.653 C927.559,421.104 933.497,426.916 939.744,433.723 C930.994,434.880 922.980,435.952 914.962,436.997 C907.107,438.020 898.921,437.982 891.489,440.334 C885.024,442.380 878.619,442.033 872.225,442.975 C864.687,444.085 857.104,444.899 849.573,446.050 C844.327,446.852 839.135,448.016 833.916,448.999 C828.536,450.013 823.152,451.007 817.768,452.002 C812.061,453.055 806.188,453.567 800.686,455.277 C793.217,457.600 786.012,460.787 778.730,463.693 C771.333,466.646 764.039,469.867 756.587,472.669 C751.510,474.578 746.238,475.968 740.999,478.013 Z';
+    function sampleSVGPath(pathD, numSamples) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', '0 0 1000 1000');
+      svg.style.position = 'absolute'; svg.style.width = '0'; svg.style.height = '0'; svg.style.overflow = 'hidden';
+      const path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', pathD);
+      svg.appendChild(path); document.body.appendChild(svg);
+      const totalLen = path.getTotalLength();
+      const raw = [];
+      for (let i = 0; i < numSamples; i++) {
+        const pt = path.getPointAtLength((i / numSamples) * totalLen);
+        raw.push({ x: pt.x, y: pt.y });
+      }
+      document.body.removeChild(svg);
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      raw.forEach(p => { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y; });
+      const bw = maxX - minX || 1, bh = maxY - minY || 1;
+      return raw.map(p => ({ x: (p.x - minX) / bw, y: (p.y - minY) / bh }));
+    }
+
+    class Particle {
+      constructor(x, y) {
+        this.x = x; this.y = y; this.baseX = x;
+        this.vy = -(0.3 + Math.random() * 0.8); this.vx = (Math.random() - 0.5) * 0.4;
+        this.life = 1; this.decay = 0.003 + Math.random() * 0.005; this.size = 0.5 + Math.random() * 1.5;
+      }
+      update() { this.x += this.vx; this.y += this.vy; this.life -= this.decay; }
+      draw(ctx) {
+        if (this.life <= 0) return;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(193, 17, 17, ' + (this.life * 0.4).toFixed(3) + ')';
+        ctx.fill();
+      }
+    }
+
+    class Trace {
+      constructor(pathPoints, speed, delay, color, width) {
+        this.pathPoints = pathPoints; this.pathLen = pathPoints.length; this.speed = speed; this.delay = delay;
+        this.color = color; this.baseWidth = width; this.progress = Math.random() * pathPoints.length;
+        this.tailLen = 60 + Math.random() * 40; this.active = false; this.opacity = 1;
+      }
+      update(time) {
+        if (time < this.delay) return;
+        this.active = true; this.progress += this.speed;
+        if (this.progress >= this.pathLen) this.progress -= this.pathLen;
+      }
+      draw(ctx) {
+        if (!this.active || this.opacity < 0.01) return;
+        const headIdx = Math.floor(this.progress) % this.pathLen;
+        const segments = 8, segLen = Math.floor(this.tailLen / segments);
+        for (let s = segments - 1; s >= 0; s--) {
+          const tFade = 1 - (s / segments);
+          const alpha = tFade * tFade * 0.55 * this.opacity;
+          const width = this.baseWidth * (0.2 + tFade * 0.8);
+          ctx.beginPath();
+          const startI = s * segLen, endI = Math.min((s + 1) * segLen + 1, this.tailLen);
+          for (let i = startI; i < endI; i++) {
+            const idx = (headIdx - i + this.pathLen) % this.pathLen;
+            const pt = this.pathPoints[idx];
+            if (i === startI) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+          }
+          ctx.strokeStyle = this.color.replace('ALPHA', alpha.toFixed(3));
+          ctx.lineWidth = width; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+        }
+      }
+    }
+
+    let W, H, pathPoints = [], traces = [], particles = [];
+    const normPoints = sampleSVGPath(LOGO_PATH, 300);
+    const traceConfigs = [
+      { spd: 1.0, delay: 100, col: 'rgba(193, 17, 17, ALPHA)', w: 2.0 }, { spd: 0.75, delay: 400, col: 'rgba(193, 17, 17, ALPHA)', w: 1.6 },
+      { spd: 1.15, delay: 800, col: 'rgba(220, 60, 60, ALPHA)', w: 1.4 }, { spd: 0.9, delay: 1200, col: 'rgba(255, 255, 255, ALPHA)', w: 1.5 },
+      { spd: 0.65, delay: 200, col: 'rgba(160, 30, 30, ALPHA)', w: 1.2 }, { spd: 0.8, delay: 600, col: 'rgba(193, 17, 17, ALPHA)', w: 0.8 },
+      { spd: 1.05, delay: 1000, col: 'rgba(220, 60, 60, ALPHA)', w: 1.8 }, { spd: 0.7, delay: 300, col: 'rgba(255, 255, 255, ALPHA)', w: 1.3 }
+    ];
+
+    function resizeCanvas() {
+      if(!canvas) return;
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      
+      // Math correctly scales the SVG points to perfectly overlay the CSS mask cutout
+      const aspect = 2.16;
+      let maskW = W * 0.55; 
+      if (W <= 640) maskW = W * 0.85; // Mobile CSS mask sizing
+      const maskH = maskW / aspect;
+      pathPoints = normPoints.map(p => ({
+        x: W/2 + (p.x - 0.5) * maskW,
+        y: H/2 + (p.y - 0.5) * maskH
+      }));
+      
+      traces = traceConfigs.map(c => new Trace(pathPoints, c.spd, c.delay, c.col, c.w));
+    }
+    
+    if (canvas) {
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      
+      const startTime = performance.now();
+      function animatePortal(now) {
+        requestAnimationFrame(animatePortal);
+        const elapsed = now - startTime;
+        ctx.clearRect(0, 0, W, H);
+
+        // 1. Draw central glowing aura
+        const pc = { x: W/2, y: H/2 };
+        const r = Math.min(W, H) * 1.2 * (1 + Math.sin(elapsed * 0.0005) * 0.08);
+        const glow = ctx.createRadialGradient(pc.x, pc.y, 0, pc.x, pc.y, r);
+        glow.addColorStop(0, 'rgba(193, 17, 17, 0.12)'); glow.addColorStop(0.3, 'rgba(193, 17, 17, 0.06)');
+        glow.addColorStop(0.6, 'rgba(160, 30, 30, 0.025)'); glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+        // 2. Draw Traces perfectly around the hole
+        traces.forEach(t => { t.update(elapsed); t.draw(ctx); });
+
+        // 3. Embers
+        if (particles.length < 80 && Math.random() < 0.3) {
+          var randomTrace = traces[Math.floor(Math.random() * traces.length)];
+          if (randomTrace.active) {
+            var headIdx = Math.floor(randomTrace.progress) % randomTrace.pathLen;
+            particles.push(new Particle(randomTrace.pathPoints[headIdx].x, randomTrace.pathPoints[headIdx].y));
+          }
+        }
+        for (var pi = particles.length - 1; pi >= 0; pi--) {
+          particles[pi].update();
+          if (particles[pi].life <= 0) particles.splice(pi, 1);
+          else particles[pi].draw(ctx);
+        }
+      }
+      requestAnimationFrame(animatePortal);
+    }
+
+    // -- 2. Scroll 3D Zoom & Scrub Engine --
     var img = document.getElementById('cinematic-sequence');
     var placeholder = document.getElementById('cinematic-placeholder');
     var totalFrames = 60;
 
     // 👇 Replace with your actual frame path 👇
-    function getFrameUrl(frameNum) {
-      return `/animation/frame_${frameNum}.jpg`; 
-    }
+    function getFrameUrl(frameNum) { return `/animation/frame_${frameNum}.jpg`; }
 
     // Preload first batch to prevent flashes
-    for(var i = 1; i <= 15; i++) {
-      var pre = new Image();
-      pre.src = getFrameUrl(i);
+    for(var i = 1; i <= 15; i++) { var pre = new Image(); pre.src = getFrameUrl(i); }
+    if (img) {
+      img.src = getFrameUrl(1);
+      img.onload = function() { if(placeholder) placeholder.style.display = 'none'; };
     }
-    if (img) img.src = getFrameUrl(1);
-    if (img) img.onload = function() { if(placeholder) placeholder.style.display = 'none'; };
 
     window.addEventListener('scroll', function() {
       var vh = window.innerHeight;
@@ -442,7 +514,7 @@ const descriptionLines = highlightDescription
       var windowProximity = Math.max(0, Math.min(1, (cameraZ - 400) / 600));
       if (glassWall) glassWall.style.backdropFilter = 'blur(' + (15 * (1 - windowProximity)) + 'px)';
       
-      // Fade out Hero layer so it doesn't clip the camera, disable clicks when invisible
+      // Fade out Hero layer so it doesn't clip the camera
       var heroOpacity = 1 - Math.max(0, Math.min(1, (cameraZ - 400) / 400));
       if (layerHero) {
         layerHero.style.opacity = heroOpacity;
@@ -452,28 +524,21 @@ const descriptionLines = highlightDescription
       // Fade in Highlight layer so it glows gracefully in the distance
       if (layerHighlight) layerHighlight.style.opacity = Math.max(0, Math.min(1, (cameraZ - 500) / 1000));
       
-      // Hard hide the glass wall once we pass perfectly through to avoid weird edge clipping bugs
-      if (glassWall) glassWall.style.opacity = cameraZ > 1950 ? 0 : 1;
-
+      // Hard hide the portal layer once we pass perfectly through to avoid weird edge clipping bugs
+      if (layerWindow = document.getElementById('layer-window')) {
+          layerWindow.style.opacity = cameraZ > 1950 ? 0 : 1;
+      }
 
       // --- PHASE 2: CINEMATIC VIDEO SCRUB (200vh to 350vh) ---
-      // The scrub only starts calculating AFTER we finish zooming through the hole
       var scrubStart = vh * 2;
       var scrubDuration = vh * 1.5;
-      var scrubP = 0;
-      
-      if (y > scrubStart) {
-        scrubP = (y - scrubStart) / scrubDuration;
-      }
+      var scrubP = y > scrubStart ? (y - scrubStart) / scrubDuration : 0;
       scrubP = Math.max(0, Math.min(1, scrubP));
       
       if (img) {
         var frame = Math.max(1, Math.min(totalFrames, Math.ceil(scrubP * totalFrames)));
         var targetSrc = getFrameUrl(frame);
-        // Only trigger DOM update if the frame actually changed
-        if (img.getAttribute('src') !== targetSrc) {
-          img.setAttribute('src', targetSrc);
-        }
+        if (img.getAttribute('src') !== targetSrc) img.setAttribute('src', targetSrc);
       }
     }, { passive: true });
   })();
@@ -486,21 +551,13 @@ const descriptionLines = highlightDescription
     if (!reel) return;
     var words = reel.querySelectorAll('.reel-word');
     var totalWords = words.length;
-    if (totalWords === 0) return;
-
     var wordH = words[0].offsetHeight;
     var lastIdx = totalWords - 1;
-
-    function getDelay(idx) {
-      var t = idx / lastIdx;
-      var curve = Math.sin(t * (Math.PI / 2));
-      return 10 + curve * 180; 
-    }
 
     function scrollToWord(idx) {
       var offset = idx * wordH;
       if (idx < lastIdx) {
-        var delay = getDelay(idx);
+        var delay = 10 + Math.sin((idx / lastIdx) * (Math.PI / 2)) * 180;
         reel.style.transition = 'transform ' + delay + 'ms linear';
         reel.style.transform = 'translateY(-' + offset + 'px)';
         setTimeout(function() { scrollToWord(idx + 1); }, delay);
@@ -509,7 +566,6 @@ const descriptionLines = highlightDescription
         reel.style.transform = 'translateY(-' + offset + 'px)';
       }
     }
-
     setTimeout(function() { scrollToWord(1); }, 400);
   })();
 
@@ -517,24 +573,16 @@ const descriptionLines = highlightDescription
   //  FLOATING SINE WAVE — nav pills
   // ============================================
   (function() {
-    var pills = document.querySelectorAll('#nav-cards .nav-pill');
-    var chips = document.querySelectorAll('#ext-row .ext-chip');
+    var all = [].slice.call(document.querySelectorAll('#nav-cards .nav-pill'))
+                .concat([].slice.call(document.querySelectorAll('#ext-row .ext-chip')));
     var exploreTag = document.getElementById('explore-tag');
-    var all = [].slice.call(pills).concat([].slice.call(chips));
     if (exploreTag) all.push(exploreTag);
 
     var startTime = performance.now();
-    var SETTLE = 6000;
-    var MIN_AMP = 0.4;
-
     function animateFloat(time) {
-      var elapsed = time - startTime;
-      var decay = Math.max(MIN_AMP / 5, 1 - elapsed / SETTLE);
-      var amplitude = 5 * decay;
-      
+      var decay = Math.max(0.08, 1 - (time - startTime) / 6000);
       all.forEach(function(el) {
-        var phase = parseFloat(el.dataset.phase || '0');
-        var y = Math.sin(time * 0.0015 + phase) * amplitude;
+        var y = Math.sin(time * 0.0015 + parseFloat(el.dataset.phase || '0')) * (5 * decay);
         el.style.transform = 'translateY(' + y.toFixed(2) + 'px)';
       });
       requestAnimationFrame(animateFloat);
@@ -548,81 +596,41 @@ const descriptionLines = highlightDescription
   (function() {
     var container = document.getElementById('highlight-star-flood');
     if (!container) return;
-
     var canvas = document.createElement('canvas');
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
+    canvas.style.width = '100%'; canvas.style.height = '100%';
     container.appendChild(canvas);
-    var ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d'), W, H, floodStars = [], mouseX = -1000, mouseY = -1000;
 
-    var W, H;
     function resize() {
-      W = canvas.width = container.clientWidth;
-      H = canvas.height = container.clientHeight;
-      buildFloodStars();
-    }
-
-    var floodStars = [];
-    function buildFloodStars() {
+      W = canvas.width = container.clientWidth; H = canvas.height = container.clientHeight;
       floodStars = [];
-      var spacing = 40;
-      for (var x = spacing / 2; x < W; x += spacing) {
-        for (var y = spacing / 2; y < H; y += spacing) {
-          floodStars.push({
-            baseX: x, baseY: y,
-            size: 2.0 + Math.random() * 2.5,
-            twinkle: Math.random() * Math.PI * 2
-          });
+      for (var x = 20; x < W; x += 40) {
+        for (var y = 20; y < H; y += 40) {
+          floodStars.push({ baseX: x, baseY: y, size: 2.0 + Math.random() * 2.5, twinkle: Math.random() * Math.PI * 2 });
         }
       }
     }
-
-    resize();
-    window.addEventListener('resize', resize);
-    
-    var mouseX = -1000, mouseY = -1000;
+    resize(); window.addEventListener('resize', resize);
     window.addEventListener('mousemove', function(e) {
-      var rect = canvas.getBoundingClientRect();
-      mouseX = e.clientX - rect.left;
-      mouseY = e.clientY - rect.top;
+      var rect = canvas.getBoundingClientRect(); mouseX = e.clientX - rect.left; mouseY = e.clientY - rect.top;
     });
 
-    var lastFrame = 0;
     function animate(now) {
       requestAnimationFrame(animate);
-      if (now - lastFrame < 33) return;
-      lastFrame = now;
-
       ctx.clearRect(0, 0, W, H);
-
-      var mouseInf = 80;
-      var mouseInfSq = mouseInf * mouseInf;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // Dark stars
-      ctx.beginPath();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; ctx.beginPath();
       
       for (var i = 0; i < floodStars.length; i++) {
-        var s = floodStars[i];
-        var sx = s.baseX;
-        var sy = s.baseY;
-        
-        var mdx = sx - mouseX;
-        var mdy = sy - mouseY;
-        var mDistSq = mdx * mdx + mdy * mdy;
-        
-        if (mDistSq < mouseInfSq && mDistSq > 0) {
-          var mDist = Math.sqrt(mDistSq);
-          var force = (1 - mDist / mouseInf) * 15;
-          sx += (mdx / mDist) * force;
-          sy += (mdy / mDist) * force;
+        var s = floodStars[i], sx = s.baseX, sy = s.baseY, mdx = sx - mouseX, mdy = sy - mouseY, mDistSq = mdx * mdx + mdy * mdy;
+        if (mDistSq < 6400 && mDistSq > 0) {
+          var mDist = Math.sqrt(mDistSq), force = (1 - mDist / 80) * 15;
+          sx += (mdx / mDist) * force; sy += (mdy / mDist) * force;
         }
-        
         var alpha = 0.5 + 0.5 * Math.sin(now * 0.002 + s.twinkle);
-        ctx.moveTo(sx + s.size, sy);
-        ctx.arc(sx, sy, s.size * alpha, 0, Math.PI * 2);
+        ctx.moveTo(sx + s.size, sy); ctx.arc(sx, sy, s.size * alpha, 0, Math.PI * 2);
       }
       ctx.fill();
     }
-
     requestAnimationFrame(animate);
   })();
 </script>
