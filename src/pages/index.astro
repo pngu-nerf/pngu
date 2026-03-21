@@ -179,11 +179,12 @@ const descriptionLines = highlightDescription
 
 <style define:vars={{ maskUri: SVG_MASK_URI }}>
   :root {
-    --base-mask-width: 25vw;
+    /* DOUBLED SIZE: Head cut out is twice as big as original */
+    --base-mask-width: 50vw; 
   }
   @media (max-width: 768px) {
     :root {
-      --base-mask-width: 55vw;
+      --base-mask-width: 100vw;
     }
   }
 
@@ -366,7 +367,9 @@ const descriptionLines = highlightDescription
     overflow: visible;
   }
 
-  .css-trace { fill: none; stroke-width: 6px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  /* REMOVED vector-effect so the lines physically swell and scale up with the animation */
+  .css-trace { fill: none; stroke-width: 6px; stroke-linecap: round; }
+  
   .trace-1 { stroke: rgba(193, 17, 17, 0.9); stroke-dasharray: 200 1500; animation: traceMove 6s linear infinite; }
   .trace-2 { stroke: rgba(220, 60, 60, 0.8); stroke-dasharray: 100 1600; animation: traceMove 4s linear infinite reverse; animation-delay: -2s; }
   .trace-3 { stroke: rgba(255, 255, 255, 0.5); stroke-dasharray: 50 1650; animation: traceMove 5s linear infinite; animation-delay: -1s; }
@@ -446,22 +449,25 @@ const descriptionLines = highlightDescription
       var zoomEnd = vh * 1.5;
       var zoomP = Math.max(0, Math.min(1, scrollY / zoomEnd));
       
-      // Scale curves aggressively from 1 to 60
-      var scale = Math.pow(60, zoomP);
+      // Sine Wave Ease-In-Out for buttery smooth acceleration
+      var easeZoomP = -(Math.cos(Math.PI * zoomP) - 1) / 2;
+      
+      // Scale curves aggressively from 1 to 60 using the eased value
+      var scale = Math.pow(60, easeZoomP);
       root.style.setProperty('--scale', scale);
       
-      // Hero layer fades out quickly in first 40% of zoom
-      var heroP = Math.max(0, Math.min(1, zoomP / 0.4));
+      // Hero layer fades out perfectly in sync with the curve
+      var heroP = Math.max(0, Math.min(1, easeZoomP / 0.4));
       root.style.setProperty('--hero-opacity', 1 - heroP);
       root.style.setProperty('--hero-scale', 1 + (heroP * 0.1));
       root.style.setProperty('--hero-events', heroP > 0.5 ? 'none' : 'auto');
 
       // The Portal "Defrosts" by fading in the opaque white cinematic layout
-      var defrostP = Math.max(0, Math.min(1, (zoomP - 0.3) / 0.5));
+      var defrostP = Math.max(0, Math.min(1, (easeZoomP - 0.3) / 0.5));
       root.style.setProperty('--defrost', defrostP);
 
       // Traces fade out completely right before screen edge to prevent pixelation 
-      var tracesP = Math.max(0, Math.min(1, (zoomP - 0.7) / 0.3));
+      var tracesP = Math.max(0, Math.min(1, (easeZoomP - 0.7) / 0.3));
       root.style.setProperty('--traces-opacity', 1 - tracesP);
 
 
