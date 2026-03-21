@@ -54,14 +54,16 @@ const descriptionLines = highlightDescription
       <div class="world" id="world">
         
         <div class="layer layer-highlight" id="layer-highlight">
-          <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
-          
-          <div class="highlight-content">
-            <h2 class="highlight-heading scroll-reveal">Highlight</h2>
-            <div class="highlight-render-card cinematic-box" id="highlight-render">
-              <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
-              <div class="highlight-render-placeholder" id="cinematic-placeholder">
-                <span>60-Frame Sequence Loading</span>
+          <div class="highlight-wrapper">
+            <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
+            
+            <div class="highlight-content">
+              <h2 class="highlight-heading scroll-reveal">Highlight</h2>
+              <div class="highlight-render-card cinematic-box" id="highlight-render">
+                <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
+                <div class="highlight-render-placeholder" id="cinematic-placeholder">
+                  <span>60-Frame Sequence Loading</span>
+                </div>
               </div>
             </div>
           </div>
@@ -164,6 +166,8 @@ const descriptionLines = highlightDescription
   /* ── 3D Scene Architecture ── */
   .zoom-scene {
     height: 450vh; 
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
     position: relative;
     z-index: 10;
   }
@@ -171,33 +175,43 @@ const descriptionLines = highlightDescription
   .sticky-container {
     position: sticky;
     top: 0;
-    height: 100vh;
-    overflow: hidden;
+    height: 100svh;
+    width: 100vw;
+    overflow: hidden; 
     perspective: 1000px; 
     z-index: 1;
+    /* Forces hardware acceleration to prevent Safari clipping bugs */
+    transform: translate3d(0,0,0);
   }
 
   .world {
     position: absolute;
     inset: 0;
     transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
     will-change: transform;
-    pointer-events: none; 
   }
 
-  /* ── Front Layer: Hero ── */
-  .layer-hero {
+  .layer {
     position: absolute;
-    inset: 0;
+    left: 50%;
+    top: 50%;
+    transform-origin: center center;
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+  }
+
+  /* ── Front Layer: Hero (Z=0, Scale 1) ── */
+  .layer-hero {
     width: 100vw;
-    height: 100vh;
-    transform: translateZ(0px);
+    height: 100svh;
+    transform: translate(-50%, -50%) translateZ(0px);
     pointer-events: auto; 
     will-change: opacity;
   }
 
   .landing-fold {
-    height: 100vh;
+    height: 100svh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -218,23 +232,13 @@ const descriptionLines = highlightDescription
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* ── Middle Layer: The Penguin Portal ── */
-  /* Because Z=-1000px cuts visual scale in half, we make this layer exactly 200vw x 200vh.
-     This counteracts the perspective scaling perfectly so the mask and canvas bounds precisely 
-     match the physical screen, locking the hole punch to the glowing traces.
-  */
+  /* ── Middle Layer: The Penguin Portal (Z=-1000, 200% width) ── */
   .layer-window {
-    position: absolute;
     width: 200vw;
-    height: 200vh;
-    left: -50vw;
-    top: -50vh;
-    transform: translateZ(-1000px);
+    height: 200svh;
+    transform: translate(-50%, -50%) translateZ(-1000px);
     pointer-events: none;
     will-change: opacity;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .glass-wall {
@@ -243,16 +247,17 @@ const descriptionLines = highlightDescription
     background: rgba(8, 8, 10, 0.85);
     backdrop-filter: blur(15px);
     
-    /* 40vw is relative to the viewport, ensuring the mask sizes correctly on any screen */
+    /* MASK FIX: Using 25% guarantees the mask is mathematically locked to the 200vw container size, 
+       eliminating all perspective/scaling mismatch bugs. */
     -webkit-mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
-    -webkit-mask-size: 40vw auto, 100% 100%;
+    -webkit-mask-size: 25% auto, 100% 100%;
     -webkit-mask-position: center center;
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-composite: source-out;
     mask-composite: exclude;
   }
 
-  /* Embedded Canvas for Traces & Glow */
+  /* Embedded Canvas perfectly matches the 200vw layer dimensions */
   #portal-canvas {
     position: absolute;
     inset: 0;
@@ -262,30 +267,33 @@ const descriptionLines = highlightDescription
     pointer-events: none;
   }
 
-  /* ── Back Layer: Highlight (The bright void inside the portal) ── */
+  /* ── Back Layer: Highlight Void (Z=-2000, 300% width) ── */
   .layer-highlight {
-    position: absolute;
-    width: 100vw;
-    height: 100vh;
-    top: 0;
-    left: 0;
-    transform: translateZ(-2000px);
+    width: 300vw;
+    height: 300svh;
+    transform: translate(-50%, -50%) translateZ(-2000px);
     background: #ffffff;
-    /* Box shadow ensures we never see the "edges" of the room while zooming towards it */
-    box-shadow: 0 0 0 200vw #ffffff; 
+    opacity: 0; /* Fades in during zoom so you can see Aurora at start */
+    will-change: opacity;
+  }
+
+  /* Locks the actual content to 100vw so it doesn't stretch across the 300vw void */
+  .highlight-wrapper {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    height: 100svh;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    pointer-events: auto;
-    opacity: 0; 
-    will-change: opacity;
   }
 
   .highlight-content {
     position: relative;
     z-index: 2;
-    width: 100vw;
-    margin: 0;
+    width: 100%;
     padding: 2rem 0;
   }
 
@@ -302,8 +310,8 @@ const descriptionLines = highlightDescription
   }
 
   .highlight-render-card.cinematic-box {
-    width: 100vw;
-    aspect-ratio: 21 / 9;
+    width: 100%;
+    aspect-ratio: 21 / 9; /* Ultra-wide cinematic aspect */
     border-radius: 0; 
     background: #e0e0e0;
     position: relative;
@@ -322,7 +330,7 @@ const descriptionLines = highlightDescription
 
   .highlight-star-flood {
     position: absolute; 
-    inset: -50vw; /* Extends past boundaries slightly to cover overscan */
+    inset: -50vw; /* Extends past boundaries to cover overscan */
     z-index: 1; 
     pointer-events: none;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
@@ -345,7 +353,8 @@ const descriptionLines = highlightDescription
   @media (max-width: 640px) {
     .highlight-heading { font-size: 2.5rem; }
     .highlight-project-title { font-size: 1.8rem; }
-    .glass-wall { -webkit-mask-size: 75vw auto, 100% 100%; }
+    /* Scales mask up for mobile */
+    .glass-wall { -webkit-mask-size: 45% auto, 100% 100%; }
   }
 </style>
 
@@ -357,6 +366,7 @@ const descriptionLines = highlightDescription
     var world = document.getElementById('world');
     var glassWall = document.getElementById('glass-wall');
     var layerHero = document.getElementById('layer-hero');
+    var layerWindow = document.getElementById('layer-window');
     var layerHighlight = document.getElementById('layer-highlight');
     var canvas = document.getElementById('portal-canvas');
     var ctx = canvas ? canvas.getContext('2d') : null;
@@ -442,17 +452,16 @@ const descriptionLines = highlightDescription
 
     function resizeCanvas() {
       if(!canvas) return;
-      
-      // The canvas is 200vw by 200vh. Multiply innerWidth by 2 to get its absolute pixel width.
+      // Because the layer is 200vw by 200vh, we map the canvas pixel grid to double the window size
       W = canvas.width = window.innerWidth * 2;
       H = canvas.height = window.innerHeight * 2;
       
-      const aspect = 2.16;
-      let maskW = window.innerWidth * 0.40; 
-      if (window.innerWidth <= 640) maskW = window.innerWidth * 0.75; // Mobile CSS mask sizing
+      const aspect = 2.164; // Exact aspect ratio of the SVG bounding box
+      // Mask size maps precisely to the 25% / 45% CSS sizes. This mathematically eliminates alignment drift.
+      let maskW = W * 0.25; 
+      if (window.innerWidth <= 640) maskW = W * 0.45; 
       const maskH = maskW / aspect;
       
-      // Because W is 200vw, W/2 is exactly the center of the viewport.
       pathPoints = normPoints.map(p => ({
         x: W/2 + (p.x - 0.5) * maskW,
         y: H/2 + (p.y - 0.5) * maskH
@@ -471,7 +480,7 @@ const descriptionLines = highlightDescription
         const elapsed = now - startTime;
         ctx.clearRect(0, 0, W, H);
 
-        // 1. Draw central glowing aura
+        // Draw central glowing aura
         const pc = { x: W/2, y: H/2 };
         const r = Math.min(W, H) * 0.6 * (1 + Math.sin(elapsed * 0.0005) * 0.08);
         const glow = ctx.createRadialGradient(pc.x, pc.y, 0, pc.x, pc.y, r);
@@ -479,10 +488,8 @@ const descriptionLines = highlightDescription
         glow.addColorStop(0.6, 'rgba(160, 30, 30, 0.025)'); glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
-        // 2. Draw Traces perfectly around the hole
         traces.forEach(t => { t.update(elapsed); t.draw(ctx); });
 
-        // 3. Embers
         if (particles.length < 80 && Math.random() < 0.3) {
           var randomTrace = traces[Math.floor(Math.random() * traces.length)];
           if (randomTrace.active) {
@@ -504,6 +511,7 @@ const descriptionLines = highlightDescription
     var placeholder = document.getElementById('cinematic-placeholder');
     var totalFrames = 60;
 
+    // 👇 YOUR ANIMATION RENDER PATH 👇
     function getFrameUrl(frameNum) { return `/animation/frame_${frameNum}.jpg`; }
 
     for(var i = 1; i <= 15; i++) { var pre = new Image(); pre.src = getFrameUrl(i); }
@@ -514,39 +522,41 @@ const descriptionLines = highlightDescription
 
     window.addEventListener('scroll', function() {
       var vh = window.innerHeight;
-      var y = window.scrollY;
+      var scene = document.getElementById('zoom-scene');
+      if (!scene) return;
+      
+      // Calculate scroll strictly relative to the 3D scene box to ignore layout padding
+      var rect = scene.getBoundingClientRect();
+      var scrollInScene = Math.max(0, -rect.top);
       
       // --- PHASE 1: 3D PORTAL ZOOM (0 to 200vh) ---
       var zoomEnd = vh * 2;
-      var zoomP = Math.max(0, Math.min(1, y / zoomEnd));
-      
-      // Camera moves from Z=0 to Z=2000
+      var zoomP = Math.max(0, Math.min(1, scrollInScene / zoomEnd));
       var cameraZ = zoomP * 2000;
+      
       if (world) world.style.transform = 'translateZ(' + cameraZ + 'px)';
       
-      // Defrost the glass as we approach the window (Z=1000)
+      // Defrost the glass as we approach the window
       var windowProximity = Math.max(0, Math.min(1, (cameraZ - 400) / 600));
       if (glassWall) glassWall.style.backdropFilter = 'blur(' + (15 * (1 - windowProximity)) + 'px)';
       
-      // Fade out Hero layer so it doesn't clip the camera
-      var heroOpacity = 1 - Math.max(0, Math.min(1, (cameraZ - 400) / 400));
+      // Fade out Hero layer so it safely passes behind the camera
       if (layerHero) {
+        var heroOpacity = 1 - Math.max(0, Math.min(1, cameraZ / 800));
         layerHero.style.opacity = heroOpacity;
         layerHero.style.pointerEvents = heroOpacity < 0.1 ? 'none' : 'auto';
       }
       
-      // Fade in Highlight layer so it glows gracefully in the distance
-      if (layerHighlight) layerHighlight.style.opacity = Math.max(0, Math.min(1, (cameraZ - 500) / 1000));
+      // Fade in Highlight layer gently so the dark Aurora is visible at the very start
+      if (layerHighlight) layerHighlight.style.opacity = Math.max(0, Math.min(1, (cameraZ - 400) / 1000));
       
-      // Hard hide the portal layer once we pass perfectly through to avoid weird edge clipping bugs
-      if (layerWindow = document.getElementById('layer-window')) {
-          layerWindow.style.opacity = cameraZ > 1950 ? 0 : 1;
-      }
+      // Fade out portal right before clipping plane to ensure no sudden flash
+      if (layerWindow) layerWindow.style.opacity = 1 - Math.max(0, Math.min(1, (cameraZ - 1800) / 200));
 
       // --- PHASE 2: CINEMATIC VIDEO SCRUB (200vh to 350vh) ---
       var scrubStart = vh * 2;
       var scrubDuration = vh * 1.5;
-      var scrubP = y > scrubStart ? (y - scrubStart) / scrubDuration : 0;
+      var scrubP = scrollInScene > scrubStart ? (scrollInScene - scrubStart) / scrubDuration : 0;
       scrubP = Math.max(0, Math.min(1, scrubP));
       
       if (img) {
