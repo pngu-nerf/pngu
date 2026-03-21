@@ -3,27 +3,24 @@
  * index.astro — PNGU homepage
  *
  * Layout sections (top to bottom):
- * 1. Landing Fold (100vh wrapper)
+ * 1. Landing Fold (Sticky 100vh wrapper)
  * a. Hero — "Get ____" slot machine reel
  * b. Nav Cards — Floating pill links
  * c. External Links — YouTube, GitHub, Printables
- * 2. Highlight — Dynamic project showcase that "floods" up the screen on scroll
+ * 2. Highlight — Wavy white water that floats up with elastic scroll resistance
  */
 import MainLayout from '../layouts/MainLayout.astro';
 import { getR2Data } from '../lib/r2';
 import { R2_HIGHLIGHT_BASE } from '../constants';
 
-// ── Fetch highlight data from R2 bucket (dynamic, like the brand page) ──
+// ── Fetch highlight data from R2 bucket ──
 let highlightTitle = "";
 let highlightDescription = "";
-let renderUrl = "";
 
 try {
   const highlightProjects = await getR2Data("highlight/");
   for (const project of highlightProjects) {
-    const folder = project.folderName === "."
-      ? ""
-      : `/${encodeURIComponent(project.folderName)}`;
+    const folder = project.folderName === "." ? "" : `/${encodeURIComponent(project.folderName)}`;
     const base = `${R2_HIGHLIGHT_BASE}${folder}`;
     const files = project.files as string[];
 
@@ -31,24 +28,13 @@ try {
       try {
         const res = await fetch(`${base}/title`);
         if (res.ok) highlightTitle = (await res.text()).trim();
-      } catch { /* title fetch failed, use fallback */ }
+      } catch { /* fallback */ }
     }
-
     if (files.includes("description")) {
       try {
         const res = await fetch(`${base}/description`);
         if (res.ok) highlightDescription = (await res.text()).trim();
-      } catch { /* description fetch failed, use fallback */ }
-    }
-
-    // Locate the scrolling animation render file
-    const renderExtensions = [".mp4", ".webm", ".mov", ".webp", ".png", ".jpg", ".jpeg", ".gif"];
-    const renderFile = files.find((f) =>
-      renderExtensions.some((ext) => f.toLowerCase().endsWith(ext))
-    );
-
-    if (renderFile) {
-      renderUrl = `${base}/${encodeURIComponent(renderFile)}`;
+      } catch { /* fallback */ }
     }
   }
 } catch (e) {
@@ -58,7 +44,6 @@ try {
 const descriptionLines = highlightDescription
   ? highlightDescription.split("\n").filter(Boolean)
   : [];
-const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 ---
 
 <MainLayout title="Home">
@@ -136,8 +121,8 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 
   <section class="highlight-section" id="highlight-section">
     <svg class="highlight-terrain" viewBox="0 0 1440 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,300 L0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135 L1440,300 Z" fill="#000000"/>
-      <path d="M0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2.5"/>
+      <path d="M0,300 L0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135 L1440,300 Z" fill="#ffffff"/>
+      <path d="M0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
     </svg>
 
     <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
@@ -145,28 +130,16 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     <div class="highlight-content">
       <h2 class="highlight-heading scroll-reveal">Highlight</h2>
 
-      <div class="highlight-render-card scroll-reveal" id="highlight-render">
-        {isVideo ? (
-          <video
-            src={renderUrl}
-            muted
-            playsinline
-            preload="auto"
-            class="highlight-render-media"
-            id="highlight-video"
-          />
-        ) : renderUrl ? (
-          <img
-            src={renderUrl}
-            alt={highlightTitle || "Project highlight"}
-            class="highlight-render-media"
-            loading="lazy"
-          />
-        ) : (
-          <div class="highlight-render-placeholder">
-            <span>Scrolling Animation</span>
-          </div>
-        )}
+      <div class="highlight-render-card cinematic-box scroll-reveal" id="highlight-render">
+        <img
+          id="cinematic-sequence"
+          src=""
+          alt="Cinematic Scroll Animation"
+          class="highlight-render-media"
+        />
+        <div class="highlight-render-placeholder" id="cinematic-placeholder">
+          <span>60-Frame Sequence Loading</span>
+        </div>
       </div>
     </div>
 
@@ -198,9 +171,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 <style>
   /* ── Landing Fold Wrapper (Sticky Parallax Effect) ── */
   .landing-fold {
-    /* Guarantees the highlight section is forced below the viewport on load */
     height: 100vh;
-    /* Keeps the hero locked in place so the next section slides OVER it */
     position: sticky;
     top: 0;
     z-index: 1;
@@ -209,7 +180,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     justify-content: center;
   }
 
-  /* ── Hero word-wrap mask ── */
   .hero {
     padding: 0 0 3rem; 
     text-align: center;
@@ -223,28 +193,35 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     overflow: visible;
     clip-path: inset(-2% -50vw -2% 0);
     vertical-align: baseline;
-    /* Locked to the exact width of the final word "info" */
     width: 2.7em; 
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* ── Highlight Section (The Flood Water) ── */
+  /* ── Highlight Section (The White Flood Water) ── */
   .highlight-section {
     position: relative;
-    z-index: 10; /* Higher z-index forces it to slide over the sticky landing fold */
+    z-index: 10;
     width: 100vw;
     margin-left: calc(-50vw + 50%);
+    /* Protrudes upward into the bottom of the viewport on initial load */
+    margin-top: -15vh; 
     padding: 0;
-    background: #000000; /* Solid black "water body" that swallows the hero */
+    padding-bottom: 25vh; /* Provides runway for the gradient to transition back to the strands */
+    
+    /* White body fading transparent at the bottom to reveal footer/aurora */
+    background: linear-gradient(to bottom, #ffffff 0%, #ffffff 75%, transparent 100%);
+    
+    /* Prepares the element for the JS elastic scroll transform */
+    will-change: transform;
   }
 
-  /* Wavy rim of the water that sits exactly on top of the section */
+  /* Wavy white rim of the water */
   .highlight-terrain {
     position: absolute;
-    bottom: 99.5%; /* Sits precisely on top of the section with a tiny overlap to kill seams */
-    left: -5vw;
-    width: 110vw;
+    bottom: 99.5%; 
+    left: -10vw;
+    width: 120vw;
     height: 160px;
     z-index: 0;
     transform-origin: bottom center;
@@ -273,9 +250,9 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
   .highlight-content {
     position: relative;
     z-index: 2;
-    max-width: 980px;
+    max-width: none; /* Removed limits to allow cinematic full-bleed */
     margin: 0 auto;
-    padding: 1rem 2rem 2rem;
+    padding: 1rem 0 2rem;
   }
 
   .highlight-heading {
@@ -284,17 +261,19 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     font-weight: normal;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    color: var(--text-primary);
+    color: #000000; /* Black text for white background */
     margin-bottom: 2rem;
     line-height: 1;
+    text-align: center;
   }
 
-  .highlight-render-card {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    border-radius: 24px;
+  /* ── Cinematic 21:9 Full-Bleed Render Box ── */
+  .highlight-render-card.cinematic-box {
+    width: 100vw;
+    aspect-ratio: 21 / 9;
+    border-radius: 0; /* Full bleed edge-to-edge */
     overflow: hidden;
-    background: var(--accent);
+    background: #e0e0e0;
     position: relative;
   }
 
@@ -303,6 +282,10 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     height: 100%;
     object-fit: cover;
     display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
   }
 
   .highlight-render-placeholder {
@@ -311,21 +294,25 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
   }
 
   .highlight-render-placeholder span {
     font-family: var(--font-title);
     font-size: clamp(1.5rem, 4vw, 3rem);
-    color: rgba(0, 0, 0, 0.5);
+    color: rgba(0, 0, 0, 0.3);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
 
-  /* ── White zone at bottom ── */
+  /* ── White zone info at bottom ── */
   .highlight-white-zone {
     position: relative;
     z-index: 2;
-    background: #ffffff;
+    background: transparent;
     padding: 2.5rem 0 3rem;
   }
 
@@ -345,7 +332,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     font-weight: normal;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    color: #111;
+    color: #000000; /* Black text */
     margin-bottom: 0.5rem;
     line-height: 1.1;
   }
@@ -354,7 +341,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     font-family: var(--font-title);
     font-size: clamp(0.85rem, 2vw, 1.15rem);
     font-weight: normal;
-    color: var(--accent);
+    color: #444444; /* Dark grey for readability */
     letter-spacing: 0.03em;
     text-transform: uppercase;
     margin-bottom: 0.2rem;
@@ -363,21 +350,93 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 
   /* ── Mobile ── */
   @media (max-width: 640px) {
-    .highlight-heading {
-      font-size: 2.5rem;
-    }
-    .highlight-render-card {
-      border-radius: 16px;
-    }
-    .highlight-project-title {
-      font-size: 1.8rem;
-    }
+    .highlight-heading { font-size: 2.5rem; }
+    .highlight-project-title { font-size: 1.8rem; }
   }
 </style>
 
 <script is:inline>
   // ============================================
-  //  SLOT MACHINE REEL — Vertical word scroll
+  //  ELASTIC SINE WAVE SCROLL (The "Water Flood" effect)
+  // ============================================
+  (function() {
+    var highlight = document.getElementById('highlight-section');
+    if (!highlight) return;
+
+    window.addEventListener('scroll', function() {
+      var y = window.scrollY;
+      var vh = window.innerHeight;
+      
+      // Calculate progress over the first 1.5 screen heights of scrolling
+      var p = Math.max(0, Math.min(1, y / (vh * 1.5)));
+      
+      // Full sine wave mapping: 0 -> 1 -> 0 -> -1 -> 0
+      // This forces the section to:
+      // 1. Push down (Resist)
+      // 2. Snap back to 0 (Speed up)
+      // 3. Push up (Overshoot/Speed up more)
+      // 4. Settle back to 0 (Slow down)
+      var offset = Math.sin(p * Math.PI * 2) * 120; 
+      
+      highlight.style.transform = 'translateY(' + offset + 'px)';
+    }, { passive: true });
+  })();
+
+  // ============================================
+  //  CINEMATIC 60-FRAME SCROLLER (Lowest Debt)
+  // ============================================
+  (function() {
+    var img = document.getElementById('cinematic-sequence');
+    var card = document.getElementById('highlight-render');
+    var placeholder = document.getElementById('cinematic-placeholder');
+    if (!img || !card) return;
+
+    var totalFrames = 60;
+    
+    // 👇 YOUR ANIMATION PATH HERE 👇
+    // Place your files in the public folder and return the path structure here.
+    function getFrameUrl(frameNum) {
+      // Example: If your files are public/animation/frame_1.jpg ...
+      return `/animation/frame_${frameNum}.jpg`; 
+    }
+
+    // Preload the first few frames so it doesn't flash empty when scrolling starts
+    var preloaded = [];
+    for(var i = 1; i <= 15; i++) {
+      var pre = new Image();
+      pre.src = getFrameUrl(i);
+      preloaded.push(pre);
+    }
+    
+    // Set initial frame
+    img.src = getFrameUrl(1);
+
+    // Hide placeholder once first image loads
+    img.onload = function() {
+      if (placeholder) placeholder.style.display = 'none';
+    };
+
+    function syncScroll() {
+      var rect = card.getBoundingClientRect();
+      var viewH = window.innerHeight;
+      
+      // Calculate scroll progress exclusively while the box is visible on screen
+      var progress = 1 - rect.bottom / (viewH + rect.height);
+      progress = Math.max(0, Math.min(1, progress));
+
+      // Map progress to 1-60
+      var frame = Math.max(1, Math.min(totalFrames, Math.ceil(progress * totalFrames)));
+      
+      img.src = getFrameUrl(frame);
+    }
+
+    window.addEventListener('scroll', syncScroll, { passive: true });
+    // Initial sync
+    syncScroll();
+  })();
+
+  // ============================================
+  //  SLOT MACHINE REEL
   // ============================================
   (function() {
     var reel = document.getElementById('hero-reel');
@@ -392,7 +451,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     function getDelay(idx) {
       var t = idx / lastIdx;
       var curve = Math.sin(t * (Math.PI / 2));
-      // Halved durations for double speed
+      // Halved durations to match the longer list speed requirement
       return 10 + curve * 180; 
     }
 
@@ -404,18 +463,16 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
         reel.style.transform = 'translateY(-' + offset + 'px)';
         setTimeout(function() { scrollToWord(idx + 1); }, delay);
       } else {
-        // Final word snap
         reel.style.transition = 'transform 600ms cubic-bezier(0.25, 1.2, 0.5, 1)';
         reel.style.transform = 'translateY(-' + offset + 'px)';
       }
     }
 
-    // Delay start slightly
     setTimeout(function() { scrollToWord(1); }, 400);
   })();
 
   // ============================================
-  //  FLOATING SINE WAVE — nav pills & link chips
+  //  FLOATING SINE WAVE — nav pills
   // ============================================
   (function() {
     var pills = document.querySelectorAll('#nav-cards .nav-pill');
@@ -444,43 +501,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
   })();
 
   // ============================================
-  //  SCROLL-DRIVEN BACKGROUND COLOR
-  // ============================================
-  (function() {
-    var canvas = document.getElementById('bg-canvas');
-    if (!canvas) return;
-
-    function updateScrollColor() {
-      var scrollY = window.scrollY;
-      var docH = document.documentElement.scrollHeight - window.innerHeight;
-      var t = docH > 0 ? scrollY / docH : 0;
-      var r, g, b;
-      
-      if (t < 0.33) {
-        var s = t / 0.33;
-        r = Math.round(s * 18);
-        g = Math.round(s * 17);
-        b = Math.round(s * 16);
-      } else if (t < 0.66) {
-        var s2 = (t - 0.33) / 0.33;
-        r = Math.round(18 + s2 * 14);
-        g = Math.round(17 - s2 * 12);
-        b = Math.round(16 - s2 * 10);
-      } else {
-        var s3 = (t - 0.66) / 0.34;
-        r = Math.round(32 - s3 * 20);
-        g = Math.round(5 + s3 * 7);
-        b = Math.round(6 - s3 * 2);
-      }
-      canvas.style.background = 'rgb(' + r + ',' + g + ',' + b + ')';
-    }
-
-    window.addEventListener('scroll', updateScrollColor, { passive: true });
-    updateScrollColor();
-  })();
-
-  // ============================================
-  //  INTERACTIVE STAR FLOOD — Highlight Background
+  //  INTERACTIVE STAR FLOOD (Dark Stars on White)
   // ============================================
   (function() {
     var container = document.getElementById('highlight-star-flood');
@@ -507,7 +528,8 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
         for (var y = spacing / 2; y < H; y += spacing) {
           floodStars.push({
             baseX: x, baseY: y,
-            size: 0.7 + Math.random() * 0.9,
+            // Stars made significantly larger per instruction
+            size: 2.0 + Math.random() * 2.5,
             twinkle: Math.random() * Math.PI * 2
           });
         }
@@ -517,7 +539,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     resize();
     window.addEventListener('resize', resize);
     
-    // Track mouse over the window to ensure it works even if pointer-events: none
     var mouseX = -1000, mouseY = -1000;
     window.addEventListener('mousemove', function(e) {
       var rect = canvas.getBoundingClientRect();
@@ -535,7 +556,8 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 
       var mouseInf = 80;
       var mouseInfSq = mouseInf * mouseInf;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      // Dark grey color to contrast against the white background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
       ctx.beginPath();
       
       for (var i = 0; i < floodStars.length; i++) {
@@ -547,7 +569,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
         var mdy = sy - mouseY;
         var mDistSq = mdx * mdx + mdy * mdy;
         
-        // Push stars away from cursor
         if (mDistSq < mouseInfSq && mDistSq > 0) {
           var mDist = Math.sqrt(mDistSq);
           var force = (1 - mDist / mouseInf) * 15;
@@ -555,7 +576,6 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
           sy += (mdy / mDist) * force;
         }
         
-        // Dynamic twinkle pulse
         var alpha = 0.5 + 0.5 * Math.sin(now * 0.002 + s.twinkle);
         ctx.moveTo(sx + s.size, sy);
         ctx.arc(sx, sy, s.size * alpha, 0, Math.PI * 2);
@@ -564,30 +584,5 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     }
 
     requestAnimationFrame(animate);
-  })();
-
-  // ============================================
-  //  SCROLL-DRIVEN VIDEO — highlight render
-  // ============================================
-  (function() {
-    var video = document.getElementById('highlight-video');
-    var card = document.getElementById('highlight-render');
-    if (!video || !card) return;
-
-    video.pause();
-
-    function syncScroll() {
-      var rect = card.getBoundingClientRect();
-      var viewH = window.innerHeight;
-      var progress = 1 - rect.bottom / (viewH + rect.height);
-      progress = Math.max(0, Math.min(1, progress));
-
-      if (video.duration && video.readyState >= 2) {
-        video.currentTime = progress * video.duration;
-      }
-    }
-
-    window.addEventListener('scroll', syncScroll, { passive: true });
-    video.addEventListener('loadedmetadata', syncScroll);
   })();
 </script>
