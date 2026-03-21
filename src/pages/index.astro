@@ -185,16 +185,12 @@ const descriptionLines = highlightDescription
     pointer-events: none; 
   }
 
-  .layer {
+  /* ── Front Layer: Hero ── */
+  .layer-hero {
     position: absolute;
     inset: 0;
     width: 100vw;
     height: 100vh;
-    transform-style: preserve-3d;
-  }
-
-  /* ── Front Layer: Hero ── */
-  .layer-hero {
     transform: translateZ(0px);
     pointer-events: auto; 
     will-change: opacity;
@@ -223,7 +219,16 @@ const descriptionLines = highlightDescription
   }
 
   /* ── Middle Layer: The Penguin Portal ── */
+  /* Because Z=-1000px cuts visual scale in half, we make this layer exactly 200vw x 200vh.
+     This counteracts the perspective scaling perfectly so the mask and canvas bounds precisely 
+     match the physical screen, locking the hole punch to the glowing traces.
+  */
   .layer-window {
+    position: absolute;
+    width: 200vw;
+    height: 200vh;
+    left: -50vw;
+    top: -50vh;
     transform: translateZ(-1000px);
     pointer-events: none;
     will-change: opacity;
@@ -234,14 +239,14 @@ const descriptionLines = highlightDescription
 
   .glass-wall {
     position: absolute;
-    inset: -100vmax; /* Bleeds infinitely outside the viewport */
-    background: rgba(8, 8, 10, 0.85); /* Frost base */
+    inset: 0;
+    background: rgba(8, 8, 10, 0.85);
     backdrop-filter: blur(15px);
     
-    /* The exact viewport-relative size for perfect JS alignment */
+    /* 40vw is relative to the viewport, ensuring the mask sizes correctly on any screen */
     -webkit-mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
-    -webkit-mask-size: 55vw auto, 100% 100%;
-    -webkit-mask-position: center, center;
+    -webkit-mask-size: 40vw auto, 100% 100%;
+    -webkit-mask-position: center center;
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-composite: source-out;
     mask-composite: exclude;
@@ -250,19 +255,24 @@ const descriptionLines = highlightDescription
   /* Embedded Canvas for Traces & Glow */
   #portal-canvas {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     z-index: 2;
     pointer-events: none;
   }
 
   /* ── Back Layer: Highlight (The bright void inside the portal) ── */
   .layer-highlight {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
     transform: translateZ(-2000px);
     background: #ffffff;
-    box-shadow: 0 0 0 100vw #ffffff; 
+    /* Box shadow ensures we never see the "edges" of the room while zooming towards it */
+    box-shadow: 0 0 0 200vw #ffffff; 
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -275,7 +285,7 @@ const descriptionLines = highlightDescription
     position: relative;
     z-index: 2;
     width: 100vw;
-    margin: 0 auto;
+    margin: 0;
     padding: 2rem 0;
   }
 
@@ -311,7 +321,10 @@ const descriptionLines = highlightDescription
   }
 
   .highlight-star-flood {
-    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    position: absolute; 
+    inset: -50vw; /* Extends past boundaries slightly to cover overscan */
+    z-index: 1; 
+    pointer-events: none;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
   }
@@ -332,7 +345,7 @@ const descriptionLines = highlightDescription
   @media (max-width: 640px) {
     .highlight-heading { font-size: 2.5rem; }
     .highlight-project-title { font-size: 1.8rem; }
-    .glass-wall { -webkit-mask-size: 85vw auto, 100% 100%; }
+    .glass-wall { -webkit-mask-size: 75vw auto, 100% 100%; }
   }
 </style>
 
@@ -429,14 +442,17 @@ const descriptionLines = highlightDescription
 
     function resizeCanvas() {
       if(!canvas) return;
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
       
-      // Math correctly scales the SVG points to perfectly overlay the CSS mask cutout
+      // The canvas is 200vw by 200vh. Multiply innerWidth by 2 to get its absolute pixel width.
+      W = canvas.width = window.innerWidth * 2;
+      H = canvas.height = window.innerHeight * 2;
+      
       const aspect = 2.16;
-      let maskW = W * 0.55; 
-      if (W <= 640) maskW = W * 0.85; // Mobile CSS mask sizing
+      let maskW = window.innerWidth * 0.40; 
+      if (window.innerWidth <= 640) maskW = window.innerWidth * 0.75; // Mobile CSS mask sizing
       const maskH = maskW / aspect;
+      
+      // Because W is 200vw, W/2 is exactly the center of the viewport.
       pathPoints = normPoints.map(p => ({
         x: W/2 + (p.x - 0.5) * maskW,
         y: H/2 + (p.y - 0.5) * maskH
@@ -457,7 +473,7 @@ const descriptionLines = highlightDescription
 
         // 1. Draw central glowing aura
         const pc = { x: W/2, y: H/2 };
-        const r = Math.min(W, H) * 1.2 * (1 + Math.sin(elapsed * 0.0005) * 0.08);
+        const r = Math.min(W, H) * 0.6 * (1 + Math.sin(elapsed * 0.0005) * 0.08);
         const glow = ctx.createRadialGradient(pc.x, pc.y, 0, pc.x, pc.y, r);
         glow.addColorStop(0, 'rgba(193, 17, 17, 0.12)'); glow.addColorStop(0.3, 'rgba(193, 17, 17, 0.06)');
         glow.addColorStop(0.6, 'rgba(160, 30, 30, 0.025)'); glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
@@ -488,10 +504,8 @@ const descriptionLines = highlightDescription
     var placeholder = document.getElementById('cinematic-placeholder');
     var totalFrames = 60;
 
-    // 👇 Replace with your actual frame path 👇
     function getFrameUrl(frameNum) { return `/animation/frame_${frameNum}.jpg`; }
 
-    // Preload first batch to prevent flashes
     for(var i = 1; i <= 15; i++) { var pre = new Image(); pre.src = getFrameUrl(i); }
     if (img) {
       img.src = getFrameUrl(1);
