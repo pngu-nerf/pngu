@@ -2,23 +2,21 @@
 /**
  * index.astro — PNGU homepage
  *
- * Layout sections (top to bottom):
+ * Layout sections:
  * 1. 3D Zoom Scene (450vh total scroll space)
  * - Layer Front (Z=0): Hero Section
  * - Layer Middle (Z=-1000px): Frosted Glass + Pure CSS Glowing Traces
  * - Layer Back (Z=-2000px): Highlight White Zone (Cinematic Video)
- * 2. Highlight Details (Flows seamlessly below the 3D scene)
- * 3. Fade to Aurora
+ * 2. Highlight Details
  */
 import MainLayout from '../layouts/MainLayout.astro';
 import { getR2Data } from '../lib/r2';
 import { R2_HIGHLIGHT_BASE } from '../constants';
 
 // ── The Master SVG Path ──
-// This path is used mathematically for BOTH the CSS Mask and the SVG glowing traces,
-// guaranteeing perfect 1:1 pixel alignment across all screen sizes.
+// Normalized to a 0,0 origin to prevent WebKit mask drift bugs.
 const LOGO_PATH = "M740.999,478.013 C732.574,479.445 726.913,485.562 720.161,489.579 C712.414,494.187 704.845,499.102 697.298,504.036 C692.012,507.492 686.547,510.801 681.777,514.892 C674.551,521.090 667.873,527.928 660.935,534.464 C654.627,540.404 648.340,546.368 641.928,552.195 C639.013,554.844 635.485,556.876 632.823,559.735 C627.664,565.276 622.951,571.231 617.999,576.966 C611.902,584.025 605.341,590.729 599.758,598.169 C595.680,603.603 591.923,609.316 589.345,615.895 C586.196,623.934 581.278,631.263 577.628,639.132 C575.564,643.581 574.522,648.502 572.996,653.202 C571.465,657.920 569.905,662.628 568.356,667.339 C568.256,667.642 568.004,667.957 568.045,668.234 C569.180,675.956 563.976,674.825 559.098,675.090 C545.363,675.834 531.422,675.836 518.020,678.466 C510.688,679.905 503.644,679.769 496.516,679.888 C461.607,680.469 426.579,679.030 391.812,681.458 C356.639,683.914 321.572,682.024 286.473,682.919 C257.736,683.651 228.980,683.617 200.234,684.019 C184.150,684.245 168.069,684.716 151.986,684.988 C129.572,685.368 107.157,685.739 84.741,685.946 C79.477,685.995 75.828,682.500 72.505,678.891 C71.964,678.304 71.809,676.901 72.095,676.095 C73.272,672.776 74.624,669.514 76.028,666.282 C79.981,657.187 83.997,648.119 87.978,639.036 C92.523,628.667 97.115,618.317 101.567,607.908 C103.141,604.229 104.237,600.347 105.774,596.651 C109.775,587.026 113.968,577.481 117.948,567.847 C120.196,562.404 122.038,556.792 124.309,551.358 C127.095,544.691 130.291,538.194 133.020,531.504 C134.939,526.798 136.209,521.830 138.071,517.098 C139.877,512.507 141.862,507.960 144.139,503.587 C147.600,496.940 151.181,490.338 155.090,483.949 C158.234,478.810 162.091,474.112 165.357,469.042 C169.395,462.771 172.954,456.189 177.079,449.979 C181.603,443.167 186.668,436.715 191.241,429.934 C194.070,425.740 196.243,421.106 199.027,416.879 C203.584,409.962 208.472,403.264 213.075,396.376 C215.326,393.009 216.687,388.884 219.421,386.033 C229.376,375.650 239.777,365.698 249.936,355.509 C256.358,349.067 262.390,342.209 269.107,336.098 C272.430,333.075 276.849,331.217 280.868,329.007 C290.026,323.972 299.206,318.976 308.446,314.095 C316.772,309.695 324.964,304.916 333.647,301.360 C339.508,298.959 346.158,298.540 352.385,296.958 C359.025,295.271 365.667,293.512 372.154,291.330 C382.317,287.911 392.847,287.437 403.361,287.054 C426.521,286.213 449.703,285.931 472.853,284.882 C483.476,284.400 493.720,285.910 504.024,287.915 C507.539,288.599 511.188,288.584 514.769,288.950 C521.210,289.609 527.711,289.960 534.066,291.113 C539.058,292.019 543.933,293.752 548.738,295.463 C553.265,297.075 557.640,299.117 562.066,301.007 C566.924,303.081 571.821,305.076 576.597,307.327 C582.149,309.943 587.534,312.913 593.089,315.523 C600.764,319.129 609.275,321.490 616.071,326.301 C624.695,332.407 634.338,336.107 643.456,341.000 C654.417,346.882 665.312,352.890 676.352,358.620 C681.614,361.350 687.229,363.394 692.531,366.053 C698.779,369.185 704.857,372.654 711.020,375.957 C711.783,376.366 712.597,376.916 713.411,376.959 C721.158,377.360 728.908,377.735 736.662,377.984 C748.910,378.377 761.167,378.531 773.410,379.040 C785.084,379.525 796.741,380.404 808.412,380.978 C817.490,381.424 826.582,381.588 835.662,382.019 C848.105,382.610 860.547,383.264 872.977,384.082 C874.690,384.195 876.413,385.251 877.992,386.124 C884.449,389.693 890.880,393.313 897.263,397.013 C899.923,398.555 902.505,400.252 905.010,402.037 C910.838,406.190 917.701,408.722 922.423,414.653 C927.559,421.104 933.497,426.916 939.744,433.723 C930.994,434.880 922.980,435.952 914.962,436.997 C907.107,438.020 898.921,437.982 891.489,440.334 C885.024,442.380 878.619,442.033 872.225,442.975 C864.687,444.085 857.104,444.899 849.573,446.050 C844.327,446.852 839.135,448.016 833.916,448.999 C828.536,450.013 823.152,451.007 817.768,452.002 C812.061,453.055 806.188,453.567 800.686,455.277 C793.217,457.600 786.012,460.787 778.730,463.693 C771.333,466.646 764.039,469.867 756.587,472.669 C751.510,474.578 746.238,475.968 740.999,478.013 Z";
-const SVG_MASK_URI = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='72.095 284.4 867.649 401.595'%3E%3Cpath d='${LOGO_PATH}'/%3E%3C/svg%3E")`;
+const SVG_MASK_URI = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 867.65 401.6' width='100%25' height='100%25'%3E%3Cg transform='translate(-72.1, -284.4)'%3E%3Cpath d='${LOGO_PATH}'/%3E%3C/g%3E%3C/svg%3E")`;
 
 // ── Fetch highlight data from R2 bucket ──
 let highlightTitle = "";
@@ -60,14 +58,15 @@ const descriptionLines = highlightDescription
       <div class="world" id="world">
         
         <div class="layer layer-highlight" id="layer-highlight">
-          <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
-          
-          <div class="highlight-content">
-            <h2 class="highlight-heading scroll-reveal">Highlight</h2>
-            <div class="highlight-render-card cinematic-box" id="highlight-render">
-              <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
-              <div class="highlight-render-placeholder" id="cinematic-placeholder">
-                <span>60-Frame Sequence Loading</span>
+          <div class="highlight-wrapper">
+            <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
+            <div class="highlight-content">
+              <h2 class="highlight-heading scroll-reveal">Highlight</h2>
+              <div class="highlight-render-card cinematic-box" id="highlight-render">
+                <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
+                <div class="highlight-render-placeholder" id="cinematic-placeholder">
+                  <span>60-Frame Sequence Loading</span>
+                </div>
               </div>
             </div>
           </div>
@@ -77,10 +76,12 @@ const descriptionLines = highlightDescription
           <div class="glass-wall" id="glass-wall"></div>
           
           <div class="portal-svg-wrapper">
-             <svg viewBox="72.095 284.4 867.649 401.595" class="portal-svg">
-                <path d={LOGO_PATH} class="css-trace trace-1" />
-                <path d={LOGO_PATH} class="css-trace trace-2" />
-                <path d={LOGO_PATH} class="css-trace trace-3" />
+             <svg viewBox="0 0 867.65 401.6" class="portal-svg">
+                <g transform="translate(-72.1, -284.4)">
+                   <path d={LOGO_PATH} class="css-trace trace-1" />
+                   <path d={LOGO_PATH} class="css-trace trace-2" />
+                   <path d={LOGO_PATH} class="css-trace trace-3" />
+                </g>
              </svg>
              <div class="portal-glow-aura"></div>
           </div>
@@ -187,9 +188,9 @@ const descriptionLines = highlightDescription
   .sticky-container {
     position: sticky;
     top: 0;
-    height: 100svh;
+    height: 100vh;
     width: 100vw;
-    overflow: hidden; 
+    /* OVERFLOW REMOVED: This was causing 3D layers to crash together on Safari/WebKit */
     perspective: 1000px; 
     z-index: 1;
     transform: translate3d(0,0,0);
@@ -202,47 +203,48 @@ const descriptionLines = highlightDescription
     will-change: transform;
   }
 
-  /* Every layer uses a 100vw base size. The scale() transform mathematically 
-     counteracts the perspective shrink, guaranteeing perfect screen bounds. */
   .layer {
     position: absolute;
-    left: 0; top: 0;
-    width: 100vw; height: 100vh;
     transform-origin: center center;
     transform-style: preserve-3d;
   }
 
-  /* ── Front Layer: Hero (Z=0, Scale 1) ── */
+  /* ── Front Layer: Hero (Z=0) ── */
   .layer-hero {
-    transform: translateZ(0px) scale(1);
+    left: 0; top: 0;
+    width: 100vw; height: 100vh;
+    transform: translateZ(0px);
     pointer-events: auto; 
     will-change: opacity;
   }
 
   .landing-fold {
-    height: 100svh; display: flex; flex-direction: column; justify-content: center; margin-top: -2rem;
+    height: 100vh; display: flex; flex-direction: column; justify-content: center; margin-top: -2rem;
   }
   .hero { padding: 0 0 3rem; text-align: center; }
   .hero-word-wrap {
     display: inline-block; text-align: left; position: relative; height: 1.1em; overflow: visible; clip-path: inset(-2% -50vw -2% 0); vertical-align: baseline; width: 2.7em; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* ── Middle Layer: The Penguin Portal (Z=-1000, Scale 2) ── */
+  /* ── Middle Layer: The Penguin Portal (Z=-1000) ── */
+  /* Expanded to 200vw physical size to maintain full screen coverage at depth without fake scaling */
   .layer-window {
-    transform: translateZ(-1000px) scale(2);
+    left: -50vw; top: -50vh;
+    width: 200vw; height: 200vh;
+    transform: translateZ(-1000px);
     pointer-events: none;
     will-change: opacity;
   }
 
   .glass-wall {
     position: absolute;
-    inset: -50vw; /* Oversized to prevent edges from showing during zoom */
+    inset: 0;
     background: rgba(8, 8, 10, 0.85);
     backdrop-filter: blur(15px);
     
-    /* Using the exact mathematical inline SVG path for the mask */
+    /* MASK FIX: Locking size to 25% structurally glues it to the 200vw box. */
     -webkit-mask-image: var(--maskUri), linear-gradient(#fff, #fff);
-    -webkit-mask-size: 25vw auto, 100% 100%;
+    -webkit-mask-size: 25% auto, 100% 100%;
     -webkit-mask-position: center center;
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-composite: source-out;
@@ -261,8 +263,8 @@ const descriptionLines = highlightDescription
   .portal-svg {
     position: relative;
     z-index: 2;
-    /* Exactly matching the 25vw mask size locks them together forever */
-    width: 25vw; 
+    /* Exactly matching the 25% mask size locks them perfectly together forever */
+    width: 25%; 
     height: auto;
     overflow: visible;
   }
@@ -271,11 +273,9 @@ const descriptionLines = highlightDescription
     fill: none;
     stroke-width: 6px;
     stroke-linecap: round;
-    /* Prevents the lines from becoming massively thick during the camera zoom */
     vector-effect: non-scaling-stroke;
   }
 
-  /* Layered animations create the traveling neon energy effect */
   .trace-1 { stroke: rgba(193, 17, 17, 0.9); stroke-dasharray: 200 1500; animation: traceMove 6s linear infinite; }
   .trace-2 { stroke: rgba(220, 60, 60, 0.8); stroke-dasharray: 100 1600; animation: traceMove 4s linear infinite reverse; animation-delay: -2s; }
   .trace-3 { stroke: rgba(255, 255, 255, 0.5); stroke-dasharray: 50 1650; animation: traceMove 5s linear infinite; animation-delay: -1s; }
@@ -285,10 +285,9 @@ const descriptionLines = highlightDescription
     to { stroke-dashoffset: 0; }
   }
 
-  /* A soft glowing aura inside the cut-out */
   .portal-glow-aura {
     position: absolute;
-    width: 25vw;
+    width: 25%;
     aspect-ratio: 2.16;
     background: radial-gradient(circle, rgba(193,17,17,0.15) 0%, rgba(193,17,17,0) 65%);
     animation: pulseGlow 4s ease-in-out infinite alternate;
@@ -299,12 +298,22 @@ const descriptionLines = highlightDescription
     100% { transform: scale(1.1); opacity: 1; }
   }
 
-  /* ── Back Layer: Highlight Void (Z=-2000, Scale 3) ── */
+  /* ── Back Layer: Highlight Void (Z=-2000) ── */
   .layer-highlight {
-    transform: translateZ(-2000px) scale(3);
+    left: 0; top: 0;
+    width: 100vw; height: 100vh;
+    transform: translateZ(-2000px);
+    opacity: 0; 
+    will-change: opacity;
+  }
+
+  .highlight-wrapper {
+    position: absolute;
+    inset: 0;
     background: #ffffff;
-    display: flex; flex-direction: column; justify-content: center;
-    pointer-events: auto; opacity: 0; will-change: opacity;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .highlight-content {
@@ -322,7 +331,7 @@ const descriptionLines = highlightDescription
   .highlight-render-placeholder span { font-family: var(--font-title); font-size: clamp(1.5rem, 4vw, 3rem); color: rgba(0, 0, 0, 0.3); text-transform: uppercase; letter-spacing: 0.04em; }
 
   .highlight-star-flood {
-    position: absolute; inset: 0; z-index: 1; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%); mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
+    position: absolute; inset: -50vw; z-index: 1; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%); mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
   }
 
   /* ── Bottom White Zone & Fade Out ── */
@@ -336,16 +345,15 @@ const descriptionLines = highlightDescription
   @media (max-width: 640px) {
     .highlight-heading { font-size: 2.5rem; }
     .highlight-project-title { font-size: 1.8rem; }
-    /* Mobile sizes lock identically as well */
-    .glass-wall { -webkit-mask-size: 65vw auto, 100% 100%; }
-    .portal-svg { width: 65vw; }
-    .portal-glow-aura { width: 65vw; }
+    .glass-wall { -webkit-mask-size: 45% auto, 100% 100%; }
+    .portal-svg { width: 45%; }
+    .portal-glow-aura { width: 45%; }
   }
 </style>
 
 <script is:inline>
   // ============================================
-  //  THE 3D CAMERA ENGINE (No Canvas Required!)
+  //  PURE 3D GEOMETRY CAMERA ENGINE
   // ============================================
   (function() {
     var world = document.getElementById('world');
@@ -358,10 +366,8 @@ const descriptionLines = highlightDescription
     var placeholder = document.getElementById('cinematic-placeholder');
     var totalFrames = 60;
 
-    // 👇 YOUR ANIMATION RENDER PATH 👇
     function getFrameUrl(frameNum) { return `/animation/frame_${frameNum}.jpg`; }
 
-    // Preload first batch to prevent flashes
     for(var i = 1; i <= 15; i++) { var pre = new Image(); pre.src = getFrameUrl(i); }
     if (img) {
       img.src = getFrameUrl(1);
@@ -373,39 +379,41 @@ const descriptionLines = highlightDescription
       var scene = document.getElementById('zoom-scene');
       if (!scene) return;
       
-      // Calculate scroll strictly relative to the 3D scene box
       var rect = scene.getBoundingClientRect();
       var scrollInScene = Math.max(0, -rect.top);
       
-      // --- PHASE 1: 3D PORTAL ZOOM (0 to 200vh) ---
+      // Zoom Phase (0 -> 200vh Scroll maps to 0 -> 2000px depth)
       var zoomEnd = vh * 2;
       var zoomP = Math.max(0, Math.min(1, scrollInScene / zoomEnd));
       var cameraZ = zoomP * 2000;
       
       if (world) world.style.transform = 'translateZ(' + cameraZ + 'px)';
       
-      // Defrost the glass as we approach the window
-      var windowProximity = Math.max(0, Math.min(1, (cameraZ - 400) / 600));
-      if (glassWall) glassWall.style.backdropFilter = 'blur(' + (15 * (1 - windowProximity)) + 'px)';
+      // Defrost the glass
+      var blur = 15 * (1 - Math.max(0, Math.min(1, (cameraZ - 500) / 1000)));
+      if (glassWall) glassWall.style.backdropFilter = 'blur(' + blur + 'px)';
       
-      // Fade out Hero layer so it safely passes behind the camera
+      // Hero Fades out safely behind camera
       if (layerHero) {
         var heroOpacity = 1 - Math.max(0, Math.min(1, cameraZ / 800));
         layerHero.style.opacity = heroOpacity;
         layerHero.style.pointerEvents = heroOpacity < 0.1 ? 'none' : 'auto';
       }
       
-      // Fade in Highlight layer gently so the dark Aurora is visible at the very start
-      if (layerHighlight) layerHighlight.style.opacity = Math.max(0, Math.min(1, (cameraZ - 400) / 1000));
-      
-      // Fade out portal right before clipping plane to ensure no sudden flash
-      if (layerWindow) layerWindow.style.opacity = 1 - Math.max(0, Math.min(1, (cameraZ - 1800) / 200));
+      // Window fades out gracefully right before passing the eyeball plane
+      if (layerWindow) {
+        layerWindow.style.opacity = 1 - Math.max(0, Math.min(1, (cameraZ - 1600) / 300));
+      }
 
-      // --- PHASE 2: CINEMATIC VIDEO SCRUB (200vh to 350vh) ---
+      // Highlight Void becomes fully visible right as the hero disappears
+      if (layerHighlight) {
+        layerHighlight.style.opacity = Math.max(0, Math.min(1, cameraZ / 1000));
+      }
+
+      // Scrub Phase (200vh to 350vh)
       var scrubStart = vh * 2;
       var scrubDuration = vh * 1.5;
-      var scrubP = scrollInScene > scrubStart ? (scrollInScene - scrubStart) / scrubDuration : 0;
-      scrubP = Math.max(0, Math.min(1, scrubP));
+      var scrubP = Math.max(0, Math.min(1, (scrollInScene - scrubStart) / scrubDuration));
       
       if (img) {
         var frame = Math.max(1, Math.min(totalFrames, Math.ceil(scrubP * totalFrames)));
