@@ -7,7 +7,7 @@
  * a. Hero — "Get ____" slot machine reel
  * b. Nav Cards — Floating pill links
  * c. External Links — YouTube, GitHub, Printables
- * 2. Highlight — Dynamic project showcase with scrolling animation and animated terrain
+ * 2. Highlight — Dynamic project showcase that "floods" up the screen on scroll
  */
 import MainLayout from '../layouts/MainLayout.astro';
 import { getR2Data } from '../lib/r2';
@@ -136,7 +136,7 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 
   <section class="highlight-section" id="highlight-section">
     <svg class="highlight-terrain" viewBox="0 0 1440 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,300 L0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135 L1440,300 Z" fill="#b0b0b0"/>
+      <path d="M0,300 L0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135 L1440,300 Z" fill="#000000"/>
       <path d="M0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2.5"/>
     </svg>
 
@@ -196,19 +196,22 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 </MainLayout>
 
 <style>
-  /* ── Landing Fold Wrapper ── */
+  /* ── Landing Fold Wrapper (Sticky Parallax Effect) ── */
   .landing-fold {
-    /* 100vh minus the padding and nav height defined in MainLayout */
-    min-height: calc(100vh - var(--nav-height) - 6.5rem); 
+    /* Guarantees the highlight section is forced below the viewport on load */
+    height: 100vh;
+    /* Keeps the hero locked in place so the next section slides OVER it */
+    position: sticky;
+    top: 0;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin-top: -2rem; /* Pulls the block up slightly to optically balance the nav bar */
   }
 
   /* ── Hero word-wrap mask ── */
   .hero {
-    padding: 0 0 3rem; /* Removed the 6rem top padding since flexbox centers it now */
+    padding: 0 0 3rem; 
     text-align: center;
   }
 
@@ -218,39 +221,41 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
     position: relative;
     height: 1.1em;
     overflow: visible;
-    /* Permits overflow on the right side (-50vw) so longer words spill out gracefully */
     clip-path: inset(-2% -50vw -2% 0);
     vertical-align: baseline;
-    /* Locked to the exact width of the final word "info" so the centering never shifts */
+    /* Locked to the exact width of the final word "info" */
     width: 2.7em; 
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* ── Highlight Section — dark bg, animated gray terrain, stars, white bottom ── */
+  /* ── Highlight Section (The Flood Water) ── */
   .highlight-section {
     position: relative;
+    z-index: 10; /* Higher z-index forces it to slide over the sticky landing fold */
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     padding: 0;
+    background: #000000; /* Solid black "water body" that swallows the hero */
   }
 
+  /* Wavy rim of the water that sits exactly on top of the section */
   .highlight-terrain {
     position: absolute;
-    top: 0;
-    left: -10vw; /* Shift left to hide edge during scaling */
-    width: 120vw; /* Make it wider so we can pan/breathe without seeing the edge */
-    height: 72%;
+    bottom: 99.5%; /* Sits precisely on top of the section with a tiny overlap to kill seams */
+    left: -5vw;
+    width: 110vw;
+    height: 160px;
     z-index: 0;
     transform-origin: bottom center;
-    animation: terrainBreathe 16s ease-in-out infinite alternate;
-    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
+    /* Exaggerated breathing animation */
+    animation: terrainBreathe 6s ease-in-out infinite alternate;
+    pointer-events: none;
   }
 
   @keyframes terrainBreathe {
-    0% { transform: translateY(0) scale(1) rotate(-0.5deg); }
-    100% { transform: translateY(12px) scale(1.04) rotate(0.8deg); }
+    0% { transform: translateY(0px) scale(1) rotate(-0.5deg); }
+    100% { transform: translateY(16px) scale(1.04) rotate(1.2deg); }
   }
 
   .highlight-star-flood {
@@ -386,28 +391,27 @@ const isVideo = !!renderUrl && /\.(mp4|webm|mov)$/i.test(renderUrl);
 
     function getDelay(idx) {
       var t = idx / lastIdx;
-      // Sine wave mapping: starts at 0 (fast), curves up to 1 (slow)
       var curve = Math.sin(t * (Math.PI / 2));
-      return 15 + curve * 280; // adjusted for slightly longer word list
+      // Halved durations for double speed
+      return 10 + curve * 180; 
     }
 
     function scrollToWord(idx) {
       var offset = idx * wordH;
       if (idx < lastIdx) {
         var delay = getDelay(idx);
-        // Linear easing ensures a continuous speed sweep without stop-start stuttering
         reel.style.transition = 'transform ' + delay + 'ms linear';
         reel.style.transform = 'translateY(-' + offset + 'px)';
         setTimeout(function() { scrollToWord(idx + 1); }, delay);
       } else {
-        // Final word snap with standard easing
-        reel.style.transition = 'transform 800ms cubic-bezier(0.25, 1.2, 0.5, 1)';
+        // Final word snap
+        reel.style.transition = 'transform 600ms cubic-bezier(0.25, 1.2, 0.5, 1)';
         reel.style.transform = 'translateY(-' + offset + 'px)';
       }
     }
 
     // Delay start slightly
-    setTimeout(function() { scrollToWord(1); }, 600);
+    setTimeout(function() { scrollToWord(1); }, 400);
   })();
 
   // ============================================
