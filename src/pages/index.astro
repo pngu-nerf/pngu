@@ -3,10 +3,11 @@
  * index.astro — PNGU homepage
  *
  * Layout sections:
- * 1. 3D Zoom Scene (450vh total scroll space)
- * - Layer Front (Z=0): Hero Section & Nav
- * - Layer Middle (Z=-1000px): Solid Portal Wall + Pure CSS Glowing Traces (Shifted up 50px)
- * - Layer Back (Z=-2000px): Highlight White Zone (Cinematic Video shrinks on scroll)
+ * 1. 2.5D Scale Parallax Scene (450vh total scroll space)
+ * - Layer Front (z=4): Hero Section & Nav
+ * - Layer Middle (z=3): Solid Portal Wall + Pure CSS Glowing Traces (Shifted up 50px)
+ * - Layer Back (z=2): Highlight White Zone (Cinematic Video shrinks on scroll)
+ * - Background Canvas (z=-1): Space environment
  * 2. Highlight Details
  */
 import MainLayout from '../layouts/MainLayout.astro';
@@ -54,103 +55,100 @@ const descriptionLines = highlightDescription
   
   <div class="zoom-scene" id="zoom-scene">
     <div class="sticky-container">
-      <div class="world" id="world">
-        
-        <div class="layer layer-highlight" id="layer-highlight">
-          <div class="highlight-wrapper">
-            <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
-            <div class="highlight-content">
-              <h2 class="highlight-heading scroll-reveal">Highlight</h2>
-              <div class="highlight-render-card cinematic-box" id="highlight-render">
-                <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
-                <div class="highlight-render-placeholder" id="cinematic-placeholder">
-                  <span>60-Frame Sequence Loading</span>
-                </div>
+      
+      <div class="layer layer-highlight" id="layer-highlight">
+        <div class="highlight-wrapper">
+          <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
+          <div class="highlight-content">
+            <h2 class="highlight-heading scroll-reveal">Highlight</h2>
+            <div class="highlight-render-card cinematic-box" id="highlight-render">
+              <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
+              <div class="highlight-render-placeholder" id="cinematic-placeholder">
+                <span>60-Frame Sequence Loading</span>
               </div>
             </div>
           </div>
         </div>
-
-        <div class="layer layer-window" id="layer-window">
-          <div class="portal-offset">
-            <div class="glass-wall" id="glass-wall"></div>
-            <div class="portal-svg-wrapper">
-               <svg viewBox="0 0 867.65 401.6" class="portal-svg">
-                  <g transform="translate(-72.1, -284.4)">
-                     <path d={LOGO_PATH} class="css-trace trace-1" />
-                     <path d={LOGO_PATH} class="css-trace trace-2" />
-                     <path d={LOGO_PATH} class="css-trace trace-3" />
-                  </g>
-               </svg>
-               <div class="portal-glow-aura"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="layer layer-hero" id="layer-hero">
-          <div class="landing-fold">
-            <section class="hero">
-              <h1 class="hero-title">
-                <span class="hero-get">Get</span>
-                <span class="hero-word-wrap">
-                  <span class="hero-reel" id="hero-reel">
-                    <span class="reel-word">files</span>
-                    <span class="reel-word">data</span>
-                    <span class="reel-word">cad</span>
-                    <span class="reel-word">stls</span>
-                    <span class="reel-word">code</span>
-                    <span class="reel-word">mods</span>
-                    <span class="reel-word">parts</span>
-                    <span class="reel-word">specs</span>
-                    <span class="reel-word">plans</span>
-                    <span class="reel-word">ideas</span>
-                    <span class="reel-word">tools</span>
-                    <span class="reel-word">props</span>
-                    <span class="reel-word">assets</span>
-                    <span class="reel-word">models</span>
-                    <span class="reel-word">prints</span>
-                    <span class="reel-word">guides</span>
-                    <span class="reel-word">stuff</span>
-                    <span class="reel-word reel-final">info</span>
-                  </span>
-                </span>
-              </h1>
-              <p class="hero-question">What do you need?</p>
-            </section>
-
-            <section class="nav-section scroll-reveal">
-              <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle Navigation">
-                <span></span><span></span><span></span>
-              </button>
-              
-              <div class="nav-cards" id="nav-cards">
-                <a href="/files" class="nav-pill" data-phase="0">
-                  <span class="pill-icon">◇</span><span class="pill-label">3D Files</span><span class="pill-arrow">→</span>
-                </a>
-                <a href="/data" class="nav-pill" data-phase="0.7">
-                  <span class="pill-icon">◈</span><span class="pill-label">Blaster Data</span><span class="pill-arrow">→</span>
-                </a>
-                <a href="/brand" class="nav-pill" data-phase="1.4">
-                  <span class="pill-icon">○</span><span class="pill-label">Brand Assets</span><span class="pill-arrow">→</span>
-                </a>
-                <a href="/contact" class="nav-pill" data-phase="2.1">
-                  <span class="pill-icon">◎</span><span class="pill-label">Contact</span><span class="pill-arrow">→</span>
-                </a>
-              </div>
-            </section>
-
-            <section class="links-section scroll-reveal">
-              <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
-              <div class="ext-row" id="ext-row">
-                <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">YouTube ↗</a>
-                <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">GitHub ↗</a>
-                <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">Printables ↗</a>
-              </div>
-            </section>
-          </div>
-        </div>
-
       </div>
+
+      <div class="layer layer-window" id="layer-window">
+        <div class="glass-wall" id="glass-wall"></div>
+        
+        <div class="portal-svg-wrapper">
+           <svg viewBox="0 0 867.65 401.6" class="portal-svg">
+              <g transform="translate(-72.1, -284.4)">
+                 <path d={LOGO_PATH} class="css-trace trace-1" />
+                 <path d={LOGO_PATH} class="css-trace trace-2" />
+                 <path d={LOGO_PATH} class="css-trace trace-3" />
+              </g>
+           </svg>
+           <div class="portal-glow-aura"></div>
+        </div>
+      </div>
+
+      <div class="layer layer-hero" id="layer-hero">
+        <div class="landing-fold">
+          <section class="hero">
+            <h1 class="hero-title">
+              <span class="hero-get">Get</span>
+              <span class="hero-word-wrap">
+                <span class="hero-reel" id="hero-reel">
+                  <span class="reel-word">files</span>
+                  <span class="reel-word">data</span>
+                  <span class="reel-word">cad</span>
+                  <span class="reel-word">stls</span>
+                  <span class="reel-word">code</span>
+                  <span class="reel-word">mods</span>
+                  <span class="reel-word">parts</span>
+                  <span class="reel-word">specs</span>
+                  <span class="reel-word">plans</span>
+                  <span class="reel-word">ideas</span>
+                  <span class="reel-word">tools</span>
+                  <span class="reel-word">props</span>
+                  <span class="reel-word">assets</span>
+                  <span class="reel-word">models</span>
+                  <span class="reel-word">prints</span>
+                  <span class="reel-word">guides</span>
+                  <span class="reel-word">stuff</span>
+                  <span class="reel-word reel-final">info</span>
+                </span>
+              </span>
+            </h1>
+            <p class="hero-question">What do you need?</p>
+          </section>
+
+          <section class="nav-section scroll-reveal">
+            <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle Navigation">
+              <span></span><span></span><span></span>
+            </button>
+            
+            <div class="nav-cards" id="nav-cards">
+              <a href="/files" class="nav-pill" data-phase="0">
+                <span class="pill-icon">◇</span><span class="pill-label">3D Files</span><span class="pill-arrow">→</span>
+              </a>
+              <a href="/data" class="nav-pill" data-phase="0.7">
+                <span class="pill-icon">◈</span><span class="pill-label">Blaster Data</span><span class="pill-arrow">→</span>
+              </a>
+              <a href="/brand" class="nav-pill" data-phase="1.4">
+                <span class="pill-icon">○</span><span class="pill-label">Brand Assets</span><span class="pill-arrow">→</span>
+              </a>
+              <a href="/contact" class="nav-pill" data-phase="2.1">
+                <span class="pill-icon">◎</span><span class="pill-label">Contact</span><span class="pill-arrow">→</span>
+              </a>
+            </div>
+          </section>
+
+          <section class="links-section scroll-reveal">
+            <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
+            <div class="ext-row" id="ext-row">
+              <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">YouTube ↗</a>
+              <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">GitHub ↗</a>
+              <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">Printables ↗</a>
+            </div>
+          </section>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -180,7 +178,7 @@ const descriptionLines = highlightDescription
 </MainLayout>
 
 <style define:vars={{ maskUri: SVG_MASK_URI }}>
-  /* ── 3D Scene Architecture ── */
+  /* ── 2.5D Scene Architecture (No 3D preserve-3d clipping bugs) ── */
   .zoom-scene {
     height: 450vh; 
     width: 100vw;
@@ -194,35 +192,23 @@ const descriptionLines = highlightDescription
     top: 0;
     height: 100vh;
     width: 100vw;
-    perspective: 1000px; 
+    overflow: hidden; 
+    /* Removed perspective to kill all flickering */
     z-index: 1;
-    transform: translate3d(0,0,0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-
-  .world {
-    position: absolute;
-    inset: 0;
-    transform-style: preserve-3d;
-    will-change: transform;
   }
 
   .layer {
     position: absolute;
-    transform-origin: center center;
-    transform-style: preserve-3d;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    will-change: transform, opacity;
   }
 
-  /* ── Front Layer: Hero (Z=0) ── */
+  /* ── Front Layer: Hero (z=4) ── */
   .layer-hero {
-    left: 0; top: 0;
-    width: 100vw; height: 100vh;
-    transform: translateZ(0px);
+    z-index: 4;
     pointer-events: auto; 
-    will-change: opacity;
   }
 
   .landing-fold {
@@ -243,7 +229,7 @@ const descriptionLines = highlightDescription
 
   /* Mobile Hamburger Toggle */
   .mobile-nav-toggle {
-    display: none; /* Hidden on desktop */
+    display: none; 
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
@@ -256,9 +242,7 @@ const descriptionLines = highlightDescription
     transition: background 0.3s ease;
     margin-bottom: 1rem;
   }
-  .mobile-nav-toggle span {
-    display: block; width: 20px; height: 2px; background: #fff; transition: 0.3s;
-  }
+  .mobile-nav-toggle span { display: block; width: 20px; height: 2px; background: #fff; transition: 0.3s; }
   .mobile-nav-toggle.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
   .mobile-nav-toggle.open span:nth-child(2) { opacity: 0; }
   .mobile-nav-toggle.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
@@ -290,48 +274,56 @@ const descriptionLines = highlightDescription
       max-height: 400px;
       opacity: 1;
       transform: translateY(0);
+      overflow: visible;
     }
     .nav-cards .nav-pill { width: 100%; max-width: 280px; justify-content: space-between; }
   }
 
-  /* ── Middle Layer: Portal (Z=-1000) ── */
+  /* ── Middle Layer: Portal (z=3) ── */
   .layer-window {
-    left: -150vw; top: -150vh;
-    width: 400vw; height: 400vh;
-    transform: translateZ(-1000px);
+    z-index: 3;
     pointer-events: none;
-    will-change: opacity;
-  }
-
-  .portal-offset {
-    position: absolute;
-    inset: 0;
-    width: 100%; height: 100%;
-    /* Lifts the entire portal structure 50px physically without breaking scale */
-    transform: translateY(-50px);
+    transform-origin: center center;
   }
 
   .glass-wall {
     position: absolute;
     inset: 0;
+    /* SOLID BLACK wall fixes transparency bleed bugs */
     background: #050505; 
+    backdrop-filter: blur(15px);
+    
+    /* 25vw sizing matched perfectly with the SVG below */
     -webkit-mask-image: var(--maskUri), linear-gradient(#fff, #fff);
-    -webkit-mask-size: 100vw auto, 100% 100%;
-    -webkit-mask-position: center center;
+    -webkit-mask-size: 25vw auto, 100% 100%;
+    /* Shifting the mask exactly 50px up per request */
+    -webkit-mask-position: center calc(50% - 50px);
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-composite: destination-out;
     mask-composite: exclude;
   }
 
+  /* PURE CSS TRACES */
   .portal-svg-wrapper {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    position: absolute;
+    inset: 0;
+    display: block;
   }
+
   .portal-svg {
-    position: relative; z-index: 2; width: 100vw; height: auto; overflow: visible;
+    position: absolute;
+    z-index: 2;
+    /* Exactly matching the 25vw mask size */
+    width: 25vw; 
+    height: auto;
+    /* Shifting the SVG exactly 50px up to match the mask */
+    top: calc(50% - 50px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: visible;
   }
-  .css-trace {
-    fill: none; stroke-width: 6px; stroke-linecap: round; vector-effect: non-scaling-stroke;
-  }
+
+  .css-trace { fill: none; stroke-width: 6px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
   .trace-1 { stroke: rgba(193, 17, 17, 0.9); stroke-dasharray: 200 1500; animation: traceMove 6s linear infinite; }
   .trace-2 { stroke: rgba(220, 60, 60, 0.8); stroke-dasharray: 100 1600; animation: traceMove 4s linear infinite reverse; animation-delay: -2s; }
   .trace-3 { stroke: rgba(255, 255, 255, 0.5); stroke-dasharray: 50 1650; animation: traceMove 5s linear infinite; animation-delay: -1s; }
@@ -339,20 +331,21 @@ const descriptionLines = highlightDescription
 
   .portal-glow-aura {
     position: absolute;
-    width: 100vw;
+    width: 25vw;
     aspect-ratio: 2.16;
+    /* Shifting the glow exactly 50px up */
+    top: calc(50% - 50px);
+    left: 50%;
+    transform: translate(-50%, -50%);
     background: radial-gradient(circle, rgba(193,17,17,0.15) 0%, rgba(193,17,17,0) 65%);
     animation: pulseGlow 4s ease-in-out infinite alternate;
   }
-  @keyframes pulseGlow { 0% { transform: scale(0.9); opacity: 0.6; } 100% { transform: scale(1.1); opacity: 1; } }
+  @keyframes pulseGlow { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } }
 
-  /* ── Back Layer: Highlight Void (Z=-2000) ── */
+  /* ── Back Layer: Highlight Void (z=2) ── */
   .layer-highlight {
-    left: -50vw; top: -50vh;
-    width: 200vw; height: 200vh;
-    transform: translateZ(-2000px);
+    z-index: 2;
     opacity: 0; 
-    will-change: opacity;
   }
 
   .highlight-wrapper {
@@ -366,11 +359,11 @@ const descriptionLines = highlightDescription
     font-family: var(--font-title); font-size: clamp(3.5rem, 8vw, 6rem); font-weight: normal; letter-spacing: 0.02em; text-transform: uppercase; color: #000000; margin-bottom: 2rem; line-height: 1; text-align: center;
   }
 
-  /* Cinematic Box: Interpolates width/radius using JS mapped CSS variables */
+  /* Cinematic Box: Starts massive, shrinks to 92vw card using CSS vars mapped in JS */
   .highlight-render-card.cinematic-box {
-    --shrinkP: 0; /* JS updates this from 0 to 1 in final 20% of scrub */
+    --shrinkP: 0; /* Updated via JS */
     
-    /* Starts at 100vw, shrinks down to min(92vw, 1200px) */
+    /* Starts at exactly 100vw, smoothly shrinks to leave dead space */
     width: calc(100vw - (var(--shrinkP) * max(8vw, 100vw - 1200px)));
     border-radius: calc(var(--shrinkP) * 24px);
     
@@ -380,9 +373,7 @@ const descriptionLines = highlightDescription
     overflow: hidden;
     box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
     margin: 0 auto;
-    /* Hardware acceleration to prevent frame jitter during width transition */
     will-change: width, border-radius;
-    transform: translateZ(0);
   }
   
   .highlight-render-media { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 2; }
@@ -404,9 +395,8 @@ const descriptionLines = highlightDescription
   @media (max-width: 640px) {
     .highlight-heading { font-size: 2.5rem; }
     .highlight-project-title { font-size: 1.8rem; }
-    .glass-wall { -webkit-mask-size: 160vw auto, 100% 100%; }
-    .portal-svg { width: 160vw; }
-    .portal-glow-aura { width: 160vw; }
+    .glass-wall { -webkit-mask-size: 65vw auto, 100% 100%; }
+    .portal-svg, .portal-glow-aura { width: 65vw; }
   }
 </style>
 
@@ -426,14 +416,13 @@ const descriptionLines = highlightDescription
   })();
 
   // ============================================
-  //  PURE 3D GEOMETRY CAMERA ENGINE
+  //  PURE 2.5D PARALLAX SCALING ENGINE (No flickering!)
   // ============================================
   (function() {
-    var world = document.getElementById('world');
-    var glassWall = document.getElementById('glass-wall');
     var layerHero = document.getElementById('layer-hero');
     var layerWindow = document.getElementById('layer-window');
     var layerHighlight = document.getElementById('layer-highlight');
+    var glassWall = document.getElementById('glass-wall');
     var cinematicBox = document.getElementById('highlight-render');
     
     var img = document.getElementById('cinematic-sequence');
@@ -456,45 +445,62 @@ const descriptionLines = highlightDescription
       var rect = scene.getBoundingClientRect();
       var scrollInScene = Math.max(0, -rect.top);
       
-      // Zoom Phase (0 -> 200vh Scroll maps to 0 -> 2000px depth)
-      var zoomEnd = vh * 2;
+      // Total zoom duration is 2.5 screen heights
+      var zoomEnd = vh * 2.5;
       var zoomP = Math.max(0, Math.min(1, scrollInScene / zoomEnd));
-      var cameraZ = zoomP * 2000;
       
-      if (world) world.style.transform = 'translateZ(' + cameraZ + 'px)';
-      
-      var blur = 15 * (1 - Math.max(0, Math.min(1, (cameraZ - 300) / 700)));
-      if (glassWall) glassWall.style.backdropFilter = 'blur(' + blur + 'px)';
-      
-      // Hero Fades out
+      // --- HERO FADE ---
+      // Hero fades out quickly in the first 30% of the zoom
       if (layerHero) {
-        var heroOpacity = 1 - Math.max(0, Math.min(1, cameraZ / 800));
-        layerHero.style.opacity = heroOpacity;
-        layerHero.style.pointerEvents = heroOpacity < 0.1 ? 'none' : 'auto';
+        var heroP = Math.max(0, Math.min(1, zoomP / 0.3));
+        layerHero.style.opacity = 1 - heroP;
+        layerHero.style.transform = 'scale(' + (1 + heroP * 0.5) + ')';
+        layerHero.style.pointerEvents = heroP > 0.9 ? 'none' : 'auto';
       }
       
-      // FLICKER FIX: Fade out the physical window layer safely BEFORE it clips the camera (Z=1000)
+      // --- PORTAL ZOOM ---
+      // The massive scale effect replaces the buggy Z-axis translation.
+      // Scales up to 60x, making the hole larger than the entire viewport.
       if (layerWindow) {
-        layerWindow.style.opacity = 1 - Math.max(0, Math.min(1, (cameraZ - 750) / 200));
+        var portalP = Math.max(0, Math.min(1, (zoomP - 0.1) / 0.8));
+        var pScale = Math.pow(60, portalP);
+        layerWindow.style.transform = 'scale(' + pScale + ')';
+        
+        // Defrost
+        var blur = 15 * (1 - portalP);
+        if (glassWall) glassWall.style.backdropFilter = 'blur(' + blur + 'px)';
+        
+        // COMPLETELY hide the layer at the very end to save GPU battery.
+        // Because it never intersects the camera, it will never flicker.
+        if (portalP > 0.98) {
+          layerWindow.style.display = 'none';
+        } else {
+          layerWindow.style.display = 'block';
+          layerWindow.style.opacity = 1 - Math.max(0, Math.min(1, (portalP - 0.9) / 0.1));
+        }
       }
 
+      // --- HIGHLIGHT VOID FADE IN ---
       if (layerHighlight) {
-        layerHighlight.style.opacity = Math.max(0, Math.min(1, cameraZ / 1000));
+        var highFadeP = Math.max(0, Math.min(1, (zoomP - 0.5) / 0.4));
+        layerHighlight.style.opacity = highFadeP;
+        // Subtle forward parallax on the white void
+        layerHighlight.style.transform = 'scale(' + (0.9 + highFadeP * 0.1) + ')';
       }
 
-      // Scrub Phase (200vh to 350vh)
-      var scrubStart = vh * 2;
+      // --- CINEMATIC SCRUB PHASE ---
+      var scrubStart = vh * 2.5;
       var scrubDuration = vh * 1.5;
       var scrubP = Math.max(0, Math.min(1, (scrollInScene - scrubStart) / scrubDuration));
       
-      // Cinematic box starts large, shrinks in the final 20% of the scrub
+      // Cinematic box starts full bleed (100vw). Shrinks in the final 20% of the scrub.
       if (cinematicBox) {
         var shrinkP = Math.max(0, Math.min(1, (scrubP - 0.8) / 0.2));
-        var easedShrink = shrinkP * shrinkP; // smooth cubic ease-in
+        var easedShrink = shrinkP * shrinkP; 
         cinematicBox.style.setProperty('--shrinkP', easedShrink);
       }
       
-      // Video frame sync mapping up to 80% scroll
+      // Video frame mapping
       if (img) {
         var frameProgress = Math.min(1, scrubP / 0.8);
         var frame = Math.max(1, Math.min(totalFrames, Math.ceil(frameProgress * totalFrames)));
@@ -552,7 +558,7 @@ const descriptionLines = highlightDescription
   })();
 
   // ============================================
-  //  INTERACTIVE STAR FLOOD (Dark Stars on White)
+  //  INTERACTIVE STAR FLOOD
   // ============================================
   (function() {
     var container = document.getElementById('highlight-star-flood');
