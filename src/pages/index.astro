@@ -3,11 +3,12 @@
  * index.astro — PNGU homepage
  *
  * Layout sections (top to bottom):
- * 1. Landing Fold (Sticky 100vh wrapper)
- * a. Hero — "Get ____" slot machine reel
- * b. Nav Cards — Floating pill links
- * c. External Links — YouTube, GitHub, Printables
- * 2. Highlight — Wavy white water that floats up with elastic scroll resistance
+ * 1. 3D Zoom Scene (450vh total scroll space)
+ * - Front: Hero Section
+ * - Middle: Frosted Glass Penguin Portal
+ * - Back: Highlight White Zone (Cinematic Video)
+ * 2. Highlight Details (Flows seamlessly below the 3D scene)
+ * 3. Fade to Aurora
  */
 import MainLayout from '../layouts/MainLayout.astro';
 import { getR2Data } from '../lib/r2';
@@ -48,143 +49,185 @@ const descriptionLines = highlightDescription
 
 <MainLayout title="Home">
   
-  <div class="landing-fold">
-    <section class="hero">
-      <h1 class="hero-title">
-        <span class="hero-get">Get</span>
-        <span class="hero-word-wrap">
-          <span class="hero-reel" id="hero-reel">
-            <span class="reel-word">files</span>
-            <span class="reel-word">data</span>
-            <span class="reel-word">cad</span>
-            <span class="reel-word">stls</span>
-            <span class="reel-word">code</span>
-            <span class="reel-word">mods</span>
-            <span class="reel-word">parts</span>
-            <span class="reel-word">specs</span>
-            <span class="reel-word">plans</span>
-            <span class="reel-word">ideas</span>
-            <span class="reel-word">tools</span>
-            <span class="reel-word">props</span>
-            <span class="reel-word">assets</span>
-            <span class="reel-word">models</span>
-            <span class="reel-word">prints</span>
-            <span class="reel-word">guides</span>
-            <span class="reel-word">stuff</span>
-            <span class="reel-word reel-final">info</span>
-          </span>
-        </span>
-      </h1>
-      <p class="hero-question">What do you need?</p>
-    </section>
+  <div class="zoom-scene" id="zoom-scene">
+    <div class="sticky-container">
+      <div class="world" id="world">
+        
+        <div class="layer layer-highlight" id="layer-highlight">
+          <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
+          
+          <div class="highlight-content">
+            <h2 class="highlight-heading scroll-reveal">Highlight</h2>
 
-    <section class="nav-section scroll-reveal">
-      <div class="nav-cards" id="nav-cards">
-        <a href="/files" class="nav-pill" data-phase="0">
-          <span class="pill-icon">◇</span>
-          <span class="pill-label">3D Files</span>
-          <span class="pill-arrow">→</span>
-        </a>
-        <a href="/data" class="nav-pill" data-phase="0.7">
-          <span class="pill-icon">◈</span>
-          <span class="pill-label">Blaster Data</span>
-          <span class="pill-arrow">→</span>
-        </a>
-        <a href="/brand" class="nav-pill" data-phase="1.4">
-          <span class="pill-icon">○</span>
-          <span class="pill-label">Brand Assets</span>
-          <span class="pill-arrow">→</span>
-        </a>
-        <a href="/contact" class="nav-pill" data-phase="2.1">
-          <span class="pill-icon">◎</span>
-          <span class="pill-label">Contact</span>
-          <span class="pill-arrow">→</span>
-        </a>
-      </div>
-    </section>
+            <div class="highlight-render-card cinematic-box" id="highlight-render">
+              <img
+                id="cinematic-sequence"
+                src=""
+                alt="Cinematic Scroll Animation"
+                class="highlight-render-media"
+              />
+              <div class="highlight-render-placeholder" id="cinematic-placeholder">
+                <span>60-Frame Sequence Loading</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <section class="links-section scroll-reveal">
-      <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
-      <div class="ext-row" id="ext-row">
-        <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">
-          YouTube ↗
-        </a>
-        <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">
-          GitHub ↗
-        </a>
-        <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">
-          Printables ↗
-        </a>
+        <div class="layer layer-window" id="layer-window">
+          <div class="glass-wall" id="glass-wall"></div>
+        </div>
+
+        <div class="layer layer-hero" id="layer-hero">
+          <div class="landing-fold">
+            <section class="hero">
+              <h1 class="hero-title">
+                <span class="hero-get">Get</span>
+                <span class="hero-word-wrap">
+                  <span class="hero-reel" id="hero-reel">
+                    <span class="reel-word">files</span>
+                    <span class="reel-word">data</span>
+                    <span class="reel-word">cad</span>
+                    <span class="reel-word">stls</span>
+                    <span class="reel-word">code</span>
+                    <span class="reel-word">mods</span>
+                    <span class="reel-word">parts</span>
+                    <span class="reel-word">specs</span>
+                    <span class="reel-word">plans</span>
+                    <span class="reel-word">ideas</span>
+                    <span class="reel-word">tools</span>
+                    <span class="reel-word">props</span>
+                    <span class="reel-word">assets</span>
+                    <span class="reel-word">models</span>
+                    <span class="reel-word">prints</span>
+                    <span class="reel-word">guides</span>
+                    <span class="reel-word">stuff</span>
+                    <span class="reel-word reel-final">info</span>
+                  </span>
+                </span>
+              </h1>
+              <p class="hero-question">What do you need?</p>
+            </section>
+
+            <section class="nav-section scroll-reveal">
+              <div class="nav-cards" id="nav-cards">
+                <a href="/files" class="nav-pill" data-phase="0">
+                  <span class="pill-icon">◇</span>
+                  <span class="pill-label">3D Files</span>
+                  <span class="pill-arrow">→</span>
+                </a>
+                <a href="/data" class="nav-pill" data-phase="0.7">
+                  <span class="pill-icon">◈</span>
+                  <span class="pill-label">Blaster Data</span>
+                  <span class="pill-arrow">→</span>
+                </a>
+                <a href="/brand" class="nav-pill" data-phase="1.4">
+                  <span class="pill-icon">○</span>
+                  <span class="pill-label">Brand Assets</span>
+                  <span class="pill-arrow">→</span>
+                </a>
+                <a href="/contact" class="nav-pill" data-phase="2.1">
+                  <span class="pill-icon">◎</span>
+                  <span class="pill-label">Contact</span>
+                  <span class="pill-arrow">→</span>
+                </a>
+              </div>
+            </section>
+
+            <section class="links-section scroll-reveal">
+              <div class="label-tag" id="explore-tag" data-phase="0.5">External links</div>
+              <div class="ext-row" id="ext-row">
+                <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener" class="ext-chip" data-phase="0.3">
+                  YouTube ↗
+                </a>
+                <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener" class="ext-chip" data-phase="1.0">
+                  GitHub ↗
+                </a>
+                <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener" class="ext-chip" data-phase="1.7">
+                  Printables ↗
+                </a>
+              </div>
+            </section>
+          </div>
+        </div>
+
       </div>
-    </section>
+    </div>
   </div>
 
-  <section class="highlight-section" id="highlight-section">
-    <svg class="highlight-terrain" viewBox="0 0 1440 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,300 L0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135 L1440,300 Z" fill="#ffffff"/>
-      <path d="M0,65 C40,55 80,35 130,18 C180,5 220,12 260,28 C290,38 320,22 365,42 C410,68 460,100 520,120 C580,135 640,122 720,128 C800,133 880,142 960,138 C1040,134 1120,142 1200,135 C1260,130 1320,134 1380,138 L1440,135" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="2.5"/>
-    </svg>
-
-    <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
-
-    <div class="highlight-content">
-      <h2 class="highlight-heading scroll-reveal">Highlight</h2>
-
-      <div class="highlight-render-card cinematic-box scroll-reveal" id="highlight-render">
-        <img
-          id="cinematic-sequence"
-          src=""
-          alt="Cinematic Scroll Animation"
-          class="highlight-render-media"
-        />
-        <div class="highlight-render-placeholder" id="cinematic-placeholder">
-          <span>60-Frame Sequence Loading</span>
-        </div>
+  <div class="highlight-white-zone">
+    <div class="highlight-white-inner">
+      <div class="highlight-info scroll-reveal">
+        <h2 class="highlight-project-title">
+          {highlightTitle || "Project Title"}
+        </h2>
+        {descriptionLines.length > 0
+          ? descriptionLines.map((line) => (
+              <p class="highlight-project-desc">{line}</p>
+            ))
+          : (
+            <>
+              <p class="highlight-project-desc">Project Description</p>
+              <p class="highlight-project-desc">Project Description</p>
+            </>
+          )
+        }
       </div>
     </div>
+  </div>
 
-    <div class="highlight-white-zone">
-      <div class="highlight-white-inner">
-        <div class="highlight-info scroll-reveal">
-          <h2 class="highlight-project-title">
-            {highlightTitle || "Project Title"}
-          </h2>
-          {descriptionLines.length > 0
-            ? descriptionLines.map((line) => (
-                <p class="highlight-project-desc">{line}</p>
-              ))
-            : (
-              <>
-                <p class="highlight-project-desc">Project Description</p>
-                <p class="highlight-project-desc">Project Description</p>
-                <p class="highlight-project-desc">Project Description</p>
-                <p class="highlight-project-desc">Project Description</p>
-              </>
-            )
-          }
-        </div>
-      </div>
-    </div>
-  </section>
+  <div class="highlight-fade-out"></div>
+
 </MainLayout>
 
 <style>
-  /* ── Landing Fold Wrapper (Sticky Parallax Effect) ── */
-  .landing-fold {
-    height: 100vh;
+  /* ── 3D Scene Architecture ── */
+  .zoom-scene {
+    height: 450vh; /* Runway: 200vh zoom + 150vh scrub + 100vh view */
+    position: relative;
+    z-index: 10;
+  }
+
+  .sticky-container {
     position: sticky;
     top: 0;
+    height: 100vh;
+    overflow: hidden;
+    perspective: 1000px; /* The camera lens */
     z-index: 1;
+  }
+
+  .world {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    will-change: transform;
+    pointer-events: none; /* Let clicks pass through to layers */
+  }
+
+  .layer {
+    position: absolute;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    transform-style: preserve-3d;
+  }
+
+  /* ── Front Layer: Hero ── */
+  .layer-hero {
+    transform: translateZ(0px);
+    pointer-events: auto; /* Clickable */
+    will-change: opacity;
+  }
+
+  .landing-fold {
+    height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    margin-top: -2rem;
   }
 
-  .hero {
-    padding: 0 0 3rem; 
-    text-align: center;
-  }
-
+  .hero { padding: 0 0 3rem; text-align: center; }
   .hero-word-wrap {
     display: inline-block;
     text-align: left;
@@ -198,61 +241,54 @@ const descriptionLines = highlightDescription
     mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* ── Highlight Section (The White Flood Water) ── */
-  .highlight-section {
-    position: relative;
-    z-index: 10;
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    /* Protrudes upward into the bottom of the viewport on initial load */
-    margin-top: -15vh; 
-    padding: 0;
-    padding-bottom: 25vh; /* Provides runway for the gradient to transition back to the strands */
-    
-    /* White body fading transparent at the bottom to reveal footer/aurora */
-    background: linear-gradient(to bottom, #ffffff 0%, #ffffff 75%, transparent 100%);
-    
-    /* Prepares the element for the JS elastic scroll transform */
-    will-change: transform;
-  }
-
-  /* Wavy white rim of the water */
-  .highlight-terrain {
-    position: absolute;
-    bottom: 99.5%; 
-    left: -10vw;
-    width: 120vw;
-    height: 160px;
-    z-index: 0;
-    transform-origin: bottom center;
-    /* Exaggerated breathing animation */
-    animation: terrainBreathe 6s ease-in-out infinite alternate;
+  /* ── Middle Layer: The Penguin Window ── */
+  .layer-window {
+    transform: translateZ(-1000px);
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: opacity;
   }
 
-  @keyframes terrainBreathe {
-    0% { transform: translateY(0px) scale(1) rotate(-0.5deg); }
-    100% { transform: translateY(16px) scale(1.04) rotate(1.2deg); }
-  }
-
-  .highlight-star-flood {
+  .glass-wall {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    pointer-events: none;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
-    mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
+    left: -100vw;
+    top: -100vh;
+    width: 300vw;
+    height: 300vh;
+    background: rgba(10, 10, 15, 0.85); /* Deep dark frost */
+    backdrop-filter: blur(15px); /* Defrosts via JS */
+    will-change: backdrop-filter;
+    
+    /* Perfect CSS Hole Punch using mask composites */
+    -webkit-mask-image: url('/brand-assets/PNGU-logo-white.svg'), linear-gradient(#fff, #fff);
+    -webkit-mask-size: 25vmin, 100% 100%;
+    -webkit-mask-position: center, center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-composite: source-out;
+    mask-composite: exclude;
+  }
+
+  /* ── Back Layer: Highlight (The bright void inside the portal) ── */
+  .layer-highlight {
+    transform: translateZ(-2000px);
+    background: #ffffff;
+    box-shadow: 0 0 0 50vw #ffffff; /* Fills extreme viewport edges during 3D travel */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    pointer-events: auto;
+    opacity: 0; /* Fades in during approach */
+    will-change: opacity;
   }
 
   .highlight-content {
     position: relative;
     z-index: 2;
-    max-width: none; /* Removed limits to allow cinematic full-bleed */
+    width: 100vw;
     margin: 0 auto;
-    padding: 1rem 0 2rem;
+    padding: 2rem 0;
   }
 
   .highlight-heading {
@@ -261,20 +297,20 @@ const descriptionLines = highlightDescription
     font-weight: normal;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    color: #000000; /* Black text for white background */
+    color: #000000; /* Black on white */
     margin-bottom: 2rem;
     line-height: 1;
     text-align: center;
   }
 
-  /* ── Cinematic 21:9 Full-Bleed Render Box ── */
+  /* ── Cinematic Full Bleed Box ── */
   .highlight-render-card.cinematic-box {
     width: 100vw;
     aspect-ratio: 21 / 9;
-    border-radius: 0; /* Full bleed edge-to-edge */
-    overflow: hidden;
+    border-radius: 0; /* Edge to edge */
     background: #e0e0e0;
     position: relative;
+    overflow: hidden;
   }
 
   .highlight-render-media {
@@ -308,12 +344,22 @@ const descriptionLines = highlightDescription
     letter-spacing: 0.04em;
   }
 
-  /* ── White zone info at bottom ── */
+  /* ── Star Flood (Inside the Highlight Portal) ── */
+  .highlight-star-flood {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
+  }
+
+  /* ── Bottom White Zone & Fade Out ── */
   .highlight-white-zone {
     position: relative;
-    z-index: 2;
-    background: transparent;
-    padding: 2.5rem 0 3rem;
+    z-index: 10;
+    background: #ffffff;
+    padding: 1rem 0 3rem;
   }
 
   .highlight-white-inner {
@@ -322,33 +368,31 @@ const descriptionLines = highlightDescription
     padding: 0 2rem;
   }
 
-  .highlight-info {
-    padding: 0;
-  }
-
+  .highlight-info { padding: 0; }
   .highlight-project-title {
     font-family: var(--font-title);
     font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight: normal;
-    letter-spacing: 0.02em;
+    color: #000000;
     text-transform: uppercase;
-    color: #000000; /* Black text */
     margin-bottom: 0.5rem;
     line-height: 1.1;
   }
-
   .highlight-project-desc {
     font-family: var(--font-title);
     font-size: clamp(0.85rem, 2vw, 1.15rem);
-    font-weight: normal;
-    color: #444444; /* Dark grey for readability */
-    letter-spacing: 0.03em;
+    color: #444444;
     text-transform: uppercase;
     margin-bottom: 0.2rem;
     line-height: 1.5;
   }
 
-  /* ── Mobile ── */
+  .highlight-fade-out {
+    position: relative;
+    z-index: 10;
+    height: 30vh;
+    background: linear-gradient(to bottom, #ffffff 0%, transparent 100%);
+  }
+
   @media (max-width: 640px) {
     .highlight-heading { font-size: 2.5rem; }
     .highlight-project-title { font-size: 1.8rem; }
@@ -357,82 +401,81 @@ const descriptionLines = highlightDescription
 
 <script is:inline>
   // ============================================
-  //  ELASTIC SINE WAVE SCROLL (The "Water Flood" effect)
+  //  THE 3D CAMERA ENGINE (Zoom + Defrost + Scrub)
   // ============================================
   (function() {
-    var highlight = document.getElementById('highlight-section');
-    if (!highlight) return;
-
-    window.addEventListener('scroll', function() {
-      var y = window.scrollY;
-      var vh = window.innerHeight;
-      
-      // Calculate progress over the first 1.5 screen heights of scrolling
-      var p = Math.max(0, Math.min(1, y / (vh * 1.5)));
-      
-      // Full sine wave mapping: 0 -> 1 -> 0 -> -1 -> 0
-      // This forces the section to:
-      // 1. Push down (Resist)
-      // 2. Snap back to 0 (Speed up)
-      // 3. Push up (Overshoot/Speed up more)
-      // 4. Settle back to 0 (Slow down)
-      var offset = Math.sin(p * Math.PI * 2) * 120; 
-      
-      highlight.style.transform = 'translateY(' + offset + 'px)';
-    }, { passive: true });
-  })();
-
-  // ============================================
-  //  CINEMATIC 60-FRAME SCROLLER (Lowest Debt)
-  // ============================================
-  (function() {
-    var img = document.getElementById('cinematic-sequence');
-    var card = document.getElementById('highlight-render');
-    var placeholder = document.getElementById('cinematic-placeholder');
-    if (!img || !card) return;
-
-    var totalFrames = 60;
+    var world = document.getElementById('world');
+    var glassWall = document.getElementById('glass-wall');
+    var layerHero = document.getElementById('layer-hero');
+    var layerHighlight = document.getElementById('layer-highlight');
     
-    // 👇 YOUR ANIMATION PATH HERE 👇
-    // Place your files in the public folder and return the path structure here.
+    var img = document.getElementById('cinematic-sequence');
+    var placeholder = document.getElementById('cinematic-placeholder');
+    var totalFrames = 60;
+
+    // 👇 Replace with your actual frame path 👇
     function getFrameUrl(frameNum) {
-      // Example: If your files are public/animation/frame_1.jpg ...
       return `/animation/frame_${frameNum}.jpg`; 
     }
 
-    // Preload the first few frames so it doesn't flash empty when scrolling starts
-    var preloaded = [];
+    // Preload first batch to prevent flashes
     for(var i = 1; i <= 15; i++) {
       var pre = new Image();
       pre.src = getFrameUrl(i);
-      preloaded.push(pre);
     }
-    
-    // Set initial frame
-    img.src = getFrameUrl(1);
+    if (img) img.src = getFrameUrl(1);
+    if (img) img.onload = function() { if(placeholder) placeholder.style.display = 'none'; };
 
-    // Hide placeholder once first image loads
-    img.onload = function() {
-      if (placeholder) placeholder.style.display = 'none';
-    };
-
-    function syncScroll() {
-      var rect = card.getBoundingClientRect();
-      var viewH = window.innerHeight;
+    window.addEventListener('scroll', function() {
+      var vh = window.innerHeight;
+      var y = window.scrollY;
       
-      // Calculate scroll progress exclusively while the box is visible on screen
-      var progress = 1 - rect.bottom / (viewH + rect.height);
-      progress = Math.max(0, Math.min(1, progress));
-
-      // Map progress to 1-60
-      var frame = Math.max(1, Math.min(totalFrames, Math.ceil(progress * totalFrames)));
+      // --- PHASE 1: 3D PORTAL ZOOM (0 to 200vh) ---
+      var zoomEnd = vh * 2;
+      var zoomP = Math.max(0, Math.min(1, y / zoomEnd));
       
-      img.src = getFrameUrl(frame);
-    }
+      // Camera moves from Z=0 to Z=2000
+      var cameraZ = zoomP * 2000;
+      if (world) world.style.transform = 'translateZ(' + cameraZ + 'px)';
+      
+      // Defrost the glass as we approach the window (Z=1000)
+      var windowProximity = Math.max(0, Math.min(1, (cameraZ - 400) / 600));
+      if (glassWall) glassWall.style.backdropFilter = 'blur(' + (15 * (1 - windowProximity)) + 'px)';
+      
+      // Fade out Hero layer so it doesn't clip the camera, disable clicks when invisible
+      var heroOpacity = 1 - Math.max(0, Math.min(1, (cameraZ - 400) / 400));
+      if (layerHero) {
+        layerHero.style.opacity = heroOpacity;
+        layerHero.style.pointerEvents = heroOpacity < 0.1 ? 'none' : 'auto';
+      }
+      
+      // Fade in Highlight layer so it glows gracefully in the distance
+      if (layerHighlight) layerHighlight.style.opacity = Math.max(0, Math.min(1, (cameraZ - 500) / 1000));
+      
+      // Hard hide the glass wall once we pass perfectly through to avoid weird edge clipping bugs
+      if (glassWall) glassWall.style.opacity = cameraZ > 1950 ? 0 : 1;
 
-    window.addEventListener('scroll', syncScroll, { passive: true });
-    // Initial sync
-    syncScroll();
+
+      // --- PHASE 2: CINEMATIC VIDEO SCRUB (200vh to 350vh) ---
+      // The scrub only starts calculating AFTER we finish zooming through the hole
+      var scrubStart = vh * 2;
+      var scrubDuration = vh * 1.5;
+      var scrubP = 0;
+      
+      if (y > scrubStart) {
+        scrubP = (y - scrubStart) / scrubDuration;
+      }
+      scrubP = Math.max(0, Math.min(1, scrubP));
+      
+      if (img) {
+        var frame = Math.max(1, Math.min(totalFrames, Math.ceil(scrubP * totalFrames)));
+        var targetSrc = getFrameUrl(frame);
+        // Only trigger DOM update if the frame actually changed
+        if (img.getAttribute('src') !== targetSrc) {
+          img.setAttribute('src', targetSrc);
+        }
+      }
+    }, { passive: true });
   })();
 
   // ============================================
@@ -451,7 +494,6 @@ const descriptionLines = highlightDescription
     function getDelay(idx) {
       var t = idx / lastIdx;
       var curve = Math.sin(t * (Math.PI / 2));
-      // Halved durations to match the longer list speed requirement
       return 10 + curve * 180; 
     }
 
@@ -528,7 +570,6 @@ const descriptionLines = highlightDescription
         for (var y = spacing / 2; y < H; y += spacing) {
           floodStars.push({
             baseX: x, baseY: y,
-            // Stars made significantly larger per instruction
             size: 2.0 + Math.random() * 2.5,
             twinkle: Math.random() * Math.PI * 2
           });
@@ -556,8 +597,7 @@ const descriptionLines = highlightDescription
 
       var mouseInf = 80;
       var mouseInfSq = mouseInf * mouseInf;
-      // Dark grey color to contrast against the white background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // Dark stars
       ctx.beginPath();
       
       for (var i = 0; i < floodStars.length; i++) {
