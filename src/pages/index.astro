@@ -3,11 +3,10 @@
  * index.astro — PNGU homepage
  *
  * Layout sections:
- * 1. 2.5D Parallax Zoom Scene (450vh total scroll space)
- * - Layer 1: Portal Frost (Blurred background masked to the penguin head)
- * - Layer 2: Highlight White Zone (Cinematic Video, fades in to "defrost" the portal)
- * - Layer 3: Glowing SVG Traces (Sits on the mask edge)
- * - Layer 4: Hero Content (Fades out)
+ * 1. 2.5D Scale Parallax Scene (450vh total scroll space)
+ * - Layer Back (Z=1): Cinematic Video (Unscaled, Fades in)
+ * - Layer Middle (Z=2): Frosted Penguin Window (Scales up 60x, Fades out)
+ * - Layer Front (Z=3): Hero Content (Fades out quickly)
  * 2. Highlight Details
  */
 import MainLayout from '../layouts/MainLayout.astro';
@@ -56,35 +55,38 @@ const descriptionLines = highlightDescription
   <div class="zoom-scene" id="zoom-scene">
     <div class="sticky-container">
 
-      <div class="layer-portal">
-        
-        <div class="portal-frost"></div>
-        
-        <div class="portal-content">
+      <div id="layer-highlight" class="layer-highlight">
+        <div class="highlight-wrapper">
           <div class="highlight-star-flood" id="highlight-star-flood" aria-hidden="true"></div>
-          
-          <div class="highlight-render-card cinematic-box" id="highlight-render">
-            <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
-            <div class="highlight-render-placeholder" id="cinematic-placeholder">
-              <span>60-Frame Sequence Loading</span>
+          <div class="highlight-content">
+            <h2 class="highlight-heading scroll-reveal">Highlight</h2>
+            
+            <div class="highlight-render-card cinematic-box" id="highlight-render">
+              <img id="cinematic-sequence" src="" alt="Cinematic Scroll Animation" class="highlight-render-media"/>
+              <div class="highlight-render-placeholder" id="cinematic-placeholder">
+                <span>60-Frame Sequence Loading</span>
+              </div>
             </div>
+            
           </div>
         </div>
-
       </div>
 
-      <div class="layer-traces">
-         <svg viewBox="0 0 867.65 401.6" class="traces-svg">
+      <div id="layer-portal" class="layer-portal">
+         
+         <div class="portal-frost" style={`-webkit-mask-image: ${SVG_MASK_URI}; mask-image: ${SVG_MASK_URI};`}></div>
+         
+         <svg viewBox="0 0 867.65 401.6" class="portal-svg">
             <g transform="translate(-72.1, -284.4)">
                <path d={LOGO_PATH} class="css-trace trace-1" />
                <path d={LOGO_PATH} class="css-trace trace-2" />
                <path d={LOGO_PATH} class="css-trace trace-3" />
             </g>
          </svg>
-         <div class="traces-glow"></div>
+         <div class="portal-glow-aura"></div>
       </div>
 
-      <div class="layer-hero" id="layer-hero">
+      <div id="layer-hero" class="layer-hero">
         <div class="landing-fold">
           <section class="hero">
             <h1 class="hero-title">
@@ -153,7 +155,7 @@ const descriptionLines = highlightDescription
   <div class="highlight-white-zone">
     <div class="highlight-white-inner">
       <div class="highlight-info scroll-reveal">
-        <h2 class="highlight-heading">Highlight</h2>
+        <h2 class="highlight-heading" style="text-align: left;">Highlight</h2>
         
         <h2 class="highlight-project-title">
           {highlightTitle || "Project Title"}
@@ -177,24 +179,23 @@ const descriptionLines = highlightDescription
 
 </MainLayout>
 
-<style define:vars={{ maskUri: SVG_MASK_URI }}>
+<style>
+  /* ── Variables & Layout ── */
   :root {
-    /* DOUBLED SIZE: Head cut out is twice as big as original */
-    --base-mask-width: 50vw; 
+    /* 50vw doubles the size from the previous version */
+    --portal-w: 50vw; 
   }
   @media (max-width: 768px) {
     :root {
-      --base-mask-width: 100vw;
+      --portal-w: 85vw;
     }
   }
 
-  /* ── Scene Architecture ── */
   .zoom-scene {
     height: 450vh; 
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     position: relative;
-    /* Low z-index so the main Header easily floats above this scene */
     z-index: 1; 
   }
 
@@ -204,195 +205,129 @@ const descriptionLines = highlightDescription
     height: 100vh;
     width: 100vw;
     overflow: hidden; 
-    /* NO 3D PERSPECTIVE = NO FLICKERING BUGS */
   }
 
-  /* ── FRONT LAYER: Hero ── */
+  /* ── LAYER 3: HERO ── */
   .layer-hero {
-    position: absolute;
-    inset: 0;
-    z-index: 10; /* Always above portal initially */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    position: absolute; inset: 0; z-index: 3;
+    display: flex; flex-direction: column; justify-content: center;
     opacity: var(--hero-opacity, 1);
     transform: scale(var(--hero-scale, 1));
     pointer-events: var(--hero-events, auto);
   }
 
-  .landing-fold {
-    height: 100vh; display: flex; flex-direction: column; justify-content: center; margin-top: -2rem;
-  }
+  .landing-fold { height: 100vh; display: flex; flex-direction: column; justify-content: center; margin-top: -2rem; }
   .hero { padding: 0 0 3rem; text-align: center; }
-  .hero-word-wrap {
-    display: inline-block; text-align: left; position: relative; height: 1.1em; overflow: visible; clip-path: inset(-2% -50vw -2% 0); vertical-align: baseline; width: 2.7em; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-  }
+  .hero-word-wrap { display: inline-block; text-align: left; position: relative; height: 1.1em; overflow: visible; clip-path: inset(-2% -50vw -2% 0); vertical-align: baseline; width: 2.7em; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); }
 
-  /* Nav Section Constraints */
-  .nav-section {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  /* Mobile Hamburger Toggle */
+  .nav-section { width: 100%; display: flex; flex-direction: column; align-items: center; }
   .mobile-nav-toggle {
-    display: none; 
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    width: 48px; height: 48px;
-    cursor: pointer;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.3s ease;
-    margin-bottom: 1rem;
+    display: none; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50%; width: 48px; height: 48px; cursor: pointer; flex-direction: column; justify-content: center; align-items: center; gap: 6px; transition: background 0.3s ease; margin-bottom: 1rem;
   }
   .mobile-nav-toggle span { display: block; width: 20px; height: 2px; background: #fff; transition: 0.3s; }
   .mobile-nav-toggle.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
   .mobile-nav-toggle.open span:nth-child(2) { opacity: 0; }
   .mobile-nav-toggle.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
-  .nav-cards {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-    width: 100%;
-    max-width: clamp(320px, 50vw, 980px);
-    margin: 0 auto;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  }
+  .nav-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; width: 100%; max-width: clamp(320px, 50vw, 980px); margin: 0 auto; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
   @media (max-width: 768px) {
     .mobile-nav-toggle { display: flex; }
-    .nav-cards {
-      flex-direction: column;
-      align-items: center;
-      max-height: 0;
-      opacity: 0;
-      overflow: hidden;
-      transform: translateY(-10px);
-    }
-    .nav-cards.open {
-      max-height: 400px;
-      opacity: 1;
-      transform: translateY(0);
-      overflow: visible;
-    }
+    .nav-cards { flex-direction: column; align-items: center; max-height: 0; opacity: 0; overflow: hidden; transform: translateY(-10px); }
+    .nav-cards.open { max-height: 400px; opacity: 1; transform: translateY(0); overflow: visible; }
     .nav-cards .nav-pill { width: 100%; max-width: 280px; justify-content: space-between; }
   }
 
-  /* ── MIDDLE LAYER: The Portal Mask ── */
+  /* ── LAYER 2: THE PORTAL ── */
   .layer-portal {
     position: absolute;
-    inset: 0;
-    z-index: 5;
-    /* Master mask: everything inside this div is shaped like the penguin */
-    -webkit-mask-image: var(--maskUri);
-    /* Shifting the cutout 50px UP per request */
-    -webkit-mask-position: center calc(50% - 50px);
-    /* GPU Accelerated CSS Variable scaling */
-    -webkit-mask-size: calc(var(--base-mask-width) * var(--scale, 1)) auto;
-    -webkit-mask-repeat: no-repeat;
+    /* SHIFTED EXACTLY 50PX UP as requested */
+    top: calc(50% - 50px); 
+    left: 50%;
+    width: var(--portal-w); 
+    aspect-ratio: 2.1605; /* Exact math bounds of the SVG logo */
+    z-index: 2;
+    transform-origin: center center;
+    /* Scales up natively, GPU accelerated */
+    transform: translate(-50%, -50%) scale(var(--portal-scale, 1));
+    will-change: transform, opacity;
+    pointer-events: none;
   }
 
-  /* Only the INSIDE of the penguin is blurred! */
+  /* FROST: ONLY exists inside the penguin shape */
   .portal-frost {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     background: rgba(255, 255, 255, 0.05);
+    -webkit-mask-size: 100% 100%;
+    -webkit-mask-position: center center;
+    -webkit-mask-repeat: no-repeat;
+    opacity: var(--frost-opacity, 1);
   }
 
-  /* The Highlight layer "Defrosts" the window by fading in its solid white background */
-  .portal-content {
-    position: absolute;
-    inset: 0;
-    background: #ffffff;
-    opacity: var(--defrost, 0); 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-
-  /* Cinematic Box: Starts massive (100vw), shrinks to card (1200px max) */
-  .highlight-render-card.cinematic-box {
-    --shrink: var(--shrinkP, 0);
-    
-    width: calc(100vw - (var(--shrink) * max(8vw, 100vw - 1200px)));
-    /* When shrink=0, min-height forces it to completely fill the screen vertically */
-    min-height: calc(100vh - (var(--shrink) * 100vh));
-    border-radius: calc(var(--shrink) * 24px);
-    aspect-ratio: 21 / 9; 
-    
-    background: #e0e0e0; 
-    position: relative; 
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
-    margin: 0 auto;
-  }
-  
-  .highlight-render-media { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 2; }
-  .highlight-render-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; z-index: 1; }
-  .highlight-render-placeholder span { font-family: var(--font-title); font-size: clamp(1.5rem, 4vw, 3rem); color: rgba(0, 0, 0, 0.3); text-transform: uppercase; letter-spacing: 0.04em; }
-
-  .highlight-star-flood {
-    position: absolute; inset: 0; z-index: 1; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%); mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%);
-  }
-
-  /* ── BACK LAYER: Glowing Traces ── */
-  /* Keeps the glowing neon lines mathematically locked to the mask, but draws them OUTSIDE the mask so the glow bleeds beautifully */
-  .layer-traces {
-    position: absolute;
-    inset: 0;
-    z-index: 6; /* Just above the portal */
-    pointer-events: none;
+  /* TRACES: Drawn natively over the hole, letting the glow bleed outwards */
+  .portal-svg {
+    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
     opacity: var(--traces-opacity, 1);
   }
 
-  .traces-svg {
-    position: absolute;
-    /* Exactly matching the 50px UP offset of the mask */
-    top: calc(50% - 50px);
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(var(--base-mask-width) * var(--scale, 1));
-    height: auto;
-    overflow: visible;
-  }
-
-  /* REMOVED vector-effect so the lines physically swell and scale up with the animation */
-  .css-trace { fill: none; stroke-width: 6px; stroke-linecap: round; }
+  /* NO VECTOR-EFFECT! This physically swells the strokes as it flies past the camera */
+  .css-trace { fill: none; stroke-width: 4px; stroke-linecap: round; }
   
   .trace-1 { stroke: rgba(193, 17, 17, 0.9); stroke-dasharray: 200 1500; animation: traceMove 6s linear infinite; }
   .trace-2 { stroke: rgba(220, 60, 60, 0.8); stroke-dasharray: 100 1600; animation: traceMove 4s linear infinite reverse; animation-delay: -2s; }
   .trace-3 { stroke: rgba(255, 255, 255, 0.5); stroke-dasharray: 50 1650; animation: traceMove 5s linear infinite; animation-delay: -1s; }
   @keyframes traceMove { from { stroke-dashoffset: 1700; } to { stroke-dashoffset: 0; } }
 
-  .traces-glow {
-    position: absolute;
-    top: calc(50% - 50px);
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(var(--base-mask-width) * var(--scale, 1));
-    aspect-ratio: 2.16;
+  .portal-glow-aura {
+    position: absolute; inset: 0; width: 100%; height: 100%;
     background: radial-gradient(circle, rgba(193,17,17,0.15) 0%, rgba(193,17,17,0) 65%);
     animation: pulseGlow 4s ease-in-out infinite alternate;
   }
-  @keyframes pulseGlow { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } }
+  @keyframes pulseGlow { 0% { transform: scale(0.9); opacity: 0.6; } 100% { transform: scale(1.1); opacity: 1; } }
 
-  /* ── Bottom White Zone & Fade Out ── */
+  /* ── LAYER 1: HIGHLIGHT (Behind everything) ── */
+  .layer-highlight {
+    position: absolute; inset: 0; z-index: 1;
+    /* Stays totally invisible until the portal is big enough to cover the screen */
+    opacity: var(--highlight-opacity, 0); 
+  }
+
+  .highlight-wrapper {
+    position: absolute; inset: 0; background: #ffffff; display: flex; flex-direction: column; justify-content: center; align-items: center;
+  }
+
+  .highlight-content {
+    position: relative; z-index: 2; width: 100vw; margin: 0; padding: 2rem 0; display: flex; flex-direction: column; align-items: center;
+  }
+  .highlight-heading { font-family: var(--font-title); font-size: clamp(3.5rem, 8vw, 6rem); font-weight: normal; letter-spacing: 0.02em; text-transform: uppercase; color: #000000; margin-bottom: 2rem; line-height: 1; text-align: center; }
+
+  /* Cinematic Box */
+  .highlight-render-card.cinematic-box {
+    --shrink: var(--shrinkP, 0);
+    /* 100vw (Full Bleed) when shrink=0, shrinks to exactly leave margins when shrink=1 */
+    width: calc(100vw - (var(--shrink) * max(8vw, 100vw - 1200px)));
+    min-height: calc(100vh - (var(--shrink) * 100vh));
+    border-radius: calc(var(--shrink) * 24px);
+    aspect-ratio: 21 / 9; 
+    
+    background: #e0e0e0; position: relative; overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+    margin: 0 auto;
+    will-change: width, border-radius;
+  }
+  
+  .highlight-render-media { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 2; }
+  .highlight-render-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; z-index: 1; }
+  .highlight-render-placeholder span { font-family: var(--font-title); font-size: clamp(1.5rem, 4vw, 3rem); color: rgba(0, 0, 0, 0.3); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .highlight-star-flood { position: absolute; inset: 0; z-index: 1; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%); mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 62%, transparent 80%); }
+
+  /* ── Bottom White Zone ── */
   .highlight-white-zone { position: relative; z-index: 10; background: #ffffff; padding: 0 0 3rem; }
   .highlight-white-inner { max-width: 1200px; width: 92vw; margin: 0 auto; padding: 0; }
   .highlight-info { padding: 0; }
-  
-  .highlight-heading { font-family: var(--font-title); font-size: clamp(3.5rem, 8vw, 6rem); font-weight: normal; letter-spacing: 0.02em; text-transform: uppercase; color: #000000; margin-bottom: 2rem; line-height: 1; text-align: left; }
   .highlight-project-title { font-family: var(--font-title); font-size: clamp(2rem, 5vw, 3.5rem); color: #000000; text-transform: uppercase; margin-bottom: 0.5rem; line-height: 1.1; }
   .highlight-project-desc { font-family: var(--font-title); font-size: clamp(0.85rem, 2vw, 1.15rem); color: #444444; text-transform: uppercase; margin-bottom: 0.2rem; line-height: 1.5; }
   .highlight-fade-out { position: relative; z-index: 10; height: 30vh; background: linear-gradient(to bottom, #ffffff 0%, transparent 100%); }
@@ -419,7 +354,7 @@ const descriptionLines = highlightDescription
   })();
 
   // ============================================
-  //  PURE CSS VARIABLE ANIMATION ENGINE (Zero Flickering)
+  //  SINE-WAVE ACCELERATED PARALLAX ENGINE
   // ============================================
   (function() {
     var img = document.getElementById('cinematic-sequence');
@@ -435,7 +370,6 @@ const descriptionLines = highlightDescription
       img.onload = function() { if(placeholder) placeholder.style.display = 'none'; };
     }
 
-    // High performance CSS variable mapper
     window.addEventListener('scroll', function() {
       var vh = window.innerHeight;
       var scene = document.getElementById('zoom-scene');
@@ -445,42 +379,46 @@ const descriptionLines = highlightDescription
       var scrollY = Math.max(0, -rect.top);
       var root = document.documentElement;
       
-      // PHASE 1: Zoom (0 -> 150vh)
+      // PHASE 1: Sine-Wave Zoom (0 -> 150vh)
       var zoomEnd = vh * 1.5;
       var zoomP = Math.max(0, Math.min(1, scrollY / zoomEnd));
       
-      // Sine Wave Ease-In-Out for buttery smooth acceleration
+      // SINE WAVE EASE: Starts slow, massively accelerates, then smooths out
       var easeZoomP = -(Math.cos(Math.PI * zoomP) - 1) / 2;
       
-      // Scale curves aggressively from 1 to 60 using the eased value
-      var scale = Math.pow(60, easeZoomP);
-      root.style.setProperty('--scale', scale);
+      // Scale portal aggressively up to 80x size (forces screen pass-through)
+      var scale = Math.pow(80, easeZoomP);
+      root.style.setProperty('--portal-scale', scale);
       
-      // Hero layer fades out perfectly in sync with the curve
+      // Hero layer fades out quickly in first 40%
       var heroP = Math.max(0, Math.min(1, easeZoomP / 0.4));
       root.style.setProperty('--hero-opacity', 1 - heroP);
-      root.style.setProperty('--hero-scale', 1 + (heroP * 0.1));
+      root.style.setProperty('--hero-scale', 1 + (heroP * 0.15));
       root.style.setProperty('--hero-events', heroP > 0.5 ? 'none' : 'auto');
 
-      // The Portal "Defrosts" by fading in the opaque white cinematic layout
-      var defrostP = Math.max(0, Math.min(1, (easeZoomP - 0.3) / 0.5));
-      root.style.setProperty('--defrost', defrostP);
+      // The Portal Frost fades away ("defrosts") as it gets large
+      var frostP = Math.max(0, Math.min(1, (easeZoomP - 0.6) / 0.3));
+      root.style.setProperty('--frost-opacity', 1 - frostP);
 
-      // Traces fade out completely right before screen edge to prevent pixelation 
-      var tracesP = Math.max(0, Math.min(1, (easeZoomP - 0.7) / 0.3));
+      // Traces fade out completely right before screen edge to prevent blindness
+      var tracesP = Math.max(0, Math.min(1, (easeZoomP - 0.5) / 0.3));
       root.style.setProperty('--traces-opacity', 1 - tracesP);
 
+      // Highlight Video fades in exactly as the frost disappears
+      var highFadeP = Math.max(0, Math.min(1, (easeZoomP - 0.6) / 0.3));
+      root.style.setProperty('--highlight-opacity', highFadeP);
 
-      // PHASE 2: Scrub & Shrink (150vh -> 350vh)
+
+      // PHASE 2: Cinematic Scrub & Shrink (150vh -> 350vh)
       var scrubStart = vh * 1.5;
       var scrubDuration = vh * 2.0;
       var scrubP = Math.max(0, Math.min(1, (scrollY - scrubStart) / scrubDuration));
       
-      // The Cinematic Box starts massive (100vw). It smoothly shrinks to Card size in the last 30% of scroll.
+      // Box stays Full-Bleed, then shrinks in the final 30% of scroll
       var shrinkP = Math.max(0, Math.min(1, (scrubP - 0.7) / 0.3));
-      root.style.setProperty('--shrinkP', shrinkP * shrinkP); // Cubic ease
+      root.style.setProperty('--shrinkP', shrinkP * shrinkP); 
       
-      // Video Frame Mapping (Finishes exactly at 70% before the shrink begins)
+      // Video Frame Mapping
       if (img) {
         var frameProgress = Math.min(1, scrubP / 0.7);
         var frame = Math.max(1, Math.min(totalFrames, Math.ceil(frameProgress * totalFrames)));
