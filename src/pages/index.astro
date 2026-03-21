@@ -4,9 +4,9 @@
  *
  * Layout sections:
  * 1. 3D Zoom Scene (450vh total scroll space)
- * - Layer Front (Z=0): Hero Section
- * - Layer Middle (Z=-1000px): Solid Portal Wall + Pure CSS Glowing Traces
- * - Layer Back (Z=-2000px): Highlight White Zone (Cinematic Video)
+ * - Layer Front (Z=0): Hero Section & Nav
+ * - Layer Middle (Z=-1000px): Solid Portal Wall + Pure CSS Glowing Traces (Shifted up 50px)
+ * - Layer Back (Z=-2000px): Highlight White Zone (Cinematic Video shrinks on scroll)
  * 2. Highlight Details
  */
 import MainLayout from '../layouts/MainLayout.astro';
@@ -72,17 +72,18 @@ const descriptionLines = highlightDescription
         </div>
 
         <div class="layer layer-window" id="layer-window">
-          <div class="glass-wall" id="glass-wall"></div>
-          
-          <div class="portal-svg-wrapper">
-             <svg viewBox="0 0 867.65 401.6" class="portal-svg">
-                <g transform="translate(-72.1, -284.4)">
-                   <path d={LOGO_PATH} class="css-trace trace-1" />
-                   <path d={LOGO_PATH} class="css-trace trace-2" />
-                   <path d={LOGO_PATH} class="css-trace trace-3" />
-                </g>
-             </svg>
-             <div class="portal-glow-aura"></div>
+          <div class="portal-offset">
+            <div class="glass-wall" id="glass-wall"></div>
+            <div class="portal-svg-wrapper">
+               <svg viewBox="0 0 867.65 401.6" class="portal-svg">
+                  <g transform="translate(-72.1, -284.4)">
+                     <path d={LOGO_PATH} class="css-trace trace-1" />
+                     <path d={LOGO_PATH} class="css-trace trace-2" />
+                     <path d={LOGO_PATH} class="css-trace trace-3" />
+                  </g>
+               </svg>
+               <div class="portal-glow-aura"></div>
+            </div>
           </div>
         </div>
 
@@ -118,6 +119,10 @@ const descriptionLines = highlightDescription
             </section>
 
             <section class="nav-section scroll-reveal">
+              <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle Navigation">
+                <span></span><span></span><span></span>
+              </button>
+              
               <div class="nav-cards" id="nav-cards">
                 <a href="/files" class="nav-pill" data-phase="0">
                   <span class="pill-icon">◇</span><span class="pill-label">3D Files</span><span class="pill-arrow">→</span>
@@ -191,7 +196,6 @@ const descriptionLines = highlightDescription
     width: 100vw;
     perspective: 1000px; 
     z-index: 1;
-    /* Hardware acceleration to kill flickering */
     transform: translate3d(0,0,0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
@@ -208,7 +212,6 @@ const descriptionLines = highlightDescription
     position: absolute;
     transform-origin: center center;
     transform-style: preserve-3d;
-    /* Forces crisp rendering and stops plane bleed during zooms */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }
@@ -230,21 +233,69 @@ const descriptionLines = highlightDescription
     display: inline-block; text-align: left; position: relative; height: 1.1em; overflow: visible; clip-path: inset(-2% -50vw -2% 0); vertical-align: baseline; width: 2.7em; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 
-  /* Fixed Nav Constraints: Occupies middle half of screen but no wider than header */
+  /* Nav Section Constraints */
+  .nav-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Mobile Hamburger Toggle */
+  .mobile-nav-toggle {
+    display: none; /* Hidden on desktop */
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 48px; height: 48px;
+    cursor: pointer;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.3s ease;
+    margin-bottom: 1rem;
+  }
+  .mobile-nav-toggle span {
+    display: block; width: 20px; height: 2px; background: #fff; transition: 0.3s;
+  }
+  .mobile-nav-toggle.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+  .mobile-nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .mobile-nav-toggle.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
   .nav-cards {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 1rem;
     width: 100%;
-    /* Locks to middle half on large screens, maxes out at 980px, fluid on mobile */
+    /* Strict constraint to the middle half of the screen, mimicking the header */
     max-width: clamp(320px, 50vw, 980px);
     margin: 0 auto;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* ── Middle Layer: The Solid Portal Wall (Z=-1000) ── */
+  /* Mobile Nav Stack */
+  @media (max-width: 768px) {
+    .mobile-nav-toggle { display: flex; }
+    .nav-cards {
+      flex-direction: column;
+      align-items: center;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-10px);
+    }
+    .nav-cards.open {
+      max-height: 400px;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .nav-cards .nav-pill { width: 100%; max-width: 280px; justify-content: space-between; }
+  }
+
+  /* ── Middle Layer: Portal (Z=-1000) ── */
   .layer-window {
-    /* 400vw size provides infinite margin, so edges NEVER show when you zoom */
     left: -150vw; top: -150vh;
     width: 400vw; height: 400vh;
     transform: translateZ(-1000px);
@@ -252,55 +303,39 @@ const descriptionLines = highlightDescription
     will-change: opacity;
   }
 
+  .portal-offset {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    /* Lifts the entire portal structure 50px physically without breaking scale */
+    transform: translateY(-50px);
+  }
+
   .glass-wall {
     position: absolute;
     inset: 0;
-    /* SOLID wall color. Fixes the transparent bleed bug. */
     background: #050505; 
-    
-    /* Absolute `100vw` sizing mathematically decouples the hole from the 400vw container. */
     -webkit-mask-image: var(--maskUri), linear-gradient(#fff, #fff);
     -webkit-mask-size: 100vw auto, 100% 100%;
     -webkit-mask-position: center center;
     -webkit-mask-repeat: no-repeat;
-    /* Destination-out is the most stable punch-composite for Safari/Chrome */
     -webkit-mask-composite: destination-out;
     mask-composite: exclude;
   }
 
-  /* PURE CSS TRACES */
   .portal-svg-wrapper {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   }
-
   .portal-svg {
-    position: relative;
-    z-index: 2;
-    /* Exactly matching the 100vw absolute mask size locks them perfectly together forever */
-    width: 100vw; 
-    height: auto;
-    overflow: visible;
+    position: relative; z-index: 2; width: 100vw; height: auto; overflow: visible;
   }
-
   .css-trace {
-    fill: none;
-    stroke-width: 6px;
-    stroke-linecap: round;
-    vector-effect: non-scaling-stroke;
+    fill: none; stroke-width: 6px; stroke-linecap: round; vector-effect: non-scaling-stroke;
   }
-
   .trace-1 { stroke: rgba(193, 17, 17, 0.9); stroke-dasharray: 200 1500; animation: traceMove 6s linear infinite; }
   .trace-2 { stroke: rgba(220, 60, 60, 0.8); stroke-dasharray: 100 1600; animation: traceMove 4s linear infinite reverse; animation-delay: -2s; }
   .trace-3 { stroke: rgba(255, 255, 255, 0.5); stroke-dasharray: 50 1650; animation: traceMove 5s linear infinite; animation-delay: -1s; }
-
-  @keyframes traceMove {
-    from { stroke-dashoffset: 1700; }
-    to { stroke-dashoffset: 0; }
-  }
+  @keyframes traceMove { from { stroke-dashoffset: 1700; } to { stroke-dashoffset: 0; } }
 
   .portal-glow-aura {
     position: absolute;
@@ -309,11 +344,7 @@ const descriptionLines = highlightDescription
     background: radial-gradient(circle, rgba(193,17,17,0.15) 0%, rgba(193,17,17,0) 65%);
     animation: pulseGlow 4s ease-in-out infinite alternate;
   }
-
-  @keyframes pulseGlow {
-    0% { transform: scale(0.9); opacity: 0.6; }
-    100% { transform: scale(1.1); opacity: 1; }
-  }
+  @keyframes pulseGlow { 0% { transform: scale(0.9); opacity: 0.6; } 100% { transform: scale(1.1); opacity: 1; } }
 
   /* ── Back Layer: Highlight Void (Z=-2000) ── */
   .layer-highlight {
@@ -325,37 +356,35 @@ const descriptionLines = highlightDescription
   }
 
   .highlight-wrapper {
-    position: absolute;
-    inset: 0;
-    background: #ffffff;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    position: absolute; inset: 0; background: #ffffff; display: flex; flex-direction: column; justify-content: center; align-items: center;
   }
 
-  /* Box Sizing Fix: Cinematic Render is now constrained with dead space margins */
   .highlight-content {
-    position: relative; 
-    z-index: 2; 
-    width: 92vw; 
-    max-width: 1200px; 
-    margin: 0 auto; 
-    padding: 2rem 0;
+    position: relative; z-index: 2; width: 100vw; margin: 0; padding: 2rem 0; display: flex; flex-direction: column; align-items: center;
   }
   .highlight-heading {
     font-family: var(--font-title); font-size: clamp(3.5rem, 8vw, 6rem); font-weight: normal; letter-spacing: 0.02em; text-transform: uppercase; color: #000000; margin-bottom: 2rem; line-height: 1; text-align: center;
   }
 
+  /* Cinematic Box: Interpolates width/radius using JS mapped CSS variables */
   .highlight-render-card.cinematic-box {
-    width: 100%; 
+    --shrinkP: 0; /* JS updates this from 0 to 1 in final 20% of scrub */
+    
+    /* Starts at 100vw, shrinks down to min(92vw, 1200px) */
+    width: calc(100vw - (var(--shrinkP) * max(8vw, 100vw - 1200px)));
+    border-radius: calc(var(--shrinkP) * 24px);
+    
     aspect-ratio: 21 / 9; 
-    border-radius: 24px; 
     background: #e0e0e0; 
     position: relative; 
     overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15); /* Adds physical depth to the boxed video */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+    margin: 0 auto;
+    /* Hardware acceleration to prevent frame jitter during width transition */
+    will-change: width, border-radius;
+    transform: translateZ(0);
   }
+  
   .highlight-render-media { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; z-index: 2; }
   .highlight-render-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; z-index: 1; }
   .highlight-render-placeholder span { font-family: var(--font-title); font-size: clamp(1.5rem, 4vw, 3rem); color: rgba(0, 0, 0, 0.3); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -366,10 +395,7 @@ const descriptionLines = highlightDescription
 
   /* ── Bottom White Zone & Fade Out ── */
   .highlight-white-zone { position: relative; z-index: 10; background: #ffffff; padding: 1rem 0 3rem; }
-  
-  /* Matches the Cinematic Box constraints */
   .highlight-white-inner { max-width: 1200px; width: 92vw; margin: 0 auto; padding: 0; }
-  
   .highlight-info { padding: 0; }
   .highlight-project-title { font-family: var(--font-title); font-size: clamp(2rem, 5vw, 3.5rem); color: #000000; text-transform: uppercase; margin-bottom: 0.5rem; line-height: 1.1; }
   .highlight-project-desc { font-family: var(--font-title); font-size: clamp(0.85rem, 2vw, 1.15rem); color: #444444; text-transform: uppercase; margin-bottom: 0.2rem; line-height: 1.5; }
@@ -378,7 +404,6 @@ const descriptionLines = highlightDescription
   @media (max-width: 640px) {
     .highlight-heading { font-size: 2.5rem; }
     .highlight-project-title { font-size: 1.8rem; }
-    /* Mobile portal expands slightly for a better visual hole size */
     .glass-wall { -webkit-mask-size: 160vw auto, 100% 100%; }
     .portal-svg { width: 160vw; }
     .portal-glow-aura { width: 160vw; }
@@ -386,6 +411,20 @@ const descriptionLines = highlightDescription
 </style>
 
 <script is:inline>
+  // ============================================
+  //  MOBILE MENU TOGGLE
+  // ============================================
+  (function() {
+    var toggle = document.getElementById('mobile-nav-toggle');
+    var navCards = document.getElementById('nav-cards');
+    if (toggle && navCards) {
+      toggle.addEventListener('click', function() {
+        toggle.classList.toggle('open');
+        navCards.classList.toggle('open');
+      });
+    }
+  })();
+
   // ============================================
   //  PURE 3D GEOMETRY CAMERA ENGINE
   // ============================================
@@ -395,6 +434,7 @@ const descriptionLines = highlightDescription
     var layerHero = document.getElementById('layer-hero');
     var layerWindow = document.getElementById('layer-window');
     var layerHighlight = document.getElementById('layer-highlight');
+    var cinematicBox = document.getElementById('highlight-render');
     
     var img = document.getElementById('cinematic-sequence');
     var placeholder = document.getElementById('cinematic-placeholder');
@@ -423,23 +463,21 @@ const descriptionLines = highlightDescription
       
       if (world) world.style.transform = 'translateZ(' + cameraZ + 'px)';
       
-      // Defrost the glass slightly earlier so it feels more responsive
       var blur = 15 * (1 - Math.max(0, Math.min(1, (cameraZ - 300) / 700)));
       if (glassWall) glassWall.style.backdropFilter = 'blur(' + blur + 'px)';
       
-      // Hero Fades out safely behind camera
+      // Hero Fades out
       if (layerHero) {
         var heroOpacity = 1 - Math.max(0, Math.min(1, cameraZ / 800));
         layerHero.style.opacity = heroOpacity;
         layerHero.style.pointerEvents = heroOpacity < 0.1 ? 'none' : 'auto';
       }
       
-      // Window fades out gracefully right before passing the eyeball plane to prevent popping
+      // FLICKER FIX: Fade out the physical window layer safely BEFORE it clips the camera (Z=1000)
       if (layerWindow) {
-        layerWindow.style.opacity = 1 - Math.max(0, Math.min(1, (cameraZ - 1600) / 300));
+        layerWindow.style.opacity = 1 - Math.max(0, Math.min(1, (cameraZ - 750) / 200));
       }
 
-      // Highlight Void becomes fully visible right as the hero disappears
       if (layerHighlight) {
         layerHighlight.style.opacity = Math.max(0, Math.min(1, cameraZ / 1000));
       }
@@ -449,8 +487,17 @@ const descriptionLines = highlightDescription
       var scrubDuration = vh * 1.5;
       var scrubP = Math.max(0, Math.min(1, (scrollInScene - scrubStart) / scrubDuration));
       
+      // Cinematic box starts large, shrinks in the final 20% of the scrub
+      if (cinematicBox) {
+        var shrinkP = Math.max(0, Math.min(1, (scrubP - 0.8) / 0.2));
+        var easedShrink = shrinkP * shrinkP; // smooth cubic ease-in
+        cinematicBox.style.setProperty('--shrinkP', easedShrink);
+      }
+      
+      // Video frame sync mapping up to 80% scroll
       if (img) {
-        var frame = Math.max(1, Math.min(totalFrames, Math.ceil(scrubP * totalFrames)));
+        var frameProgress = Math.min(1, scrubP / 0.8);
+        var frame = Math.max(1, Math.min(totalFrames, Math.ceil(frameProgress * totalFrames)));
         var targetSrc = getFrameUrl(frame);
         if (img.getAttribute('src') !== targetSrc) img.setAttribute('src', targetSrc);
       }
