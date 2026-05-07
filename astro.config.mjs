@@ -14,10 +14,12 @@ export default defineConfig({
     keystatic()
   ],
   adapter: cloudflare({
-    platformProxy: { enabled: true },
+    // 'complete' mode ensures all Node.js built-ins are polyfilled
+    runtime: { mode: 'complete' }
   }),
   vite: {
     define: {
+      // Re-adding these to ensure they are available in the browser-side of the admin panel
       'process.env.KEYSTATIC_GITHUB_CLIENT_ID': JSON.stringify(process.env.KEYSTATIC_GITHUB_CLIENT_ID),
       'process.env.KEYSTATIC_GITHUB_CLIENT_SECRET': JSON.stringify(process.env.KEYSTATIC_GITHUB_CLIENT_SECRET),
     },
