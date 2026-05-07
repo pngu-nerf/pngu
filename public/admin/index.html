@@ -2,23 +2,20 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PNGU Admin Panel</title>
+    <title>PNGU Admin</title>
     <script>window.CMS_MANUAL_INIT = true;</script>
   </head>
   <body>
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-
     <script>
-      // Initialize the CMS using the manual init method
       CMS.init({
         config: {
           backend: {
             name: 'github',
             repo: 'pngu-nerf/pngu',
             branch: 'main',
-            // This must match the URL of the Cloudflare Worker we discussed
-            base_url: 'https://pngu-auth.nolan.workers.dev', 
+            // MUST be your worker URL without the "/auth" or "/" at the end
+            base_url: 'https://pngu-auth.nolan.workers.dev' 
           },
           load_config_file: false,
           media_folder: 'public/images/blasters',
@@ -29,22 +26,10 @@
               label: 'Blaster Data',
               folder: 'src/content/blasters',
               create: true,
-              slug: '{{slug}}',
               fields: [
-                { label: 'Blaster Name', name: 'title', widget: 'string' },
-                { label: 'Short Description', name: 'description', widget: 'text' },
-                { label: 'Cover Image', name: 'coverImage', widget: 'image', required: false },
-                {
-                  label: 'Attached Files',
-                  name: 'attachedFiles',
-                  widget: 'list',
-                  required: false,
-                  fields: [
-                    { label: 'File Name', name: 'fileName', widget: 'string' },
-                    { label: 'R2 Link', name: 'fileUrl', widget: 'string' }
-                  ]
-                },
-                { label: 'Documentation Content', name: 'body', widget: 'markdown' }
+                { label: 'Title', name: 'title', widget: 'string' },
+                { label: 'Description', name: 'description', widget: 'text' },
+                { label: 'Body', name: 'body', widget: 'markdown' }
               ]
             }
           ]
