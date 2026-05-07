@@ -1,11 +1,19 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import cloudflare from "@astrojs/cloudflare";
 import sitemap from "@astrojs/sitemap";
+import mdx from "@astrojs/mdx";
+import markdoc from "@astrojs/markdoc";
 
 export default defineConfig({
   site: "https://pngu.info",
-  output: "static", // Back to static! No more worker crashes.
-  adapter: cloudflare(),
-  integrations: [sitemap()]
+  output: "static", // Pure static for maximum speed and reliability
+  integrations: [
+    sitemap(),
+    mdx(),
+    markdoc()
+  ],
+  compressHTML: true,
+  build: {
+    inlineStylesheets: 'always',
+  }
 });
