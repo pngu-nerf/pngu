@@ -1,6 +1,5 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import sitemap from "@astrojs/sitemap";
 import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
 import markdoc from "@astrojs/markdoc";
@@ -12,8 +11,7 @@ export default defineConfig({
   integrations: [
     react(),
     markdoc(),
-    keystatic(),
-    sitemap()
+    keystatic()
   ],
   adapter: cloudflare({
     platformProxy: { enabled: true },
