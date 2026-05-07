@@ -1,49 +1,35 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PNGU Content Manager</title>
+  <title>PNGU Admin</title>
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
 </head>
 <body>
   <script>
-    // This script handles the GitHub login via a simple community proxy
-    // so you don't have to manage complex OAuth logic yourself.
     CMS.init({
       config: {
         backend: {
           name: 'github',
           repo: 'pngu-nerf/pngu',
           branch: 'main',
-          base_url: 'https://github.com/login/oauth/authorize',
+          base_url: 'https://pngu-auth.nolan.workers.dev' // We will create this in Phase 4
         },
         media_folder: 'public/images/blasters',
         public_folder: '/images/blasters',
-        collections: [
-          {
-            name: 'blasters',
-            label: 'Blasters',
-            folder: 'src/content/blasters',
-            create: true,
-            slug: '{{slug}}',
-            fields: [
-              { label: 'Blaster Name', name: 'title', widget: 'string' },
-              { label: 'Short Description', name: 'description', widget: 'text' },
-              { label: 'Cover Image', name: 'coverImage', widget: 'image' },
-              {
-                label: 'Attached Files',
-                name: 'attachedFiles',
-                widget: 'list',
-                fields: [
-                  { label: 'File Name', name: 'fileName', widget: 'string' },
-                  { label: 'Download URL (R2 link)', name: 'fileUrl', widget: 'string' }
-                ]
-              },
-              { label: 'Documentation Content', name: 'body', widget: 'markdown' }
-            ]
-          }
-        ]
+        collections: [{
+          name: 'blasters', label: 'Blasters', folder: 'src/content/blasters', create: true,
+          fields: [
+            { label: 'Title', name: 'title', widget: 'string' },
+            { label: 'Description', name: 'description', widget: 'text' },
+            { label: 'Cover Image', name: 'coverImage', widget: 'image', required: false },
+            { label: 'Files', name: 'attachedFiles', widget: 'list', fields: [
+              { label: 'Name', name: 'fileName', widget: 'string' },
+              { label: 'R2 URL', name: 'fileUrl', widget: 'string' }
+            ]},
+            { label: 'Body', name: 'body', widget: 'markdown' }
+          ]
+        }]
       }
     });
   </script>
