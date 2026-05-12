@@ -469,9 +469,34 @@ const EXT_LINKS = [
 </style>
 
 <script is:inline>
+  // Skip the home-page animations entirely for users who opted out of motion
+  // or are on a metered/slow connection. The reel falls back to its
+  // last-frame static state (the final "info" word at the bottom).
+  (function () {
+    const reduceMotion =
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const saveData =
+      (navigator.connection && navigator.connection.saveData) === true;
+    if (!(reduceMotion || saveData)) return;
+    const reel = document.getElementById('hero-reel');
+    if (!reel) return;
+    const words = reel.querySelectorAll('.reel-word');
+    if (!words.length) return;
+    // Snap straight to the final word without animating.
+    reel.style.transform = 'translateY(-' + (words.length - 1) * words[0].offsetHeight + 'px)';
+  })();
+
   // Slot-machine reel: walks the word column with a cosine speed ramp
   // (medium → fast → slow → stop) and bounces on the final word.
   (function () {
+    const reduceMotion =
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const saveData =
+      (navigator.connection && navigator.connection.saveData) === true;
+    if (reduceMotion || saveData) return;
+
     const reel = document.getElementById('hero-reel');
     if (!reel) return;
     const words = reel.querySelectorAll('.reel-word');
@@ -512,7 +537,15 @@ const EXT_LINKS = [
 
   // Floating sine on nav pills, ext chips, and the explore label.
   // Amplitude decays over 6s so the page settles, then keeps a small wave.
+  // Skipped entirely under prefers-reduced-motion / saveData.
   (function () {
+    const reduceMotion =
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const saveData =
+      (navigator.connection && navigator.connection.saveData) === true;
+    if (reduceMotion || saveData) return;
+
     const pills = document.querySelectorAll('#nav-cards .nav-pill');
     const chips = document.querySelectorAll('#ext-row .ext-chip');
     const exploreTag = document.getElementById('explore-tag');

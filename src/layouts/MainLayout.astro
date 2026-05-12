@@ -15,6 +15,12 @@
 import BackgroundEffects from '../components/BackgroundEffects.astro';
 import Logo from '../components/Logo.astro';
 
+// Self-hosted variable fonts (covers all weights from a single woff2 file each)
+// instead of requesting fonts.googleapis.com — saves the DNS lookup + extra
+// connection setup on cold visits, which matters on bad connections.
+import '@fontsource-variable/sora';
+import '@fontsource-variable/jetbrains-mono';
+
 interface Props {
   title: string;
   description?: string;
@@ -40,12 +46,14 @@ const isActive = (prefix: string) =>
     <meta name="description" content={description} />
     <title>{title} | PNGU</title>
 
-    <!-- Fonts: Jumps Winter (display/titles, self-hosted) + Sora (body) + JetBrains Mono (code/labels) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Sora + JetBrains Mono are self-hosted via @fontsource-variable
+         (imported in the frontmatter). Jumps Winter loads from /fonts/. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/fonts/JumpsWinter.woff"
+      as="font"
+      type="font/woff"
+      crossorigin
     />
 
     <style is:global>
@@ -95,10 +103,10 @@ const isActive = (prefix: string) =>
         --text-secondary: #a0a0a0;
         --text-muted: #666666;
 
-        /* Type */
-        --font-title: 'Jumps Winter', 'Sora', system-ui, sans-serif;
-        --font-display: 'Sora', system-ui, sans-serif;
-        --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        /* Type — variable-font family names from @fontsource-variable. */
+        --font-title: 'Jumps Winter', 'Sora Variable', 'Sora', system-ui, sans-serif;
+        --font-display: 'Sora Variable', 'Sora', system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', monospace;
 
         /* Motion */
         --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);

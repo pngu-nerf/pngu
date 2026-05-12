@@ -36,7 +36,7 @@ blasters.sort((a, b) => a.data.title.localeCompare(b.data.title));
       <div class="project-grid scroll-reveal-stagger">
         {blasters.map((blaster) => (
           <a
-            href={`/data/${blaster.slug}`}
+            href={`/data/${blaster.id}`}
             class="project-tile"
             data-title={blaster.data.title.toLowerCase()}
           >

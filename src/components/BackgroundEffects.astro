@@ -46,6 +46,18 @@
   (function () {
     const canvas = document.getElementById('bg-canvas');
     if (!canvas) return;
+
+    // Don't burn CPU / battery on users who opted out of motion, or on
+    // metered/slow connections (Save-Data header / saveData hint). The grain
+    // overlay and CSS background still render; only the JS animation is
+    // skipped.
+    const reduceMotion =
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const saveData =
+      (navigator.connection && navigator.connection.saveData) === true;
+    if (reduceMotion || saveData) return;
+
     const ctx = canvas.getContext('2d');
     const isHome =
       window.location.pathname === '/' || window.location.pathname === '';

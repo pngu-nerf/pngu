@@ -4,18 +4,18 @@
  * markdown body plus an aside listing any attached files.
  */
 import MainLayout from '../../layouts/MainLayout.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
   const blasters = await getCollection('blasters');
   return blasters.map((blaster) => ({
-    params: { slug: blaster.slug },
+    params: { slug: blaster.id },
     props: { blaster },
   }));
 }
 
 const { blaster } = Astro.props;
-const { Content } = await blaster.render();
+const { Content } = await render(blaster);
 ---
 
 <MainLayout title={blaster.data.title} description={blaster.data.description}>

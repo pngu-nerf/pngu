@@ -1,42 +1,24 @@
 {
   "name": "pngu",
-  "description": "Build a personal website, blog, or portfolio with Astro.",
+  "description": "Astro site for pngu.info — open-source Nerf-blaster files, data, and brand assets.",
   "private": true,
-  "cloudflare": {
-    "label": "Astro Framework Starter",
-    "products": [
-      "Workers"
-    ],
-    "categories": [],
-    "preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/394ca3c9-d351-4036-035a-9f6dfa26dd00/public",
-    "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/f40a6577-eed5-4f3e-cef4-b5ef0a1be100/preview",
-    "publish": true
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^11.0.4",
-    "@astrojs/mdx": "^3.1.5",
-    "@astrojs/sitemap": "^3.1.6",
-    "astro": "^4.15.4",
-    "@astrojs/markdoc": "^0.11.0",
-    "@astrojs/react": "^3.1.0",
-    "@keystatic/astro": "^5.0.0",
-    "@keystatic/core": "^0.5.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@aws-sdk/client-s3": "^3.0.0",
-    "@aws-sdk/s3-request-presigner": "^3.0.0"
+    "astro": "^5.0.0",
+    "@astrojs/mdx": "^4.0.0",
+    "@aws-sdk/client-s3": "^3.658.0",
+    "@fontsource-variable/jetbrains-mono": "^5.1.0",
+    "@fontsource-variable/sora": "^5.1.0"
   },
   "devDependencies": {
-    "wrangler": "4.21.x"
-  },
-  "scripts": {
-    "astro": "astro",
-    "build": "astro build",
-    "cf-typegen": "wrangler types",
-    "check": "astro build && tsc && wrangler deploy --dry-run",
-    "deploy": "wrangler deploy",
-    "dev": "astro dev",
-    "preview": "astro build && wrangler dev"
-  },
-  "type": "module"
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.6.0"
+  }
 }
