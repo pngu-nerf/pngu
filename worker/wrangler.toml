@@ -1,0 +1,26 @@
+# pngu-auth worker — Decap CMS GitHub OAuth backend.
+#
+# Deploy:
+#   cd worker
+#   wrangler secret put GITHUB_CLIENT_SECRET   # one-time
+#   wrangler deploy
+#
+# The two non-secret env vars (GITHUB_CLIENT_ID, ALLOWED_ORIGINS) live below;
+# the secret is set via `wrangler secret put` so it never enters the repo.
+
+name = "pngu-auth"
+main = "src/index.ts"
+compatibility_date = "2026-01-07"
+
+# Public client id of the GitHub OAuth App. Replace with your own.
+[vars]
+GITHUB_CLIENT_ID = "REPLACE_WITH_OAUTH_APP_CLIENT_ID"
+ALLOWED_ORIGINS = "https://pngu.info,https://www.pngu.info"
+
+# If you want a custom hostname (e.g. https://pngu-auth.nolan.workers.dev),
+# the default workers.dev subdomain is enabled by default. To use a custom
+# domain instead, set up a route in the Cloudflare dashboard or with:
+#
+# [[routes]]
+# pattern = "pngu-auth.example.com/*"
+# custom_domain = true
