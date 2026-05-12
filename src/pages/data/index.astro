@@ -1,51 +1,91 @@
 ---
+/**
+ * Blaster Data index — lists entries from the `blasters` content collection
+ * as project tiles, with client-side search by title.
+ *
+ * Content comes from `src/content/blasters/*.md(x)`. Today the collection is
+ * empty (no entries committed yet); when entries are added, they show up here.
+ */
 import MainLayout from '../../layouts/MainLayout.astro';
 import { getCollection } from 'astro:content';
 
 const blasters = await getCollection('blasters');
+blasters.sort((a, b) => a.data.title.localeCompare(b.data.title));
 ---
 
 <MainLayout title="Blaster Data">
-  <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Blaster Library</h1>
-    <p style="color: var(--text-muted);">Documentation, specifications, and files for various blasters.</p>
+  <div class="page-header scroll-reveal">
+    <div class="label-tag">blaster data</div>
+    <h1>Blaster Data</h1>
+    <p class="header-subtitle">Documentation & Specifications</p>
+    <div class="header-nav">
+      <a href="/" class="btn-glass">← Back Home</a>
+    </div>
   </div>
 
-  <input 
-    type="text" 
-    id="search" 
-    placeholder="Search blasters..." 
-    style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: white; margin-bottom: 2rem;"
-  />
+  <div class="search-container scroll-reveal">
+    <input type="text" id="data-search" placeholder="Search blasters..." class="glass-input" />
+  </div>
 
-  <div class="grid" id="blaster-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
-    {blasters.map(blaster => (
-      <a href={`/data/${blaster.slug}`} class="card blaster-card" data-title={blaster.data.title.toLowerCase()}>
-        <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--text-main);">{blaster.data.title}</h2>
-        {blaster.data.description && <p style="color: var(--text-muted); font-size: 0.9rem;">{blaster.data.description}</p>}
-      </a>
-    ))}
-    {blasters.length === 0 && (
-      <p style="color: var(--text-muted);">No blasters added yet. Go to /keystatic to create one!</p>
+  <div id="results-container">
+    {blasters.length === 0 ? (
+      <p class="empty-state">
+        No blasters added yet. Add entries under <code>src/content/blasters/</code>.
+      </p>
+    ) : (
+      <div class="project-grid scroll-reveal-stagger">
+        {blasters.map((blaster) => (
+          <a
+            href={`/data/${blaster.slug}`}
+            class="project-tile"
+            data-title={blaster.data.title.toLowerCase()}
+          >
+            <div class="tile-top">
+              <span class="tile-title">{blaster.data.title}</span>
+            </div>
+            {blaster.data.description && (
+              <p class="tile-desc">{blaster.data.description}</p>
+            )}
+            <span class="tile-arrow">View entry →</span>
+          </a>
+        ))}
+      </div>
     )}
   </div>
 </MainLayout>
 
-<script is:inline>
-  const searchInput = document.getElementById('search');
-  const cards = document.querySelectorAll('.blaster-card');
+<style>
+  .empty-state {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    padding: 2rem;
+    text-align: center;
+    border: 1px dashed var(--glass-border);
+    border-radius: var(--glass-radius);
+    background: var(--glass-bg);
+  }
+  .empty-state code {
+    font-family: var(--font-mono);
+    background: var(--glass-bg-strong);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-secondary);
+  }
+</style>
 
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
+<script is:inline>
+  // Client-side filter on title. There are no letter groups on this page,
+  // so we just hide individual tiles.
+  (function () {
+    const input = document.getElementById('data-search');
+    if (!input) return;
+    const tiles = document.querySelectorAll('.project-tile');
+    input.addEventListener('input', (e) => {
       const term = e.target.value.toLowerCase();
-      cards.forEach(card => {
-        const title = card.getAttribute('data-title');
-        if (title.includes(term)) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
+      tiles.forEach((tile) => {
+        const match = (tile.dataset.title || '').includes(term);
+        tile.style.display = match ? 'flex' : 'none';
       });
     });
-  }
+  })();
 </script>

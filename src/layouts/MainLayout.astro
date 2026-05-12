@@ -1,13 +1,34 @@
 ---
+/**
+ * MainLayout.astro — site-wide chrome (nav, footer, design tokens, fonts).
+ *
+ * All globally-used patterns live here so individual pages can stay thin:
+ *   - Design tokens (:root)              — colors, glass surface, type, easings
+ *   - Nav + footer                       — the persistent chrome
+ *   - Generic primitives                 — .btn-primary, .btn-glass, .glass-card,
+ *                                          .label-tag, .scroll-reveal, headings
+ *   - Page-header / search / list / tile — patterns shared by /brand, /data, /files
+ *
+ * Page-unique styling (hero reel on /, 3D viewer on /files/[slug], etc.) lives
+ * in each page's own scoped <style> block.
+ */
 import BackgroundEffects from '../components/BackgroundEffects.astro';
+import Logo from '../components/Logo.astro';
 
 interface Props {
   title: string;
   description?: string;
 }
 
-const { title, description = "PNGU — Open-source blaster files, data, and brand assets" } = Astro.props;
-const currentPath = Astro.url.pathname;
+const {
+  title,
+  description = 'PNGU — Open-source blaster files, data, and brand assets',
+} = Astro.props;
+
+// Use the URL pathname to highlight the active nav link.
+const path = Astro.url.pathname;
+const isActive = (prefix: string) =>
+  prefix === '/' ? path === '/' : path.startsWith(prefix);
 ---
 
 <!doctype html>
@@ -19,142 +40,692 @@ const currentPath = Astro.url.pathname;
     <meta name="description" content={description} />
     <title>{title} | PNGU</title>
 
+    <!-- Fonts: Jumps Winter (display/titles, self-hosted) + Sora (body) + JetBrains Mono (code/labels) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
 
     <style is:global>
-      :root {
-        --bg-dark: #09090b;
-        --bg-card: #18181b;
-        --text-main: #f4f4f5;
-        --text-muted: #a1a1aa;
-        --accent: #ef4444;
-        --accent-hover: #dc2626;
-        --border: #27272a;
+      /* Self-hosted display face for titles */
+      @font-face {
+        font-family: 'Jumps Winter';
+        src: url('/fonts/JumpsWinter.woff') format('woff');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
       }
 
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      
+      /* ============================================================
+         Design tokens
+         ============================================================ */
+      :root {
+        /* Surfaces */
+        --bg-primary: #000000;
+        --bg-surface: #1a1a1a;
+        --bg-surface-elevated: #222222;
+        --bg-grey: #333333;
+
+        /* Brand accent */
+        --accent: #c11111;
+        --accent-bright: #e01b1b;
+        --accent-soft: rgba(193, 17, 17, 0.12);
+        --accent-glow: rgba(193, 17, 17, 0.25);
+
+        /* Glass surface */
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-bg-hover: rgba(255, 255, 255, 0.06);
+        --glass-bg-strong: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.07);
+        --glass-border-hover: rgba(255, 255, 255, 0.14);
+        --glass-blur: 20px;
+        --glass-radius: 20px;
+        --glass-radius-sm: 14px;
+        --glass-radius-xs: 10px;
+        --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25),
+          0 2px 8px rgba(0, 0, 0, 0.15);
+        --glass-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.35),
+          0 4px 12px rgba(0, 0, 0, 0.2);
+        --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+        /* Text */
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --text-muted: #666666;
+
+        /* Type */
+        --font-title: 'Jumps Winter', 'Sora', system-ui, sans-serif;
+        --font-display: 'Sora', system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+        /* Motion */
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+        --transition-fast: 0.2s var(--ease-out-expo);
+        --transition-smooth: 0.5s var(--ease-out-expo);
+        --transition-slow: 0.8s var(--ease-out-expo);
+
+        /* Layout */
+        --max-width: 980px;
+        --nav-height: 72px;
+      }
+
+      /* ============================================================
+         Reset + base
+         ============================================================ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html {
+        background-color: var(--bg-primary);
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
       body {
-        font-family: 'Sora', sans-serif;
-        background-color: var(--bg-dark);
-        color: var(--text-main);
+        font-family: var(--font-display);
+        color: var(--text-primary);
         line-height: 1.6;
         min-height: 100vh;
+        overflow-x: hidden;
+      }
+      :focus:not(:focus-visible) { outline: none !important; }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+
+      h1 {
+        font-family: var(--font-title);
+        font-size: 3rem;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+        line-height: 1.1;
+        margin-bottom: 0.5rem;
+      }
+      h2 {
+        font-family: var(--font-title);
+        font-size: 1.35rem;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+      }
+      p { color: var(--text-secondary); margin-bottom: 1rem; }
+
+      /* ============================================================
+         Site nav (fixed pill at the top)
+         ============================================================ */
+      .site-nav {
+        position: fixed;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(94%, 960px);
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.5rem;
+        background: rgba(30, 30, 30, 0.55);
+        backdrop-filter: blur(20px) saturate(1.5);
+        -webkit-backdrop-filter: blur(20px) saturate(1.5);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 100px;
+        z-index: 1000;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+      .nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: var(--text-primary);
+      }
+      .nav-logo-mark {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform var(--transition-fast);
+      }
+      .nav-logo-mark svg {
+        width: 32px;
+        height: 32px;
+        fill: var(--accent);
+        filter: drop-shadow(0 2px 8px var(--accent-glow));
+        transition: filter var(--transition-fast);
+      }
+      .nav-logo-text {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 1.15rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .nav-links-bar { display: flex; align-items: center; gap: 4px; }
+      .nav-links-bar a {
+        font-family: var(--font-display);
+        font-size: 0.78rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: var(--glass-radius-xs);
+        transition: all var(--transition-fast);
+        position: relative;
+      }
+      .nav-links-bar a.active {
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .nav-mobile-toggle {
+        display: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        color: var(--text-secondary);
+      }
+      .nav-mobile-toggle svg {
+        width: 22px; height: 22px;
+        stroke: currentColor; stroke-width: 2; fill: none;
+      }
+      @media (hover: hover) {
+        .nav-logo:hover .nav-logo-mark { transform: scale(1.08) rotate(-2deg); }
+        .nav-logo:hover .nav-logo-mark svg {
+          filter: drop-shadow(0 4px 16px var(--accent-glow));
+        }
+        .nav-links-bar a:hover {
+          color: var(--text-primary);
+          background: var(--glass-bg);
+        }
+      }
+
+      /* ============================================================
+         Main content shell + entrance animation
+         ============================================================ */
+      .main-content {
+        max-width: var(--max-width);
+        margin: 0 auto;
+        padding: calc(var(--nav-height) + 2.5rem) 2rem 4rem;
+      }
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .main-content > * { animation: fadeUp 0.7s var(--ease-out-expo) both; }
+      .main-content > *:nth-child(1) { animation-delay: 0.05s; }
+      .main-content > *:nth-child(2) { animation-delay: 0.12s; }
+      .main-content > *:nth-child(3) { animation-delay: 0.19s; }
+      .main-content > *:nth-child(4) { animation-delay: 0.26s; }
+      .main-content > *:nth-child(5) { animation-delay: 0.33s; }
+      .main-content > *:nth-child(6) { animation-delay: 0.4s; }
+
+      /* ============================================================
+         Generic primitives
+         ============================================================ */
+      .label-tag {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: var(--accent-soft);
+        padding: 6px 14px;
+        border-radius: 100px;
+        display: inline-block;
+        margin-bottom: 1rem;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-display);
+        font-size: 0.82rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-decoration: none;
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+        padding: 12px 28px;
+        border-radius: 100px;
+        border: none;
+        transition: all var(--transition-fast);
+        cursor: pointer;
+        box-shadow: 0 4px 16px var(--accent-glow);
+      }
+      .btn-glass {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-display);
+        font-size: 0.82rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-decoration: none;
+        color: var(--text-secondary);
+        background: rgba(51, 51, 51, 0.4);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 12px 28px;
+        border-radius: 100px;
+        border: 1px solid var(--glass-border);
+        transition: all var(--transition-fast);
+        cursor: pointer;
+      }
+      @media (hover: hover) {
+        .btn-primary:hover {
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 0 8px 28px var(--accent-glow);
+        }
+        .btn-glass:hover {
+          color: var(--text-primary);
+          background: rgba(51, 51, 51, 0.6);
+          border-color: var(--glass-border-hover);
+          transform: translateY(-1px);
+        }
+      }
+
+      .glass-card {
+        background: rgba(51, 51, 51, 0.35);
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid var(--glass-border);
+        border-radius: var(--glass-radius);
+        padding: 2rem;
+        box-shadow: var(--glass-shadow), var(--glass-highlight);
+        transition: all var(--transition-smooth);
+      }
+      @media (hover: hover) {
+        .glass-card:hover {
+          border-color: var(--glass-border-hover);
+          box-shadow: var(--glass-shadow-hover), var(--glass-highlight);
+          transform: translateY(-2px);
+        }
+      }
+
+      /* IntersectionObserver-driven entrance — the observer lives at the
+         bottom of this layout. Stagger version animates each child of the
+         container with cascading delays. */
+      .scroll-reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: opacity 0.7s var(--ease-out-expo),
+          transform 0.7s var(--ease-out-expo);
+      }
+      .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
+      .scroll-reveal-stagger > * {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.6s var(--ease-out-expo),
+          transform 0.6s var(--ease-out-expo);
+      }
+      .scroll-reveal-stagger.revealed > * { opacity: 1; transform: translateY(0); }
+      .scroll-reveal-stagger.revealed > *:nth-child(1) { transition-delay: 0s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(2) { transition-delay: 0.06s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(3) { transition-delay: 0.12s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(4) { transition-delay: 0.18s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(5) { transition-delay: 0.24s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(6) { transition-delay: 0.3s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(7) { transition-delay: 0.36s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(8) { transition-delay: 0.42s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(9) { transition-delay: 0.48s; }
+      .scroll-reveal-stagger.revealed > *:nth-child(10) { transition-delay: 0.54s; }
+
+      /* ============================================================
+         Shared page-header pattern (used by /data, /files, /brand, /contact)
+         ============================================================ */
+      .page-header { padding: 3rem 0 1.5rem; }
+      .header-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.05rem;
+        margin-bottom: 1.5rem;
+      }
+      .header-nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+      .back-link {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-bottom: 1rem;
+        transition: color var(--transition-fast);
+      }
+      .back-link:hover { color: var(--accent); }
+
+      .search-container { margin: 1.5rem 0; max-width: 500px; }
+      .glass-input {
+        width: 100%;
+        padding: 14px 20px;
+        border-radius: 100px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        font-family: var(--font-display);
+        outline: none;
+        transition: all var(--transition-smooth);
+        box-shadow: var(--glass-shadow);
+      }
+      .glass-input:focus {
+        border-color: rgba(193, 17, 17, 0.3);
+        box-shadow: var(--glass-shadow), 0 0 0 3px var(--accent-soft);
+      }
+      .glass-input::placeholder { color: var(--text-muted); }
+
+      /* ============================================================
+         Letter-grouped list pattern (used by /brand, /files, /data)
+         ============================================================ */
+      .letter-header {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.06);
+        margin: 2.5rem 0 1rem;
+        padding-left: 4px;
+        letter-spacing: 0.05em;
+      }
+
+      /* Expandable file dropdown (brand + files/[slug]) */
+      @keyframes slideReveal {
+        from { opacity: 0; transform: translateY(-8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .file-list { display: flex; flex-direction: column; gap: 10px; }
+      .glass-dropdown {
+        background: rgba(51, 51, 51, 0.3);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--glass-radius-sm);
+        overflow: hidden;
+        transition: all var(--transition-smooth);
+        box-shadow: var(--glass-shadow), var(--glass-highlight);
+      }
+      .glass-dropdown[open] { border-color: var(--glass-border-hover); }
+      .glass-dropdown summary {
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        list-style: none;
         display: flex;
         flex-direction: column;
+        gap: 10px;
+        user-select: none;
+        transition: background var(--transition-fast);
       }
-
-      .navbar {
-        border-bottom: 1px solid var(--border);
-        background: rgba(9, 9, 11, 0.8);
-        backdrop-filter: blur(12px);
-        position: sticky;
-        top: 0;
-        z-index: 50;
+      .glass-dropdown summary::-webkit-details-marker { display: none; }
+      @media (hover: hover) {
+        .glass-dropdown summary:hover { background: var(--glass-bg-hover); }
       }
-
-      .nav-container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 1rem 1.5rem;
+      .summary-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-      }
-
-      .logo {
-        font-weight: 800;
-        font-size: 1.25rem;
-        text-decoration: none;
-        color: var(--text-main);
-      }
-
-      .nav-links {
-        display: flex;
-        gap: 1.5rem;
-      }
-
-      .nav-links a {
-        text-decoration: none;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        font-weight: 600;
-        transition: color 0.2s;
-      }
-
-      .nav-links a:hover, .nav-links a.active {
-        color: var(--accent);
-      }
-
-      .main-content {
-        flex: 1;
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 3rem 1.5rem;
         width: 100%;
       }
-
-      .btn {
-        background: var(--accent);
-        color: white;
-        padding: 0.5rem 1.25rem;
-        border-radius: 6px;
-        text-decoration: none;
+      .file-name {
+        font-weight: 500;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+      }
+      .preview-text {
+        font-size: 0.65rem;
         font-weight: 600;
-        transition: background 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      .btn:hover { background: var(--accent-hover); }
-
-      .card {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.5rem;
-        transition: transform 0.2s, border-color 0.2s;
-        display: block;
-        text-decoration: none;
-        color: inherit;
-      }
-      a.card:hover {
-        transform: translateY(-2px);
-        border-color: var(--text-muted);
-      }
-
-      .footer {
-        border-top: 1px solid var(--border);
-        padding: 2rem 1.5rem;
-        text-align: center;
+        letter-spacing: 0.1em;
         color: var(--text-muted);
-        font-size: 0.85rem;
+        text-transform: uppercase;
+      }
+      details[open] .preview-text { color: var(--accent); }
+      .download-pill {
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 8px 20px;
+        border: 1px solid rgba(193, 17, 17, 0.3);
+        border-radius: 100px;
+        background: var(--accent-soft);
+        transition: all var(--transition-fast);
+        display: inline-block;
+        width: fit-content;
+        letter-spacing: 0.04em;
+      }
+      @media (hover: hover) {
+        .download-pill:hover {
+          background: var(--accent);
+          color: #fff;
+          border-color: var(--accent);
+          transform: scale(1.03);
+        }
+      }
+      .preview-wrap {
+        padding: 1.25rem;
+        animation: slideReveal 0.4s var(--ease-out-expo);
+      }
+
+      /* Project-tile grid (files/index + data/index) */
+      .project-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+      }
+      .project-tile {
+        display: flex;
+        flex-direction: column;
+        background: rgba(51, 51, 51, 0.3);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--glass-radius);
+        padding: 1.5rem;
+        text-decoration: none;
+        transition: all var(--transition-smooth);
+        box-shadow: var(--glass-shadow), var(--glass-highlight);
+        position: relative;
+        overflow: hidden;
+      }
+      .project-tile::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(193, 17, 17, 0.05), transparent 60%);
+        opacity: 0;
+        transition: opacity var(--transition-smooth);
+        border-radius: inherit;
+      }
+      @media (hover: hover) {
+        .project-tile:hover {
+          border-color: rgba(193, 17, 17, 0.2);
+          background: var(--glass-bg-hover);
+          transform: translateY(-3px);
+          box-shadow: var(--glass-shadow-hover), var(--glass-highlight);
+        }
+        .project-tile:hover::before { opacity: 1; }
+        .project-tile:hover .tile-title { color: var(--accent); }
+        .project-tile:hover .tile-arrow {
+          color: var(--accent);
+          transform: translateX(4px);
+        }
+      }
+      .tile-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 1;
+      }
+      .tile-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--text-primary);
+        transition: color var(--transition-fast);
+      }
+      .tile-count {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        background: var(--glass-bg-strong);
+        padding: 3px 10px;
+        border-radius: 100px;
+        border: 1px solid var(--glass-border);
+      }
+      .tile-desc {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+      }
+      .tile-arrow {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: var(--text-muted);
         margin-top: auto;
+        transition: all var(--transition-fast);
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ============================================================
+         Site footer
+         ============================================================ */
+      .site-footer {
+        margin: 4rem auto 2rem;
+        max-width: min(94%, 960px);
+        background: rgba(30, 30, 30, 0.4);
+        backdrop-filter: blur(16px) saturate(1.3);
+        -webkit-backdrop-filter: blur(16px) saturate(1.3);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 24px;
+        padding: 2rem 2.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      }
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .footer-brand {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        letter-spacing: 0.04em;
+      }
+      .footer-links { display: flex; gap: 1.5rem; }
+      .footer-links a {
+        font-family: var(--font-display);
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color var(--transition-fast);
+      }
+      @media (hover: hover) {
+        .footer-links a:hover { color: var(--text-primary); }
+      }
+
+      /* ============================================================
+         Mobile
+         ============================================================ */
+      @media (max-width: 640px) {
+        .site-nav { padding: 0 1.25rem; width: 96%; }
+        .nav-links-bar { display: none; }
+        .nav-mobile-toggle { display: block; }
+        .main-content {
+          padding: calc(var(--nav-height) + 1.5rem) 1.25rem 3rem;
+        }
+        h1 { font-size: 2.25rem; }
+        .glass-card { padding: 1.5rem; border-radius: 16px; }
+        .footer-inner { flex-direction: column; align-items: flex-start; }
       }
     </style>
   </head>
+
   <body>
     <BackgroundEffects />
-    
-    <nav class="navbar">
-      <div class="nav-container">
-        <a href="/" class="logo">PNGU</a>
-        <div class="nav-links">
-          <a href="/data" class:list={[{ active: currentPath.startsWith('/data') }]}>Data</a>
-          <a href="/files" class:list={[{ active: currentPath.startsWith('/files') }]}>Files</a>
-          <a href="/brand" class:list={[{ active: currentPath.startsWith('/brand') }]}>Brand</a>
-        </div>
+
+    <nav class="site-nav">
+      <a href="/" class="nav-logo" aria-label="PNGU home">
+        <div class="nav-logo-mark"><Logo /></div>
+        <span class="nav-logo-text">PNGU</span>
+      </a>
+      <div class="nav-links-bar">
+        <a href="/files"   class:list={[{ active: isActive('/files') }]}>Files</a>
+        <a href="/data"    class:list={[{ active: isActive('/data') }]}>Data</a>
+        <a href="/brand"   class:list={[{ active: isActive('/brand') }]}>Brand</a>
+        <a href="/contact" class:list={[{ active: isActive('/contact') }]}>Contact</a>
       </div>
+      <button class="nav-mobile-toggle" aria-label="Toggle navigation">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
+        </svg>
+      </button>
     </nav>
 
-    <main class="main-content">
+    <div class="main-content">
       <slot />
-    </main>
+    </div>
 
-    <footer class="footer">
-      <p>© {new Date().getFullYear()} PNGU. Open-source blaster files & data.</p>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span class="footer-brand">© {new Date().getFullYear()} PNGU</span>
+        <div class="footer-links">
+          <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener">YouTube</a>
+          <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener">Printables</a>
+          <a href="/contact">Contact</a>
+        </div>
+      </div>
     </footer>
+
+    <!-- Scroll-reveal: any element with .scroll-reveal or .scroll-reveal-stagger
+         fades up the first time it enters the viewport. -->
+    <script is:inline>
+      (function () {
+        const targets = document.querySelectorAll(
+          '.scroll-reveal, .scroll-reveal-stagger'
+        );
+        if (!targets.length) return;
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                io.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.1, rootMargin: '0px 0px -33% 0px' }
+        );
+        targets.forEach((el) => io.observe(el));
+      })();
+    </script>
   </body>
 </html>

@@ -1,7 +1,7 @@
 ---
 /**
- * Contact page — displays email and Discord contact info
- * with copy-to-clipboard functionality via ContactItem component.
+ * Contact page — email + Discord cards with copy-to-clipboard.
+ * The glass-card / page-header primitives come from MainLayout.
  */
 import MainLayout from '../layouts/MainLayout.astro';
 import ContactItem from '../components/ContactItem.astro';
@@ -14,56 +14,31 @@ import ContactItem from '../components/ContactItem.astro';
     <p class="header-subtitle">Reach out for collaborations or questions</p>
     <div class="header-nav">
       <a href="/" class="btn-glass">← Back</a>
-      <a href="https://lite.pngu.info/contact" class="btn-glass">Lite Version</a>
     </div>
   </div>
 
-  <!-- Email contact card -->
   <div class="glass-card contact-card scroll-reveal" style="animation-delay: 0.1s">
-    <div class="card-icon">✉</div>
     <h2>Email Address</h2>
     <p class="section-desc">For professional inquiries and partnerships.</p>
-    <ContactItem
-      buttonId="copy-email-btn"
-      value="contact@pngu.info"
-      label="Copy Email"
-    />
+    <ContactItem buttonId="copy-email-btn" value="contact@pngu.info" label="Copy Email" />
   </div>
 
-  <!-- Discord contact card -->
   <div class="glass-card contact-card scroll-reveal" style="animation-delay: 0.25s">
-    <div class="card-icon">💬</div>
     <h2>Discord</h2>
     <p class="section-desc">For casual chats and community contact.</p>
-    <ContactItem
-      buttonId="copy-discord-btn"
-      value="penguinnoly"
-      label="Copy Handle"
-    />
+    <ContactItem buttonId="copy-discord-btn" value="penguinnoly" label="Copy Handle" />
   </div>
 </MainLayout>
 
 <style>
-  /* Contact-specific card styling */
-  .card-icon {
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
-    opacity: 0.7;
-  }
-
-  .contact-card {
-    margin-bottom: 1.5rem;
-    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;
-  }
-
-  .contact-card:hover {
-    transform: translateY(-4px) scale(1.005);
-  }
-
+  .contact-card { margin-bottom: 1.5rem; }
   .section-desc {
     color: var(--text-secondary);
     font-size: 0.92rem;
     line-height: 1.6;
     margin-bottom: 1.5rem;
+  }
+  @media (max-width: 640px) {
+    .header-nav { flex-direction: column; }
   }
 </style>

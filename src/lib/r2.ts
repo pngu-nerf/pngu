@@ -1,65 +1,82 @@
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
-// Initialize the R2 Client
+/**
+ * R2 (S3-compatible) listing helper. Server-side only.
+ *
+ * Credentials are read from `process.env` exclusively — we deliberately do
+ * NOT fall back to `import.meta.env`, because Vite would inline that into the
+ * client bundle if anyone ever imports this module from a client island.
+ *
+ * To populate listings during `astro build`, set `R2_ACCESS_KEY_ID` and
+ * `R2_SECRET_ACCESS_KEY` in the build environment. When unset, getR2Data()
+ * resolves to `[]` so static builds still succeed (with empty content).
+ */
+
+const ACCOUNT_ENDPOINT =
+  'https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com';
+const BUCKET_NAME = 'pngu-assets';
+
+const accessKeyId = process.env.R2_ACCESS_KEY_ID ?? '';
+const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY ?? '';
+
 const s3 = new S3Client({
-  region: "auto",
-  endpoint: "https://3f9488bac1783599afb7ea3af1654150.r2.cloudflarestorage.com",
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || import.meta.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || import.meta.env.R2_SECRET_ACCESS_KEY || "",
-  },
+  region: 'auto',
+  endpoint: ACCOUNT_ENDPOINT,
+  credentials: { accessKeyId, secretAccessKey },
 });
 
-const BUCKET_NAME = "pngu-assets";
+export interface R2Folder {
+  /** Human-readable name (URI-decoded, "/" stripped). */
+  displayName: string;
+  /** Raw folder name as it appears in R2 (still URI-encoded if applicable). */
+  folderName: string;
+  /** File names inside this folder (relative, not URI-decoded). */
+  files: string[];
+}
 
-export async function getR2Data(folderPrefix: string) {
+/**
+ * List objects under `folderPrefix` and group them by their immediate
+ * parent folder. Loose files at the prefix root land under a synthetic
+ * "." group (`displayName: "General Assets"`).
+ *
+ * Returns `[]` on error or when credentials are missing — callers can
+ * render empty states without try/catch boilerplate.
+ */
+export async function getR2Data(folderPrefix: string): Promise<R2Folder[]> {
+  if (!accessKeyId || !secretAccessKey) return [];
+
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: BUCKET_NAME,
-      Prefix: folderPrefix,
-    });
+    const response = await s3.send(
+      new ListObjectsV2Command({ Bucket: BUCKET_NAME, Prefix: folderPrefix })
+    );
+    const files = response.Contents ?? [];
 
-    const response = await s3.send(command);
-    const files = response.Contents || [];
-    const projectMap: Record<string, any> = {};
+    const projectMap: Record<string, R2Folder> = {};
+    for (const file of files) {
+      const relativeKey = file.Key?.replace(folderPrefix, '') ?? '';
+      if (!relativeKey || relativeKey === '/') continue;
 
-    files.forEach((file) => {
-      // 1. Clean the key to get the path relative to the prefix
-      const relativeKey = file.Key?.replace(folderPrefix, "") || "";
-      
-      // Ignore directory markers or empty strings
-      if (!relativeKey || relativeKey === "/" || relativeKey === "") return;
+      const parts = relativeKey.split('/');
+      const isLoose = parts.length === 1;
+      const folderName = isLoose ? '.' : parts[0];
+      const fileName = isLoose ? parts[0] : parts[1];
 
-      const parts = relativeKey.split("/");
-      
-      /**
-       * FLEXIBLE LOGIC:
-       * If parts.length > 1: It's in a subfolder (e.g., "Data/Spreadsheet.xlsx")
-       * If parts.length === 1: It's a loose file (e.g., "logo.png")
-       */
-      const isLooseFile = parts.length === 1;
-      const folderName = isLooseFile ? "." : parts[0];
-      const fileName = isLooseFile ? parts[0] : parts[1];
-
-      // 2. Initialize the group if it doesn't exist
       if (!projectMap[folderName]) {
         projectMap[folderName] = {
-          // Display "." as "Root" or "General Assets" for internal logic
-          displayName: folderName === "." ? "General Assets" : decodeURIComponent(folderName).replace(/%20/g, " "),
-          folderName: folderName,
+          displayName:
+            folderName === '.'
+              ? 'General Assets'
+              : decodeURIComponent(folderName).replace(/%20/g, ' '),
+          folderName,
           files: [],
         };
       }
-
-      // 3. Add the file to the project group
       projectMap[folderName].files.push(fileName);
-    });
+    }
 
-    // Return as array for easy mapping in Astro components
     return Object.values(projectMap);
-
   } catch (error) {
-    console.error(`[R2 SDK ERROR] Prefix: ${folderPrefix}`, error);
+    console.error(`[R2] Failed to list "${folderPrefix}":`, error);
     return [];
   }
 }

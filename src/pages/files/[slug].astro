@@ -1,55 +1,52 @@
 ---
 /**
- * Individual 3D Files project page — dynamically generated at build time.
- * Shows all STL files in the project with expandable 3D previews (Three.js)
- * and download links. Uses getStaticPaths for static site generation.
+ * Individual 3D Files project page.
+ *
+ * Statically generated from R2 listings at build time. Each STL file gets an
+ * expandable dropdown that lazy-loads a Three.js viewer when opened.
  */
 import MainLayout from '../../layouts/MainLayout.astro';
 import { getR2Data } from '../../lib/r2';
 import { R2_FILES_BASE } from '../../constants';
 import { slugify } from '../../lib/slugify';
 
+interface FileRef { name: string; url: string; }
+
 export async function getStaticPaths() {
-  const rawProjects = await getR2Data("PNGU-3D-Files-main/");
+  const rawProjects = await getR2Data('PNGU-3D-Files-main/');
+  return Promise.all(
+    rawProjects.map(async (project) => {
+      // description/link are metadata files, not assets.
+      const assetFiles = project.files.filter(
+        (f: string) => f !== 'description' && f !== 'link'
+      );
+      const description = await fetchOptionalText(project.folderName, 'description');
+      const printablesLink = await fetchOptionalText(project.folderName, 'link');
+      return {
+        params: { slug: slugify(project.folderName) },
+        props: {
+          title: project.displayName,
+          folderName: project.folderName,
+          description,
+          printablesLink,
+          files: assetFiles.map((fileName: string) => ({
+            name: fileName,
+            url: `${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`,
+          })) satisfies FileRef[],
+        },
+      };
+    })
+  );
+}
 
-  const paths = await Promise.all(rawProjects.map(async (project) => {
-    // Filter out metadata files (description, link) to get only asset files
-    const assetFiles = project.files.filter((f: string) => f !== 'description' && f !== 'link');
-
-    // Fetch optional project description from R2
-    let descriptionText = "";
-    if (project.files.includes('description')) {
-      try {
-        const res = await fetch(`${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/description`);
-        if (res.ok) descriptionText = await res.text();
-      } catch { descriptionText = ""; }
-    }
-
-    // Fetch optional external link (e.g. Printables) from R2
-    let externalLink = "";
-    if (project.files.includes('link')) {
-      try {
-        const res = await fetch(`${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/link`);
-        if (res.ok) externalLink = await res.text();
-      } catch { externalLink = ""; }
-    }
-
-    return {
-      params: { slug: slugify(project.folderName) },
-      props: {
-        title: project.displayName,
-        folderName: project.folderName,
-        description: descriptionText.trim(),
-        printablesLink: externalLink.trim(),
-        files: assetFiles.map((fileName: string) => ({
-          name: fileName,
-          url: `${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/${encodeURIComponent(fileName)}`
-        })),
-      },
-    };
-  }));
-
-  return paths;
+async function fetchOptionalText(folderName: string, key: string): Promise<string> {
+  const url = `${R2_FILES_BASE}/${encodeURIComponent(folderName)}/${key}`;
+  try {
+    const res = await fetch(url);
+    return res.ok ? (await res.text()).trim() : '';
+  } catch {
+    return '';
+  }
 }
 
 const { title, description, printablesLink, files } = Astro.props;
@@ -68,9 +65,8 @@ const { title, description, printablesLink, files } = Astro.props;
     )}
   </div>
 
-  <!-- Expandable STL file list with 3D preview -->
   <div class="file-list">
-    {files.map((file: { name: string; url: string }) => (
+    {files.map((file: FileRef) => (
       <details class="glass-dropdown" data-stl-url={file.url}>
         <summary>
           <div class="summary-header">
@@ -92,7 +88,6 @@ const { title, description, printablesLink, files } = Astro.props;
 </MainLayout>
 
 <style>
-  /* Page-specific styles for 3D file detail pages */
   .project-desc {
     font-size: 0.95rem;
     color: var(--text-secondary);
@@ -101,14 +96,7 @@ const { title, description, printablesLink, files } = Astro.props;
     margin-bottom: 1.5rem;
     white-space: pre-wrap;
   }
-
   .printables-link { margin-bottom: 1rem; }
-
-  .file-list { display: flex; flex-direction: column; gap: 12px; }
-
-  .preview-wrap { padding: 0; }
-
-  /* Three.js 3D viewer container */
   .viewer-container {
     height: 450px;
     width: 100%;
@@ -127,37 +115,42 @@ const { title, description, printablesLink, files } = Astro.props;
     font-family: var(--font-mono);
     letter-spacing: 0.05em;
   }
-
   @media (max-width: 640px) {
     .viewer-container { height: 300px; }
   }
 </style>
 
-<!-- Three.js import map for browser-side STL loading -->
+<!-- Three.js for STL previews. Pinned exact version + SRI'd would be safer;
+     left at floating-pin for now (see security follow-ups). -->
 <script is:inline type="importmap">
-  { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
 </script>
 
-<!-- 3D viewer initialization: lazy-loads STL when dropdown is opened -->
 <script is:inline type="module">
   import * as THREE from 'three';
   import { STLLoader } from 'three/addons/loaders/STLLoader.js';
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-  // Track initialized viewers to prevent double-init
+  // Track which dropdowns we've already wired so toggling doesn't re-init.
   const activeViewers = new WeakSet();
 
-  /**
-   * Initialize a Three.js STL viewer inside a container element.
-   * Sets up scene, camera, lights, orbit controls, and loads the STL model.
-   */
   function initViewer(container, url) {
     if (activeViewers.has(container)) return;
     activeViewers.add(container);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x111111);
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
@@ -165,35 +158,53 @@ const { title, description, printablesLink, files } = Astro.props;
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
 
-    // Lighting: ambient fill + directional key light
     scene.add(new THREE.AmbientLight(0xffffff, 1));
     const dirLight = new THREE.DirectionalLight(0xffffff, 2);
     dirLight.position.set(1, 1, 1);
     scene.add(dirLight);
 
-    new STLLoader().load(url, function(geo) {
-      var loadingText = container.querySelector('.loading-text');
-      if (loadingText) loadingText.style.display = 'none';
-      geo.center();
-      var mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ color: 0xc11111, specular: 0x222222, shininess: 80 }));
-      mesh.rotation.x = -Math.PI / 2;
-      scene.add(mesh);
-      geo.computeBoundingBox();
-      var size = Math.max(geo.boundingBox.max.x - geo.boundingBox.min.x, geo.boundingBox.max.y - geo.boundingBox.min.y);
-      camera.position.z = size * 2.5;
-      var animate = function() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
-      animate();
-    }, undefined, function(err) {
-      var loadingText = container.querySelector('.loading-text');
-      if (loadingText) loadingText.innerText = 'Error loading 3D model';
-    });
+    new STLLoader().load(
+      url,
+      (geo) => {
+        const loadingText = container.querySelector('.loading-text');
+        if (loadingText) loadingText.style.display = 'none';
+        geo.center();
+        const mesh = new THREE.Mesh(
+          geo,
+          new THREE.MeshPhongMaterial({ color: 0xc11111, specular: 0x222222, shininess: 80 })
+        );
+        mesh.rotation.x = -Math.PI / 2;
+        scene.add(mesh);
+        geo.computeBoundingBox();
+        const size = Math.max(
+          geo.boundingBox.max.x - geo.boundingBox.min.x,
+          geo.boundingBox.max.y - geo.boundingBox.min.y
+        );
+        camera.position.z = size * 2.5;
+        (function animate() {
+          requestAnimationFrame(animate);
+          controls.update();
+          renderer.render(scene, camera);
+        })();
+      },
+      undefined,
+      () => {
+        const loadingText = container.querySelector('.loading-text');
+        if (loadingText) loadingText.innerText = 'Error loading 3D model';
+      }
+    );
   }
 
-  // Listen for <details> toggle to lazy-init the 3D viewer
-  document.addEventListener('toggle', function(e) {
-    if (e.target.open && e.target.classList.contains('glass-dropdown')) {
-      var viewer = e.target.querySelector('.viewer-container');
-      if (viewer) setTimeout(function() { initViewer(viewer, viewer.dataset.stlUrl); }, 50);
-    }
-  }, true);
+  // Lazy-init each viewer the first time its <details> opens. The slight
+  // setTimeout lets the open animation start before we hit the GPU.
+  document.addEventListener(
+    'toggle',
+    (e) => {
+      const target = e.target;
+      if (!target.open || !target.classList.contains('glass-dropdown')) return;
+      const viewer = target.querySelector('.viewer-container');
+      if (viewer) setTimeout(() => initViewer(viewer, viewer.dataset.stlUrl), 50);
+    },
+    true
+  );
 </script>

@@ -1,36 +1,39 @@
 ---
 /**
- * Brand Assets page — lists downloadable brand files (logos, banners)
- * from R2 storage with image preview in expandable dropdowns.
- * Includes client-side search filtering by filename.
+ * Brand Assets page — flat list of brand files pulled from R2, grouped
+ * alphabetically with expandable image previews and client-side search.
+ *
+ * Page-header, glass-input, letter-header, and the glass-dropdown pattern
+ * come from MainLayout.
  */
 import MainLayout from '../layouts/MainLayout.astro';
 import { getR2Data } from '../lib/r2';
 import { R2_BRAND_BASE } from '../constants';
 
-// Fetch all brand asset folders from R2 and flatten into a single file list
-const projects = await getR2Data("PNGU-Brand-Assets-main/");
-
-const allFiles = projects.flatMap(project =>
+// Each R2 "folder" returned by getR2Data() has a `files: string[]`. We don't
+// care about folder boundaries on this page — flatten to a single list.
+const projects = await getR2Data('PNGU-Brand-Assets-main/');
+const allFiles = projects.flatMap((project) =>
   project.files.map((fileName: string) => ({
     name: fileName,
-    fullUrl: `${R2_BRAND_BASE}/${encodeURIComponent(fileName)}`
+    fullUrl: `${R2_BRAND_BASE}/${encodeURIComponent(fileName)}`,
   }))
 );
 
-// Group files alphabetically by first character
-const grouped = allFiles.reduce((acc: Record<string, typeof allFiles>, file) => {
-  const firstChar = file.name[0].toUpperCase();
-  const char = /[A-Z]/.test(firstChar) ? firstChar : "#";
-  if (!acc[char]) acc[char] = [];
-  acc[char].push(file);
-  return acc;
-}, {});
+// Group by uppercase first letter; non-alphabetic names land in "#".
+const grouped = allFiles.reduce(
+  (acc, file) => {
+    const firstChar = file.name[0]?.toUpperCase() ?? '';
+    const key = /^[A-Z]$/.test(firstChar) ? firstChar : '#';
+    (acc[key] ??= []).push(file);
+    return acc;
+  },
+  {} as Record<string, typeof allFiles>
+);
 
-// Sort letter groups with "#" (non-alpha) at the end
 const sortedLetters = Object.keys(grouped).sort((a, b) => {
-  if (a === "#") return 1;
-  if (b === "#") return -1;
+  if (a === '#') return 1;
+  if (b === '#') return -1;
   return a.localeCompare(b);
 });
 ---
@@ -42,16 +45,13 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
     <p class="header-subtitle">Logos & Banners</p>
     <div class="header-nav">
       <a href="/" class="btn-glass">← Back Home</a>
-      <a href="https://lite.pngu.info/brand" class="btn-glass">Lite Version</a>
     </div>
   </div>
 
-  <!-- Search filter -->
   <div class="search-container scroll-reveal">
     <input type="text" id="brand-search" placeholder="Search assets..." class="glass-input" />
   </div>
 
-  <!-- Alphabetically grouped asset list -->
   <div id="results-container">
     {sortedLetters.map((letter) => (
       <div class="letter-group scroll-reveal" data-letter={letter}>
@@ -66,7 +66,12 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
                     <span class="file-name">{file.name}</span>
                     <span class="preview-text">Preview</span>
                   </div>
-                  <a href={file.fullUrl} class="download-pill" download={file.name} onclick="event.stopPropagation();">
+                  <a
+                    href={file.fullUrl}
+                    class="download-pill"
+                    download={file.name}
+                    onclick="event.stopPropagation();"
+                  >
                     Download
                   </a>
                 </summary>
@@ -89,22 +94,14 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
 </MainLayout>
 
 <style>
-  /* Brand-specific styles (shared styles live in MainLayout) */
-  .file-list { display: flex; flex-direction: column; gap: 10px; }
-
-  .preview-wrap {
-    padding: 1.25rem;
-    animation: slideReveal 0.4s var(--ease-out-expo);
-  }
-
-  /* Checkerboard pattern for transparent image previews */
+  /* Checkerboard background so transparent assets read clearly */
   .checkerboard {
     background-color: #1a1a1a;
     background-image:
-      linear-gradient(45deg, rgba(255,255,255,0.02) 25%, transparent 25%),
-      linear-gradient(-45deg, rgba(255,255,255,0.02) 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.02) 75%),
-      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.02) 75%);
+      linear-gradient(45deg,  rgba(255, 255, 255, 0.02) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(255, 255, 255, 0.02) 25%, transparent 25%),
+      linear-gradient(45deg,  transparent 75%, rgba(255, 255, 255, 0.02) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.02) 75%);
     background-size: 20px 20px;
     border-radius: var(--glass-radius-xs);
     display: flex;
@@ -113,8 +110,11 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
     padding: 2rem;
     border: 1px solid var(--glass-border);
   }
-  .checkerboard img { max-width: 100%; max-height: 400px; object-fit: contain; }
-
+  .checkerboard img {
+    max-width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+  }
   .no-preview {
     text-align: center;
     color: var(--text-muted);
@@ -124,26 +124,24 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
   }
 </style>
 
-<!-- Client-side search: filters asset dropdowns by filename -->
 <script is:inline>
-  var searchInput = document.getElementById('brand-search');
-  var letterGroups = document.querySelectorAll('.letter-group');
-
-  searchInput.addEventListener('input', function(e) {
-    var term = e.target.value.toLowerCase();
-    letterGroups.forEach(function(group) {
-      var hasVisibleFile = false;
-      var files = group.querySelectorAll('.glass-dropdown');
-      files.forEach(function(file) {
-        var name = file.dataset.filename;
-        if (name.includes(term)) {
-          file.style.display = 'block';
-          hasVisibleFile = true;
-        } else {
-          file.style.display = 'none';
-        }
+  // Client-side filter: hide non-matching files, and hide letter groups that
+  // become empty so the alphabetic anchors don't leave dangling headers.
+  (function () {
+    const input = document.getElementById('brand-search');
+    const groups = document.querySelectorAll('.letter-group');
+    if (!input) return;
+    input.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      groups.forEach((group) => {
+        let anyVisible = false;
+        group.querySelectorAll('.glass-dropdown').forEach((file) => {
+          const match = (file.dataset.filename || '').includes(term);
+          file.style.display = match ? 'block' : 'none';
+          if (match) anyVisible = true;
+        });
+        group.style.display = anyVisible ? 'block' : 'none';
       });
-      group.style.display = hasVisibleFile ? 'block' : 'none';
     });
-  });
+  })();
 </script>

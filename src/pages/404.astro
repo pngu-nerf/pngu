@@ -1,13 +1,7 @@
 ---
 /**
- * 404.astro — Not Found page with animated countdown timer
- *
- * Features:
- *   - Large SVG ring that shrinks over 10 seconds (Google Clock-style)
- *   - Countdown text showing remaining seconds
- *   - Auto-redirects to homepage when timer reaches zero
- *   - "Back Home" and "Try Lite Mode" action buttons inside the ring
- *   - Ring diameter: 560px (desktop), 340px (mobile)
+ * 404 page — shows a shrinking SVG ring as a 10-second countdown to /.
+ * The ring is a single SVG stroke whose dashoffset is updated each tick.
  */
 import MainLayout from '../layouts/MainLayout.astro';
 ---
@@ -16,155 +10,123 @@ import MainLayout from '../layouts/MainLayout.astro';
   <div class="error-page">
     <div class="label-tag">lost</div>
     <div class="timer-ring-wrap">
-      <svg class="timer-ring" viewBox="0 0 120 120">
-        <circle class="timer-ring-bg" cx="60" cy="60" r="56" />
-        <circle class="timer-ring-progress" id="timer-progress" cx="60" cy="60" r="56" />
+      <svg class="timer-ring" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="timer-ring-bg" cx="60" cy="60" r="52" />
+        <circle class="timer-ring-progress" id="timer-progress" cx="60" cy="60" r="52" />
       </svg>
-      <div class="ring-inner-content">
-        <span class="error-code">404</span>
-        <p class="error-message">This page doesn't exist.</p>
-        <p class="error-redirect" id="redirect-msg">Redirecting in <span id="countdown">10</span>s</p>
-        <div class="error-actions">
-          <a href="/" class="btn-primary">← Back Home</a>
-          <a href="https://lite.pngu.info" class="btn-glass">Try Lite Mode</a>
-        </div>
-      </div>
+      <span class="error-code">404</span>
+    </div>
+    <p class="error-message">This page doesn't exist.</p>
+    <p class="error-redirect" id="redirect-msg">
+      Redirecting in <span id="countdown">10</span>s
+    </p>
+    <div class="error-actions">
+      <a href="/" class="btn-primary">← Back Home</a>
+      <a href="/contact" class="btn-glass">Contact →</a>
     </div>
   </div>
 </MainLayout>
 
 <style>
-  /* Center the 404 content vertically within the viewport */
   .error-page {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 70vh;
+    min-height: 60vh;
     text-align: center;
   }
-
-  /* Container for the SVG ring + inner content */
   .timer-ring-wrap {
     position: relative;
-    width: 560px;
-    height: 560px;
+    width: 200px;
+    height: 200px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 1rem 0;
+    margin: 1.5rem 0 1rem;
   }
-
-  /* SVG ring rotated -90deg so stroke starts at top (12 o'clock position) */
   .timer-ring {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    transform: rotate(-90deg);
+    transform: rotate(-90deg); /* start stroke at 12 o'clock */
   }
-
-  /* Faint circular track behind the animated stroke */
   .timer-ring-bg {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.04);
-    stroke-width: 1.5;
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 3;
   }
-
-  /* Animated red ring that shrinks via stroke-dashoffset */
   .timer-ring-progress {
     fill: none;
     stroke: var(--accent);
-    stroke-width: 2;
+    stroke-width: 3;
     stroke-linecap: round;
-    stroke-dasharray: 351.86;  /* circumference = 2π × 56 */
+    stroke-dasharray: 326.73; /* 2π × 52 */
     stroke-dashoffset: 0;
     transition: stroke-dashoffset 1s linear;
-    filter: drop-shadow(0 0 12px rgba(193, 17, 17, 0.5));
+    filter: drop-shadow(0 0 8px rgba(193, 17, 17, 0.4));
   }
-
-  .ring-inner-content {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
   .error-code {
     font-family: var(--font-title);
-    font-size: 6rem;
-    font-weight: normal;
+    font-size: 5rem;
+    font-weight: 400;
     letter-spacing: 0.04em;
     line-height: 1;
-    background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 100%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
   }
-
   .error-message {
     font-size: 1.1rem;
     color: var(--text-secondary);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
   }
-
   .error-redirect {
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--text-muted);
     letter-spacing: 0.04em;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
-
   .error-actions {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
     justify-content: center;
   }
-
   @media (max-width: 640px) {
-    .timer-ring-wrap {
-      width: 340px;
-      height: 340px;
-    }
-    .error-code { font-size: 4rem; }
+    .timer-ring-wrap { width: 160px; height: 160px; }
+    .error-code { font-size: 3.5rem; }
     .error-actions { flex-direction: column; }
   }
 </style>
 
 <script is:inline>
-  // ============================================
-  //  404 COUNTDOWN TIMER
-  //  Ticks once per second, shrinking the SVG ring stroke.
-  //  stroke-dashoffset = circumference × (1 - secondsLeft/10)
-  //  Redirects to '/' when countdown reaches zero.
-  // ============================================
-  (function() {
+  // Tick once per second, shrinking the ring stroke and updating the
+  // countdown number. Redirect to / when it hits zero.
+  (function () {
     const progress = document.getElementById('timer-progress');
     const countdownEl = document.getElementById('countdown');
     if (!progress || !countdownEl) return;
 
-    const circumference = 2 * Math.PI * 56; // r=56 → ~351.86
+    const circumference = 2 * Math.PI * 52; // ≈ 326.73
     let secondsLeft = 10;
 
     function tick() {
       secondsLeft--;
       countdownEl.textContent = secondsLeft;
-
       const offset = circumference * (1 - secondsLeft / 10);
       progress.style.strokeDashoffset = offset.toFixed(1);
-
       if (secondsLeft <= 0) {
         window.location.href = '/';
       } else {
         setTimeout(tick, 1000);
       }
     }
-
     setTimeout(tick, 1000);
   })();
 </script>

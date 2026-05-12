@@ -1,12 +1,31 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PNGU Admin</title>
+    <!-- Manual init lets us configure Decap inline below rather than via a
+         /admin/config.yml file. -->
     <script>window.CMS_MANUAL_INIT = true;</script>
   </head>
   <body>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!--
+      Decap CMS is loaded from a CDN with an exact version pin. Replace the
+      `integrity` attribute below with the real SRI hash for this version:
+
+          curl -s https://unpkg.com/decap-cms@3.5.0/dist/decap-cms.js \
+            | openssl dgst -sha384 -binary \
+            | openssl base64 -A \
+            | sed 's/^/sha384-/'
+
+      Then paste the result into the integrity= attribute. Bumping the version
+      number requires regenerating the hash.
+    -->
+    <script
+      src="https://unpkg.com/decap-cms@3.5.0/dist/decap-cms.js"
+      integrity="sha384-REPLACE_ME"
+      crossorigin="anonymous"
+    ></script>
     <script>
       CMS.init({
         config: {
@@ -14,9 +33,9 @@
             name: 'github',
             repo: 'pngu-nerf/pngu',
             branch: 'main',
-            // MUST be your worker URL without the "/auth" or "/" at the end
-            base_url: 'https://pngu-auth.nolan.workers.dev', 
-            auth_endpoint: 'auth'
+            // Worker URL — no trailing slash, no "/auth".
+            base_url: 'https://pngu-auth.nolan.workers.dev',
+            auth_endpoint: 'auth',
           },
           load_config_file: false,
           media_folder: 'public/images/blasters',
@@ -30,11 +49,11 @@
               fields: [
                 { label: 'Title', name: 'title', widget: 'string' },
                 { label: 'Description', name: 'description', widget: 'text' },
-                { label: 'Body', name: 'body', widget: 'markdown' }
-              ]
-            }
-          ]
-        }
+                { label: 'Body', name: 'body', widget: 'markdown' },
+              ],
+            },
+          ],
+        },
       });
     </script>
   </body>

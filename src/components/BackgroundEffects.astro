@@ -1,18 +1,22 @@
 ---
 /**
- * BackgroundEffects.astro — Full-screen canvas animation layer
+ * BackgroundEffects.astro — full-screen canvas behind every page.
  *
- * Renders behind all page content to create the atmospheric environment.
- * Re-architected to allow the 3D CSS portals on the homepage to sit 
- * seamlessly on top without causing "double-vision" rendering bugs.
+ * Two visual modes, switched on by URL:
+ *   - "/"           — animated traces follow the PNGU logo path for 5s,
+ *                     then fade into the aurora.
+ *   - any other URL — aurora bands directly, no logo intro.
  *
- * Layers:
- * 1. Dot grid texture (cached offscreen)
- * 2. Twinkling star field with mouse repulsion
- * 3. Wavy aurora strands with parallax
- * 4. Diagonal shooting stars
+ * Rendering details:
+ *   - One offscreen dot-grid texture, blitted each frame.
+ *   - 30 FPS cap to keep mobile CPU usage modest.
+ *   - The grain overlay is a CSS-only SVG (no image request).
+ *
+ * The script duplicates the logo path data from <Logo />. Keeping a string
+ * copy avoids reading the inline <svg> from the DOM before it's painted.
  */
 ---
+
 <canvas id="bg-canvas"></canvas>
 <div id="grain-overlay"></div>
 
@@ -25,9 +29,8 @@
     height: 100%;
     z-index: -1;
     pointer-events: none;
-    background: #000000;
+    background: #000;
   }
-
   #grain-overlay {
     position: fixed;
     inset: 0;
@@ -40,242 +43,289 @@
 </style>
 
 <script is:inline>
-(function() {
-  const canvas = document.getElementById('bg-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+  (function () {
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const isHome =
+      window.location.pathname === '/' || window.location.pathname === '';
 
-  let W, H;
-  function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
+    let W, H;
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
 
-  // --- Wavy Aurora Strand ---
-  class AuroraBand {
-    constructor(y, color, width, speed, amp, freq, offset) {
-      this.baseY = y;
-      this.color = color;
-      this.width = width;
-      this.speed = speed;
-      this.amp = amp;
-      this.freq = freq;
-      this.offset = offset;
-      this.opacity = 0;
-      this.targetOpacity = 0.12 + Math.random() * 0.1;
-      this.freq2 = freq * 2.3 + Math.random() * 1.5;
-      this.amp2 = amp * 0.35;
-      this.offset2 = offset * 1.7 + Math.random();
-    }
-    update(time) {
-      if (this.opacity < this.targetOpacity) this.opacity += 0.002;
-    }
-    draw(ctx, time, W, H) {
-      if (this.opacity < 0.01) return;
-      ctx.beginPath();
-      const steps = 50;
-      const timeF = time * this.speed * 0.0008;
-      for (let i = 0; i <= steps; i++) {
-        const t = i / steps;
-        const x = t * W;
-        const wave1 = Math.sin(t * this.freq + timeF + this.offset) * this.amp;
-        const wave2 = Math.sin(t * this.freq2 + timeF * 0.7 + this.offset2) * this.amp2;
-        const y = this.baseY + wave1 + wave2;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+    // PNGU mark path — kept in sync with src/components/Logo.astro.
+    const LOGO_PATH = 'M740.999,478.013 C732.574,479.445 726.913,485.562 720.161,489.579 C712.414,494.187 704.845,499.102 697.298,504.036 C692.012,507.492 686.547,510.801 681.777,514.892 C674.551,521.090 667.873,527.928 660.935,534.464 C654.627,540.404 648.340,546.368 641.928,552.195 C639.013,554.844 635.485,556.876 632.823,559.735 C627.664,565.276 622.951,571.231 617.999,576.966 C611.902,584.025 605.341,590.729 599.758,598.169 C595.680,603.603 591.923,609.316 589.345,615.895 C586.196,623.934 581.278,631.263 577.628,639.132 C575.564,643.581 574.522,648.502 572.996,653.202 C571.465,657.920 569.905,662.628 568.356,667.339 C568.256,667.642 568.004,667.957 568.045,668.234 C569.180,675.956 563.976,674.825 559.098,675.090 C545.363,675.834 531.422,675.836 518.020,678.466 C510.688,679.905 503.644,679.769 496.516,679.888 C461.607,680.469 426.579,679.030 391.812,681.458 C356.639,683.914 321.572,682.024 286.473,682.919 C257.736,683.651 228.980,683.617 200.234,684.019 C184.150,684.245 168.069,684.716 151.986,684.988 C129.572,685.368 107.157,685.739 84.741,685.946 C79.477,685.995 75.828,682.500 72.505,678.891 C71.964,678.304 71.809,676.901 72.095,676.095 C73.272,672.776 74.624,669.514 76.028,666.282 C79.981,657.187 83.997,648.119 87.978,639.036 C92.523,628.667 97.115,618.317 101.567,607.908 C103.141,604.229 104.237,600.347 105.774,596.651 C109.775,587.026 113.968,577.481 117.948,567.847 C120.196,562.404 122.038,556.792 124.309,551.358 C127.095,544.691 130.291,538.194 133.020,531.504 C134.939,526.798 136.209,521.830 138.071,517.098 C139.877,512.507 141.862,507.960 144.139,503.587 C147.600,496.940 151.181,490.338 155.090,483.949 C158.234,478.810 162.091,474.112 165.357,469.042 C169.395,462.771 172.954,456.189 177.079,449.979 C181.603,443.167 186.668,436.715 191.241,429.934 C194.070,425.740 196.243,421.106 199.027,416.879 C203.584,409.962 208.472,403.264 213.075,396.376 C215.326,393.009 216.687,388.884 219.421,386.033 C229.376,375.650 239.777,365.698 249.936,355.509 C256.358,349.067 262.390,342.209 269.107,336.098 C272.430,333.075 276.849,331.217 280.868,329.007 C290.026,323.972 299.206,318.976 308.446,314.095 C316.772,309.695 324.964,304.916 333.647,301.360 C339.508,298.959 346.158,298.540 352.385,296.958 C359.025,295.271 365.667,293.512 372.154,291.330 C382.317,287.911 392.847,287.437 403.361,287.054 C426.521,286.213 449.703,285.931 472.853,284.882 C483.476,284.400 493.720,285.910 504.024,287.915 C507.539,288.599 511.188,288.584 514.769,288.950 C521.210,289.609 527.711,289.960 534.066,291.113 C539.058,292.019 543.933,293.752 548.738,295.463 C553.265,297.075 557.640,299.117 562.066,301.007 C566.924,303.081 571.821,305.076 576.597,307.327 C582.149,309.943 587.534,312.913 593.089,315.523 C600.764,319.129 609.275,321.490 616.071,326.301 C624.695,332.407 634.338,336.107 643.456,341.000 C654.417,346.882 665.312,352.890 676.352,358.620 C681.614,361.350 687.229,363.394 692.531,366.053 C698.779,369.185 704.857,372.654 711.020,375.957 C711.783,376.366 712.597,376.916 713.411,376.959 C721.158,377.360 728.908,377.735 736.662,377.984 C748.910,378.377 761.167,378.531 773.410,379.040 C785.084,379.525 796.741,380.404 808.412,380.978 C817.490,381.424 826.582,381.588 835.662,382.019 C848.105,382.610 860.547,383.264 872.977,384.082 C874.690,384.195 876.413,385.251 877.992,386.124 C884.449,389.693 890.880,393.313 897.263,397.013 C899.923,398.555 902.505,400.252 905.010,402.037 C910.838,406.190 917.701,408.722 922.423,414.653 C927.559,421.104 933.497,426.916 939.744,433.723 C930.994,434.880 922.980,435.952 914.962,436.997 C907.107,438.020 898.921,437.982 891.489,440.334 C885.024,442.380 878.619,442.033 872.225,442.975 C864.687,444.085 857.104,444.899 849.573,446.050 C844.327,446.852 839.135,448.016 833.916,448.999 C828.536,450.013 823.152,451.007 817.768,452.002 C812.061,453.055 806.188,453.567 800.686,455.277 C793.217,457.600 786.012,460.787 778.730,463.693 C771.333,466.646 764.039,469.867 756.587,472.669 C751.510,474.578 746.238,475.968 740.999,478.013 Z';
+
+    // Sample N points along the SVG path, normalized into [0,1]^2.
+    function sampleSVGPath(pathD, numSamples) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', '0 0 1000 1000');
+      svg.style.position = 'absolute';
+      svg.style.width = '0';
+      svg.style.height = '0';
+      svg.style.overflow = 'hidden';
+      const path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', pathD);
+      svg.appendChild(path);
+      document.body.appendChild(svg);
+
+      const total = path.getTotalLength();
+      const raw = [];
+      for (let i = 0; i < numSamples; i++) {
+        const pt = path.getPointAtLength((i / numSamples) * total);
+        raw.push({ x: pt.x, y: pt.y });
       }
-      ctx.strokeStyle = this.color.replace('ALPHA', this.opacity.toFixed(3));
-      ctx.lineWidth = this.width;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.stroke();
-    }
-  }
+      document.body.removeChild(svg);
 
-  // --- Shooting Star ---
-  class ShootingStar {
-    constructor(clustered) { this.reset(clustered); }
-    reset(clustered) {
-      var startX = W * (0.5 + Math.random() * 0.6);
-      var startY = -20 - Math.random() * H * 0.3;
-      if (clustered) {
-        startX += (Math.random() - 0.5) * W * 0.15;
-        startY += (Math.random() - 0.5) * H * 0.1;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      raw.forEach((p) => {
+        if (p.x < minX) minX = p.x;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.y > maxY) maxY = p.y;
+      });
+      const bw = maxX - minX || 1;
+      const bh = maxY - minY || 1;
+      return raw.map((p) => ({ x: (p.x - minX) / bw, y: (p.y - minY) / bh }));
+    }
+
+    // Scale a normalized path to (cx, cy) at (scaleW, scaleH) in screen space.
+    function scalePath(normPts, cx, cy, scaleW, scaleH) {
+      return normPts.map((p) => ({
+        x: cx + (p.x - 0.5) * scaleW,
+        y: cy + (p.y - 0.5) * scaleH,
+      }));
+    }
+
+    // Slow horizontal sine wave — used for the off-home ambient bands.
+    class AuroraBand {
+      constructor(y, color, width, speed, amp, freq, offset) {
+        this.baseY = y;
+        this.color = color;
+        this.width = width;
+        this.speed = speed;
+        this.amp = amp;
+        this.freq = freq;
+        this.offset = offset;
+        this.opacity = 0;
+        this.targetOpacity = 0.12 + Math.random() * 0.1;
       }
-      this.x = startX;
-      this.y = startY;
-      var angle = Math.PI * (0.65 + Math.random() * 0.2);
-      this.speed = 2.5 + Math.random() * 4;
-      this.vx = Math.cos(angle) * this.speed;
-      this.vy = Math.sin(angle) * this.speed;
-      
-      // DOUBLED: Shooting Star Size & Trail
-      this.tailLen = (40 + Math.random() * 60) * 1.5; 
-      this.width = (0.6 + Math.random() * 1.8) * 2.0; 
-      
-      this.life = 1;
-      this.decay = 0.004 + Math.random() * 0.006;
-      this.isWhite = Math.random() < 0.33;
-      this.active = true;
-    }
-    update() {
-      if (!this.active) return;
-      this.x += this.vx; this.y += this.vy;
-      this.life -= this.decay;
-      if (this.life <= 0 || this.x < -100 || this.y > H + 100) this.active = false;
-    }
-    draw(ctx) {
-      if (!this.active || this.life <= 0) return;
-      var tailX = this.x - this.vx * this.tailLen / this.speed;
-      var tailY = this.y - this.vy * this.tailLen / this.speed;
-      var segments = 6;
-      for (var s = segments - 1; s >= 0; s--) {
-        var t0 = s / segments; var t1 = (s + 1) / segments;
-        var x0 = tailX + (this.x - tailX) * t0; var y0 = tailY + (this.y - tailY) * t0;
-        var x1 = tailX + (this.x - tailX) * t1; var y1 = tailY + (this.y - tailY) * t1;
-        var alpha = t1 * t1 * this.life * 0.6;
-        var w = this.width * (0.15 + t1 * 0.85);
+      update() {
+        if (this.opacity < this.targetOpacity) this.opacity += 0.002;
+      }
+      draw(ctx, time, W, H) {
+        if (this.opacity < 0.01) return;
         ctx.beginPath();
-        ctx.moveTo(x0, y0);
-        ctx.lineTo(x1, y1);
-        ctx.strokeStyle = this.isWhite 
-          ? 'rgba(255, 255, 255, ' + alpha.toFixed(3) + ')'
-          : 'rgba(193, 17, 17, ' + alpha.toFixed(3) + ')';
-        ctx.lineWidth = w;
+        const steps = 40;
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const x = t * W;
+          const wave =
+            Math.sin(t * this.freq + time * this.speed * 0.0008 + this.offset) *
+            this.amp;
+          const y = this.baseY + wave;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = this.color.replace('ALPHA', this.opacity.toFixed(3));
+        ctx.lineWidth = this.width;
         ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.stroke();
       }
     }
-  }
 
-  // --- Initialization ---
-  const redColor = 'rgba(193, 17, 17, ALPHA)';
-  const softRed = 'rgba(220, 60, 60, ALPHA)';
-  const dimRed = 'rgba(160, 30, 30, ALPHA)';
-  const brightWhite = 'rgba(255, 255, 255, ALPHA)';
-
-  let auroraBands = [];
-  let stars = [];
-  let scrollY = 0;
-  let mouseX = -1000, mouseY = -1000;
-  let mouseActive = false;
-
-  window.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; mouseActive = true; });
-  document.addEventListener('mouseleave', function() { mouseActive = false; });
-  window.addEventListener('scroll', function() { scrollY = window.scrollY || window.pageYOffset; }, { passive: true });
-
-  let gridCanvas = null;
-  function buildGridTexture() {
-    gridCanvas = document.createElement('canvas');
-    gridCanvas.width = W; gridCanvas.height = H;
-    const gc = gridCanvas.getContext('2d');
-    gc.fillStyle = 'rgba(255, 255, 255, 0.015)';
-    for (let x = 40; x < W; x += 40) {
-      for (let y = 40; y < H; y += 40) {
-        gc.beginPath(); gc.arc(x, y, 0.6, 0, Math.PI * 2); gc.fill();
+    // A tapering "comet" that follows the logo path. Head bright, tail thin.
+    class Trace {
+      constructor(pathPoints, speed, delay, color, width) {
+        this.pathPoints = pathPoints;
+        this.pathLen = pathPoints.length;
+        this.speed = speed;
+        this.delay = delay;
+        this.color = color;
+        this.baseWidth = width;
+        this.progress = Math.random() * pathPoints.length;
+        this.tailLen = 60 + Math.random() * 40;
+        this.active = false;
+        this.opacity = 1;
+      }
+      update(time) {
+        if (time < this.delay) return;
+        this.active = true;
+        this.progress += this.speed;
+        if (this.progress >= this.pathLen) this.progress -= this.pathLen;
+      }
+      fadeOut() {
+        this.opacity = Math.max(0, this.opacity - 0.02);
+      }
+      draw(ctx) {
+        if (!this.active || this.opacity < 0.01) return;
+        const headIdx = Math.floor(this.progress) % this.pathLen;
+        const segments = 8;
+        const segLen = Math.floor(this.tailLen / segments);
+        for (let s = segments - 1; s >= 0; s--) {
+          const tFade = 1 - s / segments;
+          const alpha = tFade * tFade * 0.55 * this.opacity;
+          const width = this.baseWidth * (0.2 + tFade * 0.8);
+          ctx.beginPath();
+          const startI = s * segLen;
+          const endI = Math.min((s + 1) * segLen + 1, this.tailLen);
+          for (let i = startI; i < endI; i++) {
+            const idx = (headIdx - i + this.pathLen) % this.pathLen;
+            const pt = this.pathPoints[idx];
+            if (i === startI) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+          }
+          ctx.strokeStyle = this.color.replace('ALPHA', alpha.toFixed(3));
+          ctx.lineWidth = width;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.stroke();
+        }
       }
     }
-  }
 
-  function buildAurora() {
-    auroraBands = [];
-    const colors = [redColor, softRed, brightWhite, dimRed, redColor, softRed, brightWhite, dimRed, softRed, redColor, brightWhite, dimRed, redColor, softRed, brightWhite, softRed];
-    for (let i = 0; i < 16; i++) {
-      const band = new AuroraBand(H * (0.04 + (i / 16) * 0.92), colors[i], 0.8 + Math.random() * 1.8, 0.1 + Math.random() * 0.4, 15 + Math.random() * 30, 1.0 + Math.random() * 3.0, i * 0.8 + Math.random() * 0.5);
-      if (colors[i] === brightWhite) band.targetOpacity = 0.18 + Math.random() * 0.12;
-      auroraBands.push(band);
+    const normPoints = sampleSVGPath(LOGO_PATH, 300);
+    const redColor = 'rgba(193, 17, 17, ALPHA)';
+    const whiteColor = 'rgba(255, 255, 255, ALPHA)';
+    const softRed = 'rgba(220, 60, 60, ALPHA)';
+    const dimRed = 'rgba(160, 30, 30, ALPHA)';
+
+    let traces = [];
+    let auroraBands = [];
+    let pathPoints;
+
+    // Offscreen dot grid — drawn once on resize, blitted each frame.
+    let gridCanvas = null;
+    function buildGridTexture() {
+      gridCanvas = document.createElement('canvas');
+      gridCanvas.width = W;
+      gridCanvas.height = H;
+      const gc = gridCanvas.getContext('2d');
+      gc.fillStyle = 'rgba(255, 255, 255, 0.015)';
+      const spacing = 40;
+      for (let x = spacing; x < W; x += spacing) {
+        for (let y = spacing; y < H; y += spacing) {
+          gc.beginPath();
+          gc.arc(x, y, 0.6, 0, Math.PI * 2);
+          gc.fill();
+        }
+      }
     }
-  }
 
-  function buildStarField() {
-    stars = [];
-    for (let x = 15; x < W; x += 30) {
-      for (let y = 15; y < H; y += 30) {
-        stars.push({ 
-          baseX: x, baseY: y, 
-          x: x, y: y, 
-          // DOUBLED: Background Star Size
-          size: 1.6 + Math.random() * 1.6, 
-          twinkle: Math.random() * Math.PI * 2 
+    function buildPath() {
+      // Logo bounding-box aspect ≈ 2.16. Anchor near top-center, shifted
+      // right so the visual "head" of the mark sits on the page's centerline.
+      const aspect = 2.16;
+      const targetH = H * 0.5;
+      const targetW = targetH * aspect;
+      const finalW = Math.min(targetW, W * 0.85);
+      const finalH = finalW / aspect;
+      const cx = W * 0.5 + finalW * 0.2;
+      const cy = H * 0.36;
+      pathPoints = scalePath(normPoints, cx, cy, finalW, finalH);
+      return pathPoints;
+    }
+
+    function buildAurora() {
+      auroraBands = [];
+      const colors = [redColor, softRed, dimRed, whiteColor];
+      const yPositions = [0.12, 0.3, 0.5, 0.82];
+      for (let i = 0; i < 4; i++) {
+        auroraBands.push(
+          new AuroraBand(
+            H * yPositions[i],
+            colors[i],
+            1 + Math.random() * 1.5,
+            0.2 + Math.random() * 0.3,
+            10 + Math.random() * 15,
+            1.5 + Math.random() * 2,
+            i * 1.5
+          )
+        );
+      }
+    }
+
+    pathPoints = buildPath();
+    buildGridTexture();
+
+    if (isHome) {
+      traces.push(new Trace(pathPoints, 2.0, 100, redColor, 2.0));
+      traces.push(new Trace(pathPoints, 1.5, 500, redColor, 1.6));
+      traces.push(new Trace(pathPoints, 2.3, 1000, softRed, 1.4));
+      traces.push(new Trace(pathPoints, 1.8, 1500, dimRed, 1.2));
+      traces.push(new Trace(pathPoints, 1.3, 300, whiteColor, 0.8));
+      traces.push(new Trace(pathPoints, 1.6, 800, whiteColor, 0.6));
+    } else {
+      buildAurora();
+    }
+
+    const SPREAD_START = isHome ? 5000 : 0;
+    let spreadTriggered = !isHome;
+    let fadingOut = false;
+    const startTime = performance.now();
+    let lastFrame = 0;
+    const FRAME_TIME = 1000 / 30; // cap at 30 fps
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      if (now - lastFrame < FRAME_TIME) return;
+      lastFrame = now;
+
+      const elapsed = now - startTime;
+      ctx.clearRect(0, 0, W, H);
+      if (gridCanvas) ctx.drawImage(gridCanvas, 0, 0);
+
+      // After SPREAD_START on the home page, swap traces for aurora.
+      if (isHome && !spreadTriggered && elapsed > SPREAD_START) {
+        spreadTriggered = true;
+        fadingOut = true;
+        buildAurora();
+      }
+
+      if (isHome && traces.length > 0) {
+        if (fadingOut) traces.forEach((t) => t.fadeOut());
+        traces.forEach((t) => {
+          t.update(elapsed);
+          t.draw(ctx);
+        });
+        // Subtle red ambient glow while the logo is on screen.
+        if (!spreadTriggered) {
+          const glowAlpha = Math.min(1, elapsed / 2000) * 0.025;
+          const cx = W * 0.5, cy = H * 0.38;
+          const r = Math.min(W, H) * 0.25;
+          const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+          grd.addColorStop(0, 'rgba(193, 17, 17, ' + glowAlpha + ')');
+          grd.addColorStop(1, 'rgba(193, 17, 17, 0)');
+          ctx.fillStyle = grd;
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+
+      if (spreadTriggered) {
+        auroraBands.forEach((b) => {
+          b.update();
+          b.draw(ctx, elapsed, W, H);
         });
       }
     }
-  }
 
-  var shootingStars = [], lastShootTime = 0, nextShootDelay = 2000 + Math.random() * 3000, clusterCount = 0, inCluster = false;
-  function spawnShootingStar(elapsed) {
-    if (elapsed - lastShootTime < nextShootDelay) return;
-    lastShootTime = elapsed;
-    if (!inCluster && Math.random() < 0.4) { inCluster = true; clusterCount = 2 + Math.floor(Math.random() * 4); }
-    if (inCluster) {
-      shootingStars.push(new ShootingStar(true)); clusterCount--;
-      nextShootDelay = 80 + Math.random() * 250;
-      if (clusterCount <= 0) { inCluster = false; nextShootDelay = 3000 + Math.random() * 5000; }
-    } else {
-      shootingStars.push(new ShootingStar(false)); nextShootDelay = 2000 + Math.random() * 4000;
-    }
-    if (shootingStars.length > 20) shootingStars = shootingStars.filter(function(s) { return s.active; });
-  }
-
-  buildGridTexture(); buildAurora(); buildStarField();
-
-  // --- Render Loop ---
-  const startTime = performance.now();
-  let lastFrame = 0;
-  const FRAME_TIME = 1000 / 30;
-
-  function animate(now) {
     requestAnimationFrame(animate);
-    if (now - lastFrame < FRAME_TIME) return;
-    lastFrame = now;
 
-    const elapsed = now - startTime;
-    ctx.clearRect(0, 0, W, H);
-    if (gridCanvas) ctx.drawImage(gridCanvas, 0, 0);
-
-    // Interactive Starfield
-    // DOUBLED: Global Star Brightness Alpha
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.beginPath();
-    for (var si2 = 0; si2 < stars.length; si2++) {
-      var s2 = stars[si2];
-      var sx2 = s2.baseX; var sy2 = s2.baseY;
-      if (mouseActive) {
-        var mdx2 = sx2 - mouseX, mdy2 = sy2 - mouseY, mDist2 = mdx2 * mdx2 + mdy2 * mdy2;
-        if (mDist2 < 6400 && mDist2 > 0) {
-          var mDistReal = Math.sqrt(mDist2);
-          var force2 = (1 - mDistReal / 80) * 15;
-          sx2 += (mdx2 / mDistReal) * force2; sy2 += (mdy2 / mDistReal) * force2;
-        }
-      }
-      s2.x = sx2; s2.y = sy2;
-      var twinkle2 = 0.15 + 0.2 * Math.sin(elapsed * 0.002 + s2.twinkle);
-      ctx.moveTo(sx2 + s2.size * 0.7, sy2);
-      ctx.arc(sx2, sy2, s2.size * 0.7, 0, Math.PI * 2);
-    }
-    ctx.fill();
-
-    // Aurora Strands
-    ctx.save();
-    ctx.translate(0, -scrollY * 0.075);
-    auroraBands.forEach(function(b) { b.update(elapsed); b.draw(ctx, elapsed, W, H); });
-    ctx.restore();
-
-    // Shooting Stars
-    spawnShootingStar(elapsed);
-    for (var ssi = shootingStars.length - 1; ssi >= 0; ssi--) {
-      shootingStars[ssi].update();
-      if (!shootingStars[ssi].active) shootingStars.splice(ssi, 1);
-      else shootingStars[ssi].draw(ctx);
-    }
-  }
-
-  requestAnimationFrame(animate);
-
-  window.addEventListener('resize', function() {
-    resize(); buildGridTexture(); buildStarField(); buildAurora();
-  });
-})();
+    window.addEventListener('resize', () => {
+      pathPoints = buildPath();
+      buildGridTexture();
+      traces.forEach((t) => {
+        t.pathPoints = pathPoints;
+        t.pathLen = pathPoints.length;
+      });
+      if (spreadTriggered) buildAurora();
+    });
+  })();
 </script>

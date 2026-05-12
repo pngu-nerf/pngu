@@ -1,10 +1,14 @@
 ---
+/**
+ * Blaster Data entry page — renders one `blasters` content entry with its
+ * markdown body plus an aside listing any attached files.
+ */
 import MainLayout from '../../layouts/MainLayout.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const blasters = await getCollection('blasters');
-  return blasters.map(blaster => ({
+  return blasters.map((blaster) => ({
     params: { slug: blaster.slug },
     props: { blaster },
   }));
@@ -14,56 +18,111 @@ const { blaster } = Astro.props;
 const { Content } = await blaster.render();
 ---
 
-<MainLayout title={blaster.data.title}>
-  <a href="/data" style="color: var(--accent); text-decoration: none; display: inline-block; margin-bottom: 2rem;">← Back to Library</a>
-  
-  <article>
-    <header style="margin-bottom: 3rem; border-bottom: 1px solid var(--border); padding-bottom: 2rem;">
-      <h1 style="font-size: 3rem; margin-bottom: 1rem;">{blaster.data.title}</h1>
-      {blaster.data.description && <p style="color: var(--text-muted); font-size: 1.1rem;">{blaster.data.description}</p>}
-      
-      {blaster.data.coverImage && (
-        <img src={blaster.data.coverImage} alt={blaster.data.title} style="width: 100%; border-radius: 12px; margin-top: 1.5rem; object-fit: cover; max-height: 400px;" />
+<MainLayout title={blaster.data.title} description={blaster.data.description}>
+  <div class="page-header">
+    <a href="/data" class="back-link">← All Blasters</a>
+    <div class="label-tag">blaster</div>
+    <h1>{blaster.data.title}</h1>
+    {blaster.data.description && (
+      <p class="header-subtitle">{blaster.data.description}</p>
+    )}
+    {blaster.data.coverImage && (
+      <img
+        src={blaster.data.coverImage}
+        alt={blaster.data.title}
+        class="cover-image"
+        loading="lazy"
+      />
+    )}
+  </div>
+
+  <div class="entry-grid">
+    <article class="markdown-content">
+      <Content />
+    </article>
+
+    <aside class="glass-card attached-aside">
+      <h2>Attached Files</h2>
+      {blaster.data.attachedFiles && blaster.data.attachedFiles.length > 0 ? (
+        <ul class="attached-list">
+          {blaster.data.attachedFiles.map((file) => (
+            <li>
+              <a href={file.fileUrl} target="_blank" rel="noopener" class="attached-link">
+                📄 {file.fileName}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="attached-empty">No files attached.</p>
       )}
-    </header>
-
-    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 3rem;">
-      <div class="markdown-content">
-        <Content />
-      </div>
-
-      <aside>
-        <div class="card" style="position: sticky; top: 100px;">
-          <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Attached Files</h3>
-          {blaster.data.attachedFiles && blaster.data.attachedFiles.length > 0 ? (
-            <ul style="list-style: none; padding: 0;">
-              {blaster.data.attachedFiles.map(file => (
-                <li style="margin-bottom: 0.75rem;">
-                  <a href={file.fileUrl} target="_blank" style="color: var(--accent); text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                    📄 {file.fileName}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p style="color: var(--text-muted); font-size: 0.85rem;">No files attached.</p>
-          )}
-        </div>
-      </aside>
-    </div>
-  </article>
+    </aside>
+  </div>
 </MainLayout>
 
+<style>
+  .cover-image {
+    width: 100%;
+    border-radius: var(--glass-radius);
+    margin-top: 1rem;
+    object-fit: cover;
+    max-height: 400px;
+  }
+
+  .entry-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 3rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 768px) {
+    .entry-grid { grid-template-columns: 1fr; }
+  }
+
+  .attached-aside {
+    align-self: start;
+    position: sticky;
+    top: calc(var(--nav-height) + 2rem);
+    padding: 1.5rem;
+  }
+  .attached-list { list-style: none; padding: 0; }
+  .attached-list li { margin-bottom: 0.75rem; }
+  .attached-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color var(--transition-fast);
+  }
+  .attached-link:hover { color: var(--accent-bright); }
+  .attached-empty {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0;
+  }
+</style>
+
 <style is:global>
+  /* Markdown body — only applied inside data entry pages. */
   .markdown-content h2 { font-size: 1.75rem; margin: 2rem 0 1rem; }
   .markdown-content h3 { font-size: 1.25rem; margin: 1.5rem 0 0.5rem; }
-  .markdown-content p { margin-bottom: 1rem; color: var(--text-muted); line-height: 1.7; }
-  .markdown-content ul, .markdown-content ol { margin: 0 0 1rem 1.5rem; color: var(--text-muted); }
+  .markdown-content p { margin-bottom: 1rem; color: var(--text-secondary); line-height: 1.7; }
+  .markdown-content ul,
+  .markdown-content ol { margin: 0 0 1rem 1.5rem; color: var(--text-secondary); }
   .markdown-content li { margin-bottom: 0.5rem; }
-  .markdown-content img { max-width: 100%; border-radius: 8px; margin: 1.5rem 0; }
+  .markdown-content img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+  }
   .markdown-content a { color: var(--accent); }
-  
-  @media (max-width: 768px) {
-    article > div { grid-template-columns: 1fr !important; }
+  .markdown-content code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--glass-bg-strong);
+    padding: 2px 6px;
+    border-radius: 4px;
   }
 </style>

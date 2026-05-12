@@ -1,108 +1,120 @@
 ---
 /**
- * 3D Files listing page — fetches project folders from R2 storage,
- * groups them alphabetically, and renders a searchable tile grid.
- * Each tile links to the individual project detail page (/files/[slug]).
+ * 3D Files index — project tiles pulled from R2, grouped alphabetically.
+ * Each tile links to /files/[slug].
+ *
+ * The R2 folder layout per project is:
+ *   <projectName>/<asset files...>
+ *   <projectName>/description   ← optional, served as text
+ *   <projectName>/link          ← optional, external project URL
  */
 import MainLayout from '../../layouts/MainLayout.astro';
 import { getR2Data } from '../../lib/r2';
 import { R2_FILES_BASE } from '../../constants';
 import { slugify } from '../../lib/slugify';
 
-let projects: {
+interface Project {
   title: string;
   slug: string;
   folderName: string;
   description: string;
   printablesLink: string;
   fileCount: number;
-}[] = [];
-
-try {
-  const rawProjects = await getR2Data("PNGU-3D-Files-main/");
-
-  // For each project folder, fetch description and external link metadata
-  projects = await Promise.all(rawProjects.map(async (project) => {
-    const assetFiles = project.files.filter((f: string) => f !== 'description' && f !== 'link');
-
-    let descriptionText = "";
-    if (project.files.includes('description')) {
-      try {
-        const res = await fetch(`${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/description`);
-        if (res.ok) descriptionText = await res.text();
-      } catch { descriptionText = ""; }
-    }
-
-    let externalLink = "";
-    if (project.files.includes('link')) {
-      try {
-        const res = await fetch(`${R2_FILES_BASE}/${encodeURIComponent(project.folderName)}/link`);
-        if (res.ok) externalLink = await res.text();
-      } catch { externalLink = ""; }
-    }
-
-    return {
-      title: project.displayName,
-      slug: slugify(project.folderName),
-      folderName: project.folderName,
-      description: descriptionText.trim(),
-      printablesLink: externalLink.trim(),
-      fileCount: assetFiles.length,
-    };
-  }));
-
-  projects.sort((a, b) => a.title.localeCompare(b.title));
-} catch (e) {
-  console.error("R2 Fetch Error:", e);
 }
 
-// Group projects alphabetically by first character
-const grouped = projects.reduce((acc, project) => {
-  const char = project.title[0].toUpperCase();
-  const key = /[A-Z]/.test(char) ? char : "#";
-  if (!acc[key]) acc[key] = [];
-  acc[key].push(project);
-  return acc;
-}, {} as Record<string, typeof projects>);
+let projects: Project[] = [];
 
-// Sort letter groups with "#" (non-alpha) at the end
+try {
+  const rawProjects = await getR2Data('PNGU-3D-Files-main/');
+
+  projects = await Promise.all(
+    rawProjects.map(async (project): Promise<Project> => {
+      const assetFiles = project.files.filter(
+        (f: string) => f !== 'description' && f !== 'link'
+      );
+      const description = await fetchOptionalText(project.folderName, 'description');
+      const printablesLink = await fetchOptionalText(project.folderName, 'link');
+      return {
+        title: project.displayName,
+        slug: slugify(project.folderName),
+        folderName: project.folderName,
+        description,
+        printablesLink,
+        fileCount: assetFiles.length,
+      };
+    })
+  );
+
+  projects.sort((a, b) => a.title.localeCompare(b.title));
+} catch (err) {
+  console.error('R2 fetch failed for /files index:', err);
+}
+
+// Fetch an optional metadata file from R2; empty string if it doesn't exist.
+async function fetchOptionalText(folderName: string, key: string): Promise<string> {
+  const url = `${R2_FILES_BASE}/${encodeURIComponent(folderName)}/${key}`;
+  try {
+    const res = await fetch(url);
+    return res.ok ? (await res.text()).trim() : '';
+  } catch {
+    return '';
+  }
+}
+
+// Group projects by uppercase first letter; non-alphabetic titles land in "#".
+const grouped = projects.reduce(
+  (acc, project) => {
+    const firstChar = project.title[0]?.toUpperCase() ?? '';
+    const key = /^[A-Z]$/.test(firstChar) ? firstChar : '#';
+    (acc[key] ??= []).push(project);
+    return acc;
+  },
+  {} as Record<string, Project[]>
+);
+
 const sortedLetters = Object.keys(grouped).sort((a, b) => {
-  if (a === "#") return 1;
-  if (b === "#") return -1;
+  if (a === '#') return 1;
+  if (b === '#') return -1;
   return a.localeCompare(b);
 });
 ---
 
 <MainLayout title="3D Files">
-  <div class="page-header">
+  <div class="page-header scroll-reveal">
     <div class="label-tag">3d files</div>
     <h1>3D Files</h1>
     <p class="header-subtitle">Component & Blaster Models</p>
     <div class="header-nav">
       <a href="/" class="btn-glass">← Back Home</a>
-      <a href="https://lite.pngu.info/files/" class="btn-glass">Lite Version</a>
     </div>
   </div>
 
-  <!-- Search filter -->
-  <div class="search-container">
+  <div class="search-container scroll-reveal">
     <input type="text" id="file-search" placeholder="Search projects..." class="glass-input" />
   </div>
 
-  <!-- Alphabetically grouped project tiles -->
   <div id="results-container">
     {sortedLetters.map((letter) => (
       <div class="letter-group scroll-reveal" data-letter={letter}>
         <div class="letter-header">{letter}</div>
         <div class="project-grid scroll-reveal-stagger">
           {grouped[letter].map((project) => (
-            <a href={`/files/${project.slug}`} class="project-tile" data-title={project.title.toLowerCase()}>
+            <a
+              href={`/files/${project.slug}`}
+              class="project-tile"
+              data-title={project.title.toLowerCase()}
+            >
               <div class="tile-top">
                 <span class="tile-title">{project.title}</span>
-                <span class="tile-count">{project.fileCount} file{project.fileCount !== 1 ? 's' : ''}</span>
+                <span class="tile-count">
+                  {project.fileCount} file{project.fileCount !== 1 ? 's' : ''}
+                </span>
               </div>
               {project.description && (
-                <p class="tile-desc">{project.description.slice(0, 80)}{project.description.length > 80 ? '…' : ''}</p>
+                <p class="tile-desc">
+                  {project.description.slice(0, 80)}
+                  {project.description.length > 80 ? '…' : ''}
+                </p>
               )}
               <span class="tile-arrow">View project →</span>
             </a>
@@ -113,26 +125,23 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
   </div>
 </MainLayout>
 
-<!-- Client-side search: filters project tiles by title -->
 <script is:inline>
-  var searchInput = document.getElementById('file-search');
-  var letterGroups = document.querySelectorAll('.letter-group');
-
-  searchInput.addEventListener('input', function(e) {
-    var term = e.target.value.toLowerCase();
-    letterGroups.forEach(function(group) {
-      var hasVisible = false;
-      var tiles = group.querySelectorAll('.project-tile');
-      tiles.forEach(function(tile) {
-        var title = tile.dataset.title;
-        if (title.includes(term)) {
-          tile.style.display = 'flex';
-          hasVisible = true;
-        } else {
-          tile.style.display = 'none';
-        }
+  // Client-side filter on project title; hides empty letter groups.
+  (function () {
+    const input = document.getElementById('file-search');
+    const groups = document.querySelectorAll('.letter-group');
+    if (!input) return;
+    input.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      groups.forEach((group) => {
+        let anyVisible = false;
+        group.querySelectorAll('.project-tile').forEach((tile) => {
+          const match = (tile.dataset.title || '').includes(term);
+          tile.style.display = match ? 'flex' : 'none';
+          if (match) anyVisible = true;
+        });
+        group.style.display = anyVisible ? 'block' : 'none';
       });
-      group.style.display = hasVisible ? 'block' : 'none';
     });
-  });
+  })();
 </script>
