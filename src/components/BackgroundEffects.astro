@@ -277,18 +277,22 @@
     buildAurora();
 
     // Four snakes, evenly spaced around the logo path (0/¼/½/¾), with
-    // directions alternating CW / CCW / CW / CCW. Same speed magnitude
-    // for all four:
-    //   - same-direction pair maintains a permanent half-path offset →
-    //     they never overlap
-    //   - opposite-direction pairs pass each other twice per orbit,
-    //     briefly crossing but never chasing
+    // directions split half CW / half CCW (same-direction pair holds a
+    // permanent half-path offset → no overlap; opposite-direction pairs
+    // pass briefly but never chase).
+    //
+    // Push order matters — later draws cover earlier ones, so the two
+    // whites are appended after both reds so white always renders on top
+    // at crossings. White is also given a slightly larger radius (11/10
+    // vs red 9/8) so it reads as the "primary" colour.
     const PATH_LEN = pathPoints.length;
     const TRACE_SPEED = 1.8;
-    traces.push(new Trace(pathPoints, TRACE_SPEED, 100,  redColor,   11, +1, 0));
-    traces.push(new Trace(pathPoints, TRACE_SPEED, 400,  whiteColor,  9, -1, PATH_LEN * 0.25));
-    traces.push(new Trace(pathPoints, TRACE_SPEED, 700,  redColor,   10, +1, PATH_LEN * 0.50));
-    traces.push(new Trace(pathPoints, TRACE_SPEED, 1000, whiteColor,  8, -1, PATH_LEN * 0.75));
+    // Reds first (drawn under whites).
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 100,  redColor,    9, +1, 0));
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 400,  redColor,    8, +1, PATH_LEN * 0.50));
+    // Whites last (drawn on top).
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 700,  whiteColor, 11, -1, PATH_LEN * 0.25));
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 1000, whiteColor, 10, -1, PATH_LEN * 0.75));
 
     const startTime = performance.now();
     let lastFrame = 0;
