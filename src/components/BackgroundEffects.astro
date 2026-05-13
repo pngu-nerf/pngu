@@ -161,38 +161,45 @@
     }
 
     // A snake-like trail along the logo path. Rendered as a single
-    // stroked line through TRAIL consecutive path points with lineCap
-    // and lineJoin set to "round". One stroke = uniform thickness with
-    // no visible seams between segments, and the round caps give clean
-    // pill ends at head and tail. lineWidth = radius * 2 so `radius`
-    // still reads as "half the body thickness".
+    // stroked line through TRAIL consecutive path points with
+    // lineCap=round + lineJoin=round — one stroke gives uniform
+    // thickness with no visible seams, and the round caps act as
+    // natural pill ends.
+    //
+    // `direction` is +1 (clockwise on the path) or -1 (counter-clockwise).
+    // `startProgress` sets the initial head position in path-points so
+    // that with all traces at the same |speed|, same-direction pairs
+    // maintain a constant offset and never collide.
     class Trace {
-      constructor(pathPoints, speed, delay, color, radius) {
+      constructor(pathPoints, speed, delay, color, radius, direction, startProgress) {
         this.pathPoints = pathPoints;
         this.pathLen = pathPoints.length;
         this.speed = speed;
+        this.direction = direction;
         this.delay = delay;
         this.color = color;
         this.radius = radius;
-        this.progress = Math.random() * pathPoints.length;
+        this.progress = startProgress;
         this.active = false;
       }
       update(time) {
         if (time < this.delay) return;
         this.active = true;
-        this.progress += this.speed;
-        if (this.progress >= this.pathLen) this.progress -= this.pathLen;
+        this.progress += this.speed * this.direction;
+        // Normalise into [0, pathLen) — JS % keeps the sign of the dividend,
+        // so a manual wrap covers the negative case for CCW traces.
+        this.progress = ((this.progress % this.pathLen) + this.pathLen) % this.pathLen;
       }
       draw(ctx) {
         if (!this.active) return;
-        const headIdx = Math.floor(this.progress) % this.pathLen;
-        const TRAIL = 80;            // path points covered by the body
-        // Walk tail→head so the resulting subpath's "head end" is the
-        // moving tip (the last lineTo). The round cap there reads as the
-        // snake's nose.
+        const headIdx = Math.floor(this.progress);
+        const TRAIL = 80;
+        // The body always trails behind the head — for CCW (direction=-1)
+        // that means stepping forward through the path index instead of
+        // backward, so multiply the offset by -direction.
         ctx.beginPath();
         for (let i = TRAIL - 1; i >= 0; i--) {
-          const idx = (headIdx - i + this.pathLen) % this.pathLen;
+          const idx = (headIdx - i * this.direction + this.pathLen) % this.pathLen;
           const p = this.pathPoints[idx];
           if (i === TRAIL - 1) ctx.moveTo(p.x, p.y);
           else ctx.lineTo(p.x, p.y);
@@ -269,13 +276,19 @@
     buildGridTexture();
     buildAurora();
 
-    // Four solid-coloured snakes ride the logo path. Mixed speeds + start
-    // delays keep them from stacking; alternating red/white so the brand
-    // accent reads cleanly without the two old softer reds muddying it.
-    traces.push(new Trace(pathPoints, 2.0, 100,  redColor,   11));
-    traces.push(new Trace(pathPoints, 1.5, 500,  whiteColor,  9));
-    traces.push(new Trace(pathPoints, 2.3, 1000, redColor,   10));
-    traces.push(new Trace(pathPoints, 1.8, 1500, whiteColor,  8));
+    // Four snakes, evenly spaced around the logo path (0/¼/½/¾), with
+    // directions alternating CW / CCW / CW / CCW. Same speed magnitude
+    // for all four:
+    //   - same-direction pair maintains a permanent half-path offset →
+    //     they never overlap
+    //   - opposite-direction pairs pass each other twice per orbit,
+    //     briefly crossing but never chasing
+    const PATH_LEN = pathPoints.length;
+    const TRACE_SPEED = 1.8;
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 100,  redColor,   11, +1, 0));
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 400,  whiteColor,  9, -1, PATH_LEN * 0.25));
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 700,  redColor,   10, +1, PATH_LEN * 0.50));
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 1000, whiteColor,  8, -1, PATH_LEN * 0.75));
 
     const startTime = performance.now();
     let lastFrame = 0;
