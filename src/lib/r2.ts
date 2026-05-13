@@ -80,3 +80,23 @@ export async function getR2Data(folderPrefix: string): Promise<R2Folder[]> {
     return [];
   }
 }
+
+/**
+ * Fetch the text contents of `<baseUrl>/<folder>/<key>`, or `''` if it
+ * doesn't exist / errors. Used for the optional per-project `description`
+ * and `link` files under the public R2 mirror.
+ *
+ * Defined here (not in a page's frontmatter) because Astro's getStaticPaths
+ * is extracted into its own module scope at build time — only top-level
+ * imports are visible inside getStaticPaths, not page-local function
+ * declarations.
+ */
+export async function fetchR2Text(baseUrl: string, folder: string, key: string): Promise<string> {
+  const url = `${baseUrl}/${encodeURIComponent(folder)}/${key}`;
+  try {
+    const res = await fetch(url);
+    return res.ok ? (await res.text()).trim() : '';
+  } catch {
+    return '';
+  }
+}

@@ -6,23 +6,15 @@
  * expandable dropdown that lazy-loads a Three.js viewer when opened.
  */
 import MainLayout from '../../layouts/MainLayout.astro';
-import { getR2Data } from '../../lib/r2';
+import { getR2Data, fetchR2Text } from '../../lib/r2';
 import { R2_FILES_BASE } from '../../constants';
 import { slugify } from '../../lib/slugify';
 
 interface FileRef { name: string; url: string; }
 
-// Declared before getStaticPaths because Astro's frontmatter bundler doesn't
-// reliably hoist a function declaration into the getStaticPaths closure.
-async function fetchOptionalText(folderName: string, key: string): Promise<string> {
-  const url = `${R2_FILES_BASE}/${encodeURIComponent(folderName)}/${key}`;
-  try {
-    const res = await fetch(url);
-    return res.ok ? (await res.text()).trim() : '';
-  } catch {
-    return '';
-  }
-}
+// fetchR2Text is imported from lib/r2 (not declared inline) because Astro's
+// getStaticPaths runs in an extracted module scope where only top-level
+// imports are visible — local frontmatter declarations are not.
 
 export async function getStaticPaths() {
   const rawProjects = await getR2Data('PNGU-3D-Files-main/');
@@ -32,8 +24,8 @@ export async function getStaticPaths() {
       const assetFiles = project.files.filter(
         (f: string) => f !== 'description' && f !== 'link'
       );
-      const description = await fetchOptionalText(project.folderName, 'description');
-      const printablesLink = await fetchOptionalText(project.folderName, 'link');
+      const description = await fetchR2Text(R2_FILES_BASE, project.folderName, 'description');
+      const printablesLink = await fetchR2Text(R2_FILES_BASE, project.folderName, 'link');
       return {
         params: { slug: slugify(project.folderName) },
         props: {
