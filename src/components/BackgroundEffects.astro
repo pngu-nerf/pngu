@@ -287,12 +287,13 @@
     // vs red 9/8) so it reads as the "primary" colour.
     const PATH_LEN = pathPoints.length;
     const TRACE_SPEED = 1.8;
-    // Reds first (drawn under whites).
-    traces.push(new Trace(pathPoints, TRACE_SPEED, 100,  redColor,    9, +1, 0));
-    traces.push(new Trace(pathPoints, TRACE_SPEED, 400,  redColor,    8, +1, PATH_LEN * 0.50));
+    // Reds first (drawn under whites). Radii are halved from the previous
+    // 9/8/11/10 — gives a thinner, more thread-like trace around the mark.
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 100,  redColor,   4.5, +1, 0));
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 400,  redColor,   4.0, +1, PATH_LEN * 0.50));
     // Whites last (drawn on top).
-    traces.push(new Trace(pathPoints, TRACE_SPEED, 700,  whiteColor, 11, -1, PATH_LEN * 0.25));
-    traces.push(new Trace(pathPoints, TRACE_SPEED, 1000, whiteColor, 10, -1, PATH_LEN * 0.75));
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 700,  whiteColor, 5.5, -1, PATH_LEN * 0.25));
+    traces.push(new Trace(pathPoints, TRACE_SPEED, 1000, whiteColor, 5.0, -1, PATH_LEN * 0.75));
 
     const startTime = performance.now();
     let lastFrame = 0;
