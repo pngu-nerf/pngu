@@ -210,16 +210,19 @@ const isActive = (prefix: string) =>
       .nav-logo-mark svg {
         width: 32px;
         height: 32px;
-        fill: var(--accent);
-        filter: drop-shadow(0 2px 8px var(--accent-glow));
+        fill: var(--text-primary);
+        /* Subtle white halo — keeps the mark visible against the dark
+           translucent nav pill without re-introducing the red glow. */
+        filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.18));
         transition: filter var(--transition-fast);
       }
       .nav-logo-text {
-        font-family: var(--font-display);
-        font-weight: 700;
-        font-size: 1.15rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
+        /* Jumps Winter is weight 400 only — uppercase/wide tracking would
+           fight the stylised letterforms, so use the same treatment as h1. */
+        font-family: var(--font-title);
+        font-weight: 400;
+        font-size: 1.35rem;
+        letter-spacing: 0.02em;
       }
       .nav-links-bar { display: flex; align-items: center; gap: 4px; }
       .nav-links-bar a {
