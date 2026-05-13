@@ -22,6 +22,19 @@ interface Project {
   fileCount: number;
 }
 
+// Declared before the top-level await below so Astro's frontmatter bundler
+// can see it — function-declaration hoisting isn't reliable across the
+// boundary that wraps top-level async work.
+async function fetchOptionalText(folderName: string, key: string): Promise<string> {
+  const url = `${R2_FILES_BASE}/${encodeURIComponent(folderName)}/${key}`;
+  try {
+    const res = await fetch(url);
+    return res.ok ? (await res.text()).trim() : '';
+  } catch {
+    return '';
+  }
+}
+
 let projects: Project[] = [];
 
 try {
@@ -48,17 +61,6 @@ try {
   projects.sort((a, b) => a.title.localeCompare(b.title));
 } catch (err) {
   console.error('R2 fetch failed for /files index:', err);
-}
-
-// Fetch an optional metadata file from R2; empty string if it doesn't exist.
-async function fetchOptionalText(folderName: string, key: string): Promise<string> {
-  const url = `${R2_FILES_BASE}/${encodeURIComponent(folderName)}/${key}`;
-  try {
-    const res = await fetch(url);
-    return res.ok ? (await res.text()).trim() : '';
-  } catch {
-    return '';
-  }
 }
 
 // Group projects by uppercase first letter; non-alphabetic titles land in "#".
