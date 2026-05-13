@@ -7,10 +7,12 @@
  *                          area *outside* the logo silhouette so the
  *                          mark's interior reads as negative space.
  *   - Logo traces        — slither.io-style "snake" trails along the
- *                          PNGU mark path. Each trace is a long row of
- *                          overlapping solid circles (no gradient, no
- *                          blur) that read as a smooth coloured pill
- *                          with a tapered tail.
+ *                          PNGU mark path. Each trace is one stroked
+ *                          line through ~80 consecutive path points
+ *                          with lineCap=round and lineJoin=round — the
+ *                          single path keeps thickness uniform and the
+ *                          round caps give natural pill ends. No
+ *                          gradient, no shadowBlur, no tapering.
  *
  * Rendering details:
  *   - One offscreen dot-grid texture, blitted each frame.
@@ -158,11 +160,12 @@
       }
     }
 
-    // A snake-like trail along the logo path. Drawn as a long line of
-    // overlapping solid-fill circles — adjacent stamps (STRIDE=2) merge
-    // into a smooth pill of constant thickness. The last few stamps
-    // shrink so the tail tapers to a point instead of ending in a flat
-    // disc. No gradients, no shadowBlur — pure solid colour fills.
+    // A snake-like trail along the logo path. Rendered as a single
+    // stroked line through TRAIL consecutive path points with lineCap
+    // and lineJoin set to "round". One stroke = uniform thickness with
+    // no visible seams between segments, and the round caps give clean
+    // pill ends at head and tail. lineWidth = radius * 2 so `radius`
+    // still reads as "half the body thickness".
     class Trace {
       constructor(pathPoints, speed, delay, color, radius) {
         this.pathPoints = pathPoints;
@@ -170,7 +173,7 @@
         this.speed = speed;
         this.delay = delay;
         this.color = color;
-        this.radius = radius;     // body radius in px (= half pill thickness)
+        this.radius = radius;
         this.progress = Math.random() * pathPoints.length;
         this.active = false;
       }
@@ -183,25 +186,22 @@
       draw(ctx) {
         if (!this.active) return;
         const headIdx = Math.floor(this.progress) % this.pathLen;
-        const STAMPS = 40;           // total trail length in stamps
-        const STRIDE = 2;            // path-points between stamps (tight = solid pill)
-        const TAPER = 5;             // last N stamps shrink down to the tip
-        const fill = this.color.replace('ALPHA', '1');
-        ctx.fillStyle = fill;
-        // Walk tail→head so the head ends up drawn last (on top).
-        for (let i = STAMPS - 1; i >= 0; i--) {
-          const idx = (headIdx - i * STRIDE + this.pathLen) % this.pathLen;
+        const TRAIL = 80;            // path points covered by the body
+        // Walk tail→head so the resulting subpath's "head end" is the
+        // moving tip (the last lineTo). The round cap there reads as the
+        // snake's nose.
+        ctx.beginPath();
+        for (let i = TRAIL - 1; i >= 0; i--) {
+          const idx = (headIdx - i + this.pathLen) % this.pathLen;
           const p = this.pathPoints[idx];
-          let r = this.radius;
-          if (i >= STAMPS - TAPER) {
-            // 0 at the very last stamp → 1 just inside the taper region.
-            const t = (STAMPS - 1 - i) / (TAPER - 1);
-            r = this.radius * (0.2 + t * 0.8);
-          }
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-          ctx.fill();
+          if (i === TRAIL - 1) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
         }
+        ctx.strokeStyle = this.color.replace('ALPHA', '1');
+        ctx.lineWidth = this.radius * 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
       }
     }
 
