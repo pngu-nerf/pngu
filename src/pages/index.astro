@@ -35,7 +35,7 @@ const SECONDARY = [
 
   <nav class="sections" aria-label="Site sections">
     {PRIMARY.map((s) => (
-      <a href={s.href} class="section-row">
+      <a href={s.href} class="section-card">
         <span class="section-name">{s.name}</span>
         <span class="section-desc">{s.desc}</span>
         <span class="section-arrow" aria-hidden="true">→</span>
@@ -52,38 +52,53 @@ const SECONDARY = [
 
 <style>
   /* ============================================================
-     Primary section list — flat rows, underline-on-hover
+     Primary section buttons — liquid-glass pills, same family as
+     the .btn-glass back-button used on every interior page.
      ============================================================ */
   .sections {
     display: flex;
     flex-direction: column;
-    border-top: 1px solid var(--glass-border);
+    gap: 1rem;
     margin: 2rem 0;
   }
-  .section-row {
+  .section-card {
     display: grid;
     grid-template-columns: 8rem 1fr auto;
     align-items: baseline;
-    gap: 1.25rem;
-    padding: 1rem 0.25rem;
-    border-bottom: 1px solid var(--glass-border);
+    gap: 1.5rem;
+    padding: 1.25rem 1.75rem;
     text-decoration: none;
     color: var(--text-primary);
+    background: rgba(51, 51, 51, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--glass-radius);
+    box-shadow: var(--glass-shadow), var(--glass-highlight);
     transition: background var(--transition-fast),
-      color var(--transition-fast);
+      border-color var(--transition-fast),
+      transform var(--transition-fast),
+      box-shadow var(--transition-fast);
   }
   @media (hover: hover) {
-    .section-row:hover {
-      background: var(--glass-bg);
-      color: var(--accent);
+    .section-card:hover {
+      background: rgba(51, 51, 51, 0.6);
+      border-color: var(--glass-border-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--glass-shadow-hover), var(--glass-highlight);
     }
-    .section-row:hover .section-arrow { color: var(--accent); }
+    .section-card:hover .section-name { color: var(--accent); }
+    .section-card:hover .section-arrow {
+      color: var(--accent);
+      transform: translateX(4px);
+    }
   }
   .section-name {
     font-family: var(--font-title);
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 400;
     letter-spacing: 0.02em;
+    transition: color var(--transition-fast);
   }
   .section-desc {
     color: var(--text-secondary);
@@ -91,8 +106,9 @@ const SECONDARY = [
   }
   .section-arrow {
     color: var(--text-muted);
-    font-size: 1.1rem;
-    transition: color var(--transition-fast);
+    font-size: 1.25rem;
+    transition: color var(--transition-fast),
+      transform var(--transition-fast);
   }
 
   /* ============================================================
@@ -118,12 +134,13 @@ const SECONDARY = [
   }
 
   @media (max-width: 640px) {
-    .section-row {
+    .section-card {
       grid-template-columns: 1fr auto;
       grid-template-rows: auto auto;
       row-gap: 0.25rem;
+      padding: 1rem 1.25rem;
     }
-    .section-name { grid-column: 1; grid-row: 1; }
+    .section-name { grid-column: 1; grid-row: 1; font-size: 1.5rem; }
     .section-desc { grid-column: 1; grid-row: 2; }
     .section-arrow { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
   }
