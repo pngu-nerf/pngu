@@ -69,7 +69,7 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
 ---
 
 <MainLayout title="3D Files">
-  <div class="page-header scroll-reveal">
+  <div class="page-header">
     <div class="label-tag">3d files</div>
     <h1>3D Files</h1>
     <p class="header-subtitle">Component & Blaster Models</p>
@@ -78,15 +78,15 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
     </div>
   </div>
 
-  <div class="search-container scroll-reveal">
+  <div class="search-container">
     <input type="text" id="file-search" placeholder="Search projects..." class="glass-input" />
   </div>
 
   <div id="results-container">
     {sortedLetters.map((letter) => (
-      <div class="letter-group scroll-reveal" data-letter={letter}>
+      <div class="letter-group" data-letter={letter}>
         <div class="letter-header">{letter}</div>
-        <div class="project-grid scroll-reveal-stagger">
+        <div class="project-grid">
           {grouped[letter].map((project) => (
             <a
               href={`/files/${project.slug}`}

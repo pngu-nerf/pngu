@@ -8,7 +8,7 @@ import ContactItem from '../components/ContactItem.astro';
 ---
 
 <MainLayout title="Contact">
-  <div class="page-header scroll-reveal">
+  <div class="page-header">
     <div class="label-tag">contact</div>
     <h1>Get in Touch</h1>
     <p class="header-subtitle">Reach out for collaborations or questions</p>
@@ -17,13 +17,13 @@ import ContactItem from '../components/ContactItem.astro';
     </div>
   </div>
 
-  <div class="glass-card contact-card scroll-reveal" style="animation-delay: 0.1s">
+  <div class="glass-card contact-card" style="animation-delay: 0.1s">
     <h2>Email Address</h2>
     <p class="section-desc">For professional inquiries and partnerships.</p>
     <ContactItem buttonId="copy-email-btn" value="contact@pngu.info" label="Copy Email" />
   </div>
 
-  <div class="glass-card contact-card scroll-reveal" style="animation-delay: 0.25s">
+  <div class="glass-card contact-card" style="animation-delay: 0.25s">
     <h2>Discord</h2>
     <p class="section-desc">For casual chats and community contact.</p>
     <ContactItem buttonId="copy-discord-btn" value="penguinnoly" label="Copy Handle" />

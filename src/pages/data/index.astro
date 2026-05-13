@@ -14,7 +14,7 @@ blasters.sort((a, b) => a.data.title.localeCompare(b.data.title));
 ---
 
 <MainLayout title="Blaster Data">
-  <div class="page-header scroll-reveal">
+  <div class="page-header">
     <div class="label-tag">blaster data</div>
     <h1>Blaster Data</h1>
     <p class="header-subtitle">Documentation & Specifications</p>
@@ -23,7 +23,7 @@ blasters.sort((a, b) => a.data.title.localeCompare(b.data.title));
     </div>
   </div>
 
-  <div class="search-container scroll-reveal">
+  <div class="search-container">
     <input type="text" id="data-search" placeholder="Search blasters..." class="glass-input" />
   </div>
 
@@ -33,7 +33,7 @@ blasters.sort((a, b) => a.data.title.localeCompare(b.data.title));
         No blasters added yet. Add entries under <code>src/content/blasters/</code>.
       </p>
     ) : (
-      <div class="project-grid scroll-reveal-stagger">
+      <div class="project-grid">
         {blasters.map((blaster) => (
           <a
             href={`/data/${blaster.id}`}

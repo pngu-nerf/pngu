@@ -6,7 +6,7 @@
  *   - Design tokens (:root)              — colors, glass surface, type, easings
  *   - Nav + footer                       — the persistent chrome
  *   - Generic primitives                 — .btn-primary, .btn-glass, .glass-card,
- *                                          .label-tag, .scroll-reveal, headings
+ *                                          .label-tag, headings
  *   - Page-header / search / list / tile — patterns shared by /brand, /data, /files
  *
  * Page-unique styling (hero reel on /, 3D viewer on /files/[slug], etc.) lives
@@ -370,34 +370,6 @@ const isActive = (prefix: string) =>
         }
       }
 
-      /* IntersectionObserver-driven entrance — the observer lives at the
-         bottom of this layout. Stagger version animates each child of the
-         container with cascading delays. */
-      .scroll-reveal {
-        opacity: 0;
-        transform: translateY(40px);
-        transition: opacity 0.7s var(--ease-out-expo),
-          transform 0.7s var(--ease-out-expo);
-      }
-      .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
-      .scroll-reveal-stagger > * {
-        opacity: 0;
-        transform: translateY(30px);
-        transition: opacity 0.6s var(--ease-out-expo),
-          transform 0.6s var(--ease-out-expo);
-      }
-      .scroll-reveal-stagger.revealed > * { opacity: 1; transform: translateY(0); }
-      .scroll-reveal-stagger.revealed > *:nth-child(1) { transition-delay: 0s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(2) { transition-delay: 0.06s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(3) { transition-delay: 0.12s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(4) { transition-delay: 0.18s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(5) { transition-delay: 0.24s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(6) { transition-delay: 0.3s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(7) { transition-delay: 0.36s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(8) { transition-delay: 0.42s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(9) { transition-delay: 0.48s; }
-      .scroll-reveal-stagger.revealed > *:nth-child(10) { transition-delay: 0.54s; }
-
       /* ============================================================
          Shared page-header pattern (used by /data, /files, /brand, /contact)
          ============================================================ */
@@ -636,7 +608,7 @@ const isActive = (prefix: string) =>
       }
       .footer-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr 1.5fr;
+        grid-template-columns: 1fr 1fr;
         gap: 2rem;
         align-items: start;
       }
@@ -664,20 +636,19 @@ const isActive = (prefix: string) =>
         text-decoration: none;
         transition: color var(--transition-fast);
       }
-      .footer-meta p {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        line-height: 1.5;
-        margin: 0 0 0.5rem;
+      @media (hover: hover) {
+        .footer-list a:hover { color: var(--accent); }
       }
+      /* Standalone copyright line, centered under the two columns. */
       .footer-copy {
+        margin: 1.5rem 0 0;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--glass-border);
+        text-align: center;
         font-family: var(--font-mono);
         font-size: 0.72rem;
         color: var(--text-muted);
         letter-spacing: 0.04em;
-      }
-      @media (hover: hover) {
-        .footer-list a:hover { color: var(--accent); }
       }
 
       /* ============================================================
@@ -686,12 +657,6 @@ const isActive = (prefix: string) =>
          ============================================================ */
       @media (prefers-reduced-motion: reduce) {
         .main-content > * { animation: none !important; }
-        .scroll-reveal,
-        .scroll-reveal-stagger > * {
-          opacity: 1 !important;
-          transform: none !important;
-          transition: none !important;
-        }
       }
 
       /* Toggle icon visibility — controlled by aria-expanded on the button */
@@ -811,36 +776,9 @@ const isActive = (prefix: string) =>
             <li><a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener">Printables ↗</a></li>
           </ul>
         </div>
-        <div class="footer-col footer-meta">
-          <span class="footer-col-label">PNGU</span>
-          <p>Open-source blaster files, data, and assets for the Nerf modding community.</p>
-          <p class="footer-copy">© {new Date().getFullYear()} PNGU</p>
-        </div>
       </div>
+      <p class="footer-copy">© {new Date().getFullYear()} PNGU</p>
     </footer>
-
-    <!-- Scroll-reveal: any element with .scroll-reveal or .scroll-reveal-stagger
-         fades up the first time it enters the viewport. -->
-    <script is:inline>
-      (function () {
-        const targets = document.querySelectorAll(
-          '.scroll-reveal, .scroll-reveal-stagger'
-        );
-        if (!targets.length) return;
-        const io = new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              if (entry.isIntersecting) {
-                entry.target.classList.add('revealed');
-                io.unobserve(entry.target);
-              }
-            }
-          },
-          { threshold: 0.1, rootMargin: '0px 0px -33% 0px' }
-        );
-        targets.forEach((el) => io.observe(el));
-      })();
-    </script>
 
     <!-- Mobile nav toggle. The button drives an aria-expanded attribute that
          both this script and the CSS read; the panel slides in from CSS, and

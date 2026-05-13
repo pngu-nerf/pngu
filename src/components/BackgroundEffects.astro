@@ -232,29 +232,30 @@
     }
 
     function buildPath() {
-      // Logo bounding-box aspect ≈ 2.16. Anchor near top-center, shifted
-      // right so the visual "head" of the mark sits on the page's centerline.
+      // Logo bounding-box aspect ≈ 2.16. Anchored at the visual centre of
+      // the viewport — the penguin "head" of the mark sits on screen centre.
       const aspect = 2.16;
       const targetH = H * 0.5;
       const targetW = targetH * aspect;
       const finalW = Math.min(targetW, W * 0.85);
       const finalH = finalW / aspect;
-      const cx = W * 0.5 + finalW * 0.2;
-      const cy = H * 0.36;
+      const cx = W * 0.5;
+      const cy = H * 0.5;
       pathPoints = scalePath(normPoints, cx, cy, finalW, finalH);
       return pathPoints;
     }
 
     function buildAurora() {
       auroraBands = [];
-      const colors = [redColor, softRed, dimRed, whiteColor];
+      // All bands are white — they read as soft glowing threads behind the
+      // logo rather than competing with the red brand accents on-page.
       const yPositions = [0.12, 0.3, 0.5, 0.82];
       for (let i = 0; i < 4; i++) {
         auroraBands.push(
           new AuroraBand(
             H * yPositions[i],
-            colors[i],
-            1 + Math.random() * 1.5,
+            whiteColor,
+            2.5 + Math.random() * 2.5, // thicker strands (was 1–2.5)
             0.2 + Math.random() * 0.3,
             10 + Math.random() * 15,
             1.5 + Math.random() * 2,
@@ -268,12 +269,14 @@
     buildGridTexture();
 
     if (isHome) {
-      traces.push(new Trace(pathPoints, 2.0, 100, redColor, 2.0));
-      traces.push(new Trace(pathPoints, 1.5, 500, redColor, 1.6));
-      traces.push(new Trace(pathPoints, 2.3, 1000, softRed, 1.4));
-      traces.push(new Trace(pathPoints, 1.8, 1500, dimRed, 1.2));
-      traces.push(new Trace(pathPoints, 1.3, 300, whiteColor, 0.8));
-      traces.push(new Trace(pathPoints, 1.6, 800, whiteColor, 0.6));
+      // Trace widths ~doubled — heavier lines now that the mark is centred
+      // and reads as the focal point of the home page.
+      traces.push(new Trace(pathPoints, 2.0, 100,  redColor,   4.0));
+      traces.push(new Trace(pathPoints, 1.5, 500,  redColor,   3.2));
+      traces.push(new Trace(pathPoints, 2.3, 1000, softRed,    2.8));
+      traces.push(new Trace(pathPoints, 1.8, 1500, dimRed,     2.4));
+      traces.push(new Trace(pathPoints, 1.3, 300,  whiteColor, 1.6));
+      traces.push(new Trace(pathPoints, 1.6, 800,  whiteColor, 1.2));
     } else {
       buildAurora();
     }

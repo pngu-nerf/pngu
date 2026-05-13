@@ -39,7 +39,7 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
 ---
 
 <MainLayout title="Brand Assets">
-  <div class="page-header scroll-reveal">
+  <div class="page-header">
     <div class="label-tag">brand assets</div>
     <h1>Brand Assets</h1>
     <p class="header-subtitle">Logos & Banners</p>
@@ -48,15 +48,15 @@ const sortedLetters = Object.keys(grouped).sort((a, b) => {
     </div>
   </div>
 
-  <div class="search-container scroll-reveal">
+  <div class="search-container">
     <input type="text" id="brand-search" placeholder="Search assets..." class="glass-input" />
   </div>
 
   <div id="results-container">
     {sortedLetters.map((letter) => (
-      <div class="letter-group scroll-reveal" data-letter={letter}>
+      <div class="letter-group" data-letter={letter}>
         <div class="letter-header">{letter}</div>
-        <div class="file-list scroll-reveal-stagger">
+        <div class="file-list">
           {grouped[letter].map((file) => {
             const isImage = /\.(svg|png|jpg|jpeg|webp)$/i.test(file.name);
             return (
