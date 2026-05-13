@@ -7,6 +7,15 @@ popup; the worker exchanges the OAuth `code` for an access token and posts
 it back to the opener via `window.postMessage`. The token never leaves the
 browser session — we do not log it, store it, or forward it anywhere else.
 
+## Two copies of the source
+
+`src/index.ts` is the canonical source — what `wrangler dev`/`wrangler deploy`
+uses, and what gets type-checked.
+
+`src/index.js` is a plain-JS mirror with the same logic, for pasting into
+the Cloudflare dashboard's quick-edit mode (which doesn't accept TypeScript).
+Keep them in sync if you edit one.
+
 ## Routes
 
 | Path        | What it does                                                  |
