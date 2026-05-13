@@ -634,32 +634,50 @@ const isActive = (prefix: string) =>
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2),
           inset 0 1px 0 rgba(255, 255, 255, 0.03);
       }
-      .footer-inner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1.5fr;
+        gap: 2rem;
+        align-items: start;
       }
-      .footer-brand {
+      .footer-col-label {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+      }
+      .footer-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+      .footer-list a {
+        font-family: var(--font-display);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color var(--transition-fast);
+      }
+      .footer-meta p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin: 0 0 0.5rem;
+      }
+      .footer-copy {
         font-family: var(--font-mono);
         font-size: 0.72rem;
         color: var(--text-muted);
         letter-spacing: 0.04em;
       }
-      .footer-links { display: flex; gap: 1.5rem; }
-      .footer-links a {
-        font-family: var(--font-display);
-        font-size: 0.75rem;
-        font-weight: 500;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        text-decoration: none;
-        transition: color var(--transition-fast);
-      }
       @media (hover: hover) {
-        .footer-links a:hover { color: var(--text-primary); }
+        .footer-list a:hover { color: var(--accent); }
       }
 
       /* ============================================================
@@ -676,19 +694,64 @@ const isActive = (prefix: string) =>
         }
       }
 
+      /* Toggle icon visibility — controlled by aria-expanded on the button */
+      .nav-mobile-toggle .icon-close { display: none; }
+      .nav-mobile-toggle[aria-expanded='true'] .icon-open { display: none; }
+      .nav-mobile-toggle[aria-expanded='true'] .icon-close { display: block; }
+
       /* ============================================================
          Mobile
          ============================================================ */
       @media (max-width: 640px) {
         .site-nav { padding: 0 1.25rem; width: 96%; }
-        .nav-links-bar { display: none; }
         .nav-mobile-toggle { display: block; }
         .main-content {
           padding: calc(var(--nav-height) + 1.5rem) 1.25rem 3rem;
         }
         h1 { font-size: 2.25rem; }
         .glass-card { padding: 1.5rem; border-radius: 16px; }
-        .footer-inner { flex-direction: column; align-items: flex-start; }
+
+        /* Default: links are hidden until the toggle is pressed. */
+        .nav-links-bar { display: none; }
+
+        /* When .site-nav has .is-open, lift the links bar out of the pill
+           and present it as a glass panel docked below the nav. */
+        .site-nav.is-open .nav-links-bar {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          position: fixed;
+          top: calc(12px + 52px + 8px); /* nav top offset + nav height + gap */
+          left: 50%;
+          transform: translateX(-50%);
+          width: min(94%, 360px);
+          padding: 8px;
+          background: rgba(30, 30, 30, 0.85);
+          backdrop-filter: blur(20px) saturate(1.5);
+          -webkit-backdrop-filter: blur(20px) saturate(1.5);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 18px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+          z-index: 999;
+          animation: navMobilePanel 0.18s var(--ease-out-expo);
+        }
+        .site-nav.is-open .nav-links-bar a {
+          padding: 12px 16px;
+          text-align: left;
+          font-size: 0.95rem;
+          letter-spacing: 0.04em;
+        }
+        @keyframes navMobilePanel {
+          from { opacity: 0; transform: translate(-50%, -6px); }
+          to   { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* Footer stacks on phones */
+        .footer-grid {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
       }
     </style>
   </head>
@@ -701,15 +764,25 @@ const isActive = (prefix: string) =>
         <div class="nav-logo-mark"><Logo /></div>
         <span class="nav-logo-text">PNGU</span>
       </a>
-      <div class="nav-links-bar">
+      <div class="nav-links-bar" id="nav-links">
         <a href="/files"   class:list={[{ active: isActive('/files') }]}>Files</a>
         <a href="/data"    class:list={[{ active: isActive('/data') }]}>Data</a>
         <a href="/brand"   class:list={[{ active: isActive('/brand') }]}>Brand</a>
         <a href="/contact" class:list={[{ active: isActive('/contact') }]}>Contact</a>
       </div>
-      <button class="nav-mobile-toggle" aria-label="Toggle navigation">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
+      <button
+        class="nav-mobile-toggle"
+        aria-label="Toggle navigation"
+        aria-controls="nav-links"
+        aria-expanded="false"
+      >
+        <!-- Hamburger (closed state) -->
+        <svg class="icon-open" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
+        </svg>
+        <!-- X (open state) -->
+        <svg class="icon-close" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
         </svg>
       </button>
     </nav>
@@ -719,13 +792,29 @@ const isActive = (prefix: string) =>
     </div>
 
     <footer class="site-footer">
-      <div class="footer-inner">
-        <span class="footer-brand">© {new Date().getFullYear()} PNGU</span>
-        <div class="footer-links">
-          <a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener">YouTube</a>
-          <a href="https://github.com/pngu-nerf" target="_blank" rel="noopener">GitHub</a>
-          <a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener">Printables</a>
-          <a href="/contact">Contact</a>
+      <div class="footer-grid">
+        <div class="footer-col">
+          <span class="footer-col-label">Sitemap</span>
+          <ul class="footer-list">
+            <li><a href="/">Home</a></li>
+            <li><a href="/files">Files</a></li>
+            <li><a href="/data">Data</a></li>
+            <li><a href="/brand">Brand</a></li>
+            <li><a href="/contact">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <span class="footer-col-label">External</span>
+          <ul class="footer-list">
+            <li><a href="https://www.youtube.com/@PnguNerf" target="_blank" rel="noopener">YouTube ↗</a></li>
+            <li><a href="https://github.com/pngu-nerf" target="_blank" rel="noopener">GitHub ↗</a></li>
+            <li><a href="https://www.printables.com/@PnguNerf_3188348" target="_blank" rel="noopener">Printables ↗</a></li>
+          </ul>
+        </div>
+        <div class="footer-col footer-meta">
+          <span class="footer-col-label">PNGU</span>
+          <p>Open-source blaster files, data, and assets for the Nerf modding community.</p>
+          <p class="footer-copy">© {new Date().getFullYear()} PNGU</p>
         </div>
       </div>
     </footer>
@@ -750,6 +839,48 @@ const isActive = (prefix: string) =>
           { threshold: 0.1, rootMargin: '0px 0px -33% 0px' }
         );
         targets.forEach((el) => io.observe(el));
+      })();
+    </script>
+
+    <!-- Mobile nav toggle. The button drives an aria-expanded attribute that
+         both this script and the CSS read; the panel slides in from CSS, and
+         we close on outside-click, ESC, and link-tap. -->
+    <script is:inline>
+      (function () {
+        const nav = document.querySelector('.site-nav');
+        const toggle = nav && nav.querySelector('.nav-mobile-toggle');
+        const links = nav && nav.querySelector('.nav-links-bar');
+        if (!nav || !toggle || !links) return;
+
+        function setOpen(open) {
+          nav.classList.toggle('is-open', open);
+          toggle.setAttribute('aria-expanded', String(open));
+        }
+
+        toggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+        });
+
+        // Tapping a link navigates — close the menu first so the next page
+        // doesn't briefly render with the panel still open.
+        links.addEventListener('click', function (e) {
+          if (e.target.tagName === 'A') setOpen(false);
+        });
+
+        document.addEventListener('click', function (e) {
+          if (
+            toggle.getAttribute('aria-expanded') === 'true' &&
+            !nav.contains(e.target) &&
+            !links.contains(e.target)
+          ) {
+            setOpen(false);
+          }
+        });
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') setOpen(false);
+        });
       })();
     </script>
   </body>

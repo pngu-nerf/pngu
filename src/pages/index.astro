@@ -1,21 +1,26 @@
 ---
 /**
  * Home page — flat directory of sections, no animations, no hero theatrics.
- * Built for skim-and-click: header, four section links, external links, done.
+ *
+ * Layout:
+ *   1. Header (label + h1 + tagline)
+ *   2. Two primary section rows: Files, Data — the actual content of the site
+ *   3. Secondary row: Brand, Contact — site-meta links
+ *
+ * External links (YouTube/GitHub/Printables) live in the global footer now;
+ * the sitemap there also covers every section, so there's no need to
+ * duplicate them inline.
  */
 import MainLayout from '../layouts/MainLayout.astro';
 
-const SECTIONS = [
-  { href: '/files',   name: 'Files',   desc: '3D models and STLs' },
-  { href: '/data',    name: 'Data',    desc: 'Blaster specs and documentation' },
-  { href: '/brand',   name: 'Brand',   desc: 'Logos and brand assets' },
-  { href: '/contact', name: 'Contact', desc: 'Email and Discord' },
+const PRIMARY = [
+  { href: '/files', name: 'Files', desc: '3D models and STLs' },
+  { href: '/data',  name: 'Data',  desc: 'Blaster specs and documentation' },
 ];
 
-const EXTERNAL = [
-  { href: 'https://www.youtube.com/@PnguNerf',            label: 'YouTube' },
-  { href: 'https://github.com/pngu-nerf',                 label: 'GitHub' },
-  { href: 'https://www.printables.com/@PnguNerf_3188348', label: 'Printables' },
+const SECONDARY = [
+  { href: '/brand',   label: 'Brand' },
+  { href: '/contact', label: 'Contact' },
 ];
 ---
 
@@ -29,7 +34,7 @@ const EXTERNAL = [
   </div>
 
   <nav class="sections" aria-label="Site sections">
-    {SECTIONS.map((s) => (
+    {PRIMARY.map((s) => (
       <a href={s.href} class="section-row">
         <span class="section-name">{s.name}</span>
         <span class="section-desc">{s.desc}</span>
@@ -38,21 +43,16 @@ const EXTERNAL = [
     ))}
   </nav>
 
-  <div class="external">
-    <span class="external-label">External</span>
-    <ul class="external-list">
-      {EXTERNAL.map((l) => (
-        <li>
-          <a href={l.href} target="_blank" rel="noopener">{l.label} ↗</a>
-        </li>
-      ))}
-    </ul>
-  </div>
+  <nav class="secondary" aria-label="More">
+    {SECONDARY.map((s) => (
+      <a href={s.href}>{s.label}</a>
+    ))}
+  </nav>
 </MainLayout>
 
 <style>
   /* ============================================================
-     Section list — flat rows, underline-on-hover, no transforms
+     Primary section list — flat rows, underline-on-hover
      ============================================================ */
   .sections {
     display: flex;
@@ -96,39 +96,23 @@ const EXTERNAL = [
   }
 
   /* ============================================================
-     External links — single inline row, plain text
+     Secondary row — Brand · Contact, slim text links
      ============================================================ */
-  .external {
+  .secondary {
     display: flex;
-    align-items: baseline;
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 1.5rem;
     margin-top: 2rem;
     font-size: 0.9rem;
-  }
-  .external-label {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-  }
-  .external-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    gap: 1.25rem;
     flex-wrap: wrap;
   }
-  .external-list a {
+  .secondary a {
     color: var(--text-secondary);
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: color var(--transition-fast),
       border-color var(--transition-fast);
   }
-  .external-list a:hover {
+  .secondary a:hover {
     color: var(--accent);
     border-bottom-color: var(--accent);
   }
