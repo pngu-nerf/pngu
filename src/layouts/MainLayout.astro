@@ -273,17 +273,13 @@ const isActive = (prefix: string) =>
         margin: 0 auto;
         padding: calc(var(--nav-height) + 2.5rem) 2rem 4rem;
       }
-      @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(16px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-      .main-content > * { animation: fadeUp 0.7s var(--ease-out-expo) both; }
-      .main-content > *:nth-child(1) { animation-delay: 0.05s; }
-      .main-content > *:nth-child(2) { animation-delay: 0.12s; }
-      .main-content > *:nth-child(3) { animation-delay: 0.19s; }
-      .main-content > *:nth-child(4) { animation-delay: 0.26s; }
-      .main-content > *:nth-child(5) { animation-delay: 0.33s; }
-      .main-content > *:nth-child(6) { animation-delay: 0.4s; }
+      /* No entrance animation on main-content children. A previous version
+         used a fadeUp keyframe with animation-fill-mode: both, which leaves
+         transform: translateY(0) applied permanently. A non-`none` transform
+         on an element creates a stacking context that confines its own
+         backdrop-filter to within that context — making the blur appear
+         not to work against the page backdrop. The header and footer kept
+         working because they're siblings of .main-content, not descendants. */
 
       /* ============================================================
          Generic primitives
@@ -670,14 +666,6 @@ const isActive = (prefix: string) =>
         font-size: 0.72rem;
         color: var(--text-muted);
         letter-spacing: 0.04em;
-      }
-
-      /* ============================================================
-         Reduced motion — kill page-level animations for users who
-         explicitly opted out. Hover/transition styles still apply.
-         ============================================================ */
-      @media (prefers-reduced-motion: reduce) {
-        .main-content > * { animation: none !important; }
       }
 
       /* Toggle icon visibility — controlled by aria-expanded on the button */
