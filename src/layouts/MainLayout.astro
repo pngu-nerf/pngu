@@ -660,6 +660,20 @@ const isActive = (prefix: string) =>
       }
 
       /* ============================================================
+         Reduced motion — kill page-level animations for users who
+         explicitly opted out. Hover/transition styles still apply.
+         ============================================================ */
+      @media (prefers-reduced-motion: reduce) {
+        .main-content > * { animation: none !important; }
+        .scroll-reveal,
+        .scroll-reveal-stagger > * {
+          opacity: 1 !important;
+          transform: none !important;
+          transition: none !important;
+        }
+      }
+
+      /* ============================================================
          Mobile
          ============================================================ */
       @media (max-width: 640px) {

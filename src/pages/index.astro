@@ -1,626 +1,146 @@
 ---
 /**
- * Home page — hero "slot machine" reel + nav-pill cards + external chips
- * + a featured-project highlight card.
- *
- * Styling lives in the scoped <style> block below (hero, nav-pill, ext-chip,
- * highlight-*). Shared chrome and the .scroll-reveal/.label-tag primitives
- * come from MainLayout.
+ * Home page — flat directory of sections, no animations, no hero theatrics.
+ * Built for skim-and-click: header, four section links, external links, done.
  */
 import MainLayout from '../layouts/MainLayout.astro';
 
-// Words for the hero reel. The last entry is what stays visible; everything
-// before is the spin-up. Duplicates are intentional — they make the cylinder
-// feel like a slot machine instead of a single-pass list.
-const REEL_WORDS = [
-  'files', 'data', 'assets', 'models', 'prints',
-  'files', 'data', 'assets', 'models', 'prints',
-  'files', 'data', 'assets',
-];
-const REEL_FINAL = 'info';
-
-// Nav-pill destinations. `phase` seeds the floating sine wave so they don't
-// all bob in lockstep.
-const NAV_PILLS = [
-  { href: '/files',   icon: '◇', label: '3D Files',     phase: 0 },
-  { href: '/data',    icon: '◈', label: 'Blaster Data', phase: 0.7 },
-  { href: '/brand',   icon: '○', label: 'Brand Assets', phase: 1.4 },
-  { href: '/contact', icon: '◎', label: 'Contact',      phase: 2.1 },
+const SECTIONS = [
+  { href: '/files',   name: 'Files',   desc: '3D models and STLs' },
+  { href: '/data',    name: 'Data',    desc: 'Blaster specs and documentation' },
+  { href: '/brand',   name: 'Brand',   desc: 'Logos and brand assets' },
+  { href: '/contact', name: 'Contact', desc: 'Email and Discord' },
 ];
 
-const EXT_LINKS = [
-  { href: 'https://www.youtube.com/@PnguNerf',                label: 'YouTube',    phase: 0.3 },
-  { href: 'https://github.com/pngu-nerf',                     label: 'GitHub',     phase: 1.0 },
-  { href: 'https://www.printables.com/@PnguNerf_3188348',     label: 'Printables', phase: 1.7 },
+const EXTERNAL = [
+  { href: 'https://www.youtube.com/@PnguNerf',            label: 'YouTube' },
+  { href: 'https://github.com/pngu-nerf',                 label: 'GitHub' },
+  { href: 'https://www.printables.com/@PnguNerf_3188348', label: 'Printables' },
 ];
 ---
 
 <MainLayout title="Home">
-  <section class="hero">
-    <h1 class="hero-title">
-      <span class="hero-get">Get</span>
-      <span class="hero-word-wrap">
-        <span class="hero-reel" id="hero-reel">
-          {REEL_WORDS.map((w) => <span class="reel-word">{w}</span>)}
-          <span class="reel-word reel-final">{REEL_FINAL}</span>
-        </span>
-      </span>
-    </h1>
-    <p class="hero-question">What do you need?</p>
-  </section>
+  <div class="page-header">
+    <div class="label-tag">pngu.info</div>
+    <h1>Open-Source Blaster Resources</h1>
+    <p class="header-subtitle">
+      Files, data, and assets for the Nerf modding community.
+    </p>
+  </div>
 
-  <section class="nav-section scroll-reveal">
-    <div class="nav-cards" id="nav-cards">
-      {NAV_PILLS.map((p) => (
-        <a href={p.href} class="nav-pill" data-phase={p.phase}>
-          <span class="pill-icon">{p.icon}</span>
-          <span class="pill-label">{p.label}</span>
-          <span class="pill-arrow">→</span>
-        </a>
+  <nav class="sections" aria-label="Site sections">
+    {SECTIONS.map((s) => (
+      <a href={s.href} class="section-row">
+        <span class="section-name">{s.name}</span>
+        <span class="section-desc">{s.desc}</span>
+        <span class="section-arrow" aria-hidden="true">→</span>
+      </a>
+    ))}
+  </nav>
+
+  <div class="external">
+    <span class="external-label">External</span>
+    <ul class="external-list">
+      {EXTERNAL.map((l) => (
+        <li>
+          <a href={l.href} target="_blank" rel="noopener">{l.label} ↗</a>
+        </li>
       ))}
-    </div>
-  </section>
-
-  <section class="links-section scroll-reveal">
-    <div class="label-tag" id="explore-tag" data-phase="0.5">explore</div>
-    <div class="ext-row" id="ext-row">
-      {EXT_LINKS.map((l) => (
-        <a href={l.href} target="_blank" rel="noopener" class="ext-chip" data-phase={l.phase}>
-          {l.label} ↗
-        </a>
-      ))}
-    </div>
-  </section>
-
-  <section class="highlight-section" id="highlight-section">
-    <div class="highlight-label scroll-reveal">
-      <div class="label-tag">featured</div>
-    </div>
-    <div class="highlight-grid">
-      <div class="highlight-card highlight-main" id="highlight-main">
-        <div class="highlight-card-inner">
-          <div class="highlight-media">
-            {/* Placeholder until a featured-project image is wired in. */}
-            <img src="" alt="" class="highlight-photo" />
-            <div class="highlight-photo-placeholder">
-              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <rect x="6" y="10" width="36" height="28" rx="4" />
-                <circle cx="18" cy="22" r="4" />
-                <path d="M6 34l10-10 8 8 6-6 12 12" stroke-linejoin="round" />
-              </svg>
-              <span>Add project photo</span>
-            </div>
-          </div>
-          <div class="highlight-content">
-            <div class="highlight-badge">Current Project</div>
-            <h2 class="highlight-title">Customize this section</h2>
-            <p class="highlight-desc">
-              Add your latest project here — link to your featured blaster build,
-              data experiment, or 3D model. This section transforms as you scroll into view.
-            </p>
-            <div class="highlight-actions">
-              <a href="/files" class="btn-primary">View Project →</a>
-              <a href="/data" class="btn-glass">See Data →</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="highlight-side">
-        <div class="highlight-stat-card" id="stat-1">
-          <span class="stat-num">3D</span>
-          <span class="stat-label">Files Available</span>
-        </div>
-        <div class="highlight-stat-card" id="stat-2">
-          <span class="stat-num">∞</span>
-          <span class="stat-label">Open Source</span>
-        </div>
-        <div class="highlight-stat-card" id="stat-3">
-          <span class="stat-num">PNGU</span>
-          <span class="stat-label">Community</span>
-        </div>
-      </div>
-    </div>
-  </section>
+    </ul>
+  </div>
 </MainLayout>
 
 <style>
   /* ============================================================
-     Hero — slot-machine word reel
+     Section list — flat rows, underline-on-hover, no transforms
      ============================================================ */
-  .hero { padding: 6rem 0 3rem; text-align: center; }
-  .hero-title {
-    font-family: var(--font-title);
-    font-size: 5.5rem;
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: 0.02em;
-    margin-bottom: 1.5rem;
-    display: inline-flex;
-    align-items: baseline;
-    justify-content: center;
-    position: relative;
-  }
-  .hero-get {
-    color: var(--text-primary);
-    margin-right: 0.3em;
-    flex-shrink: 0;
-    position: relative;
-  }
-  .hero-word-wrap {
-    display: inline-block;
-    text-align: left;
-    position: relative;
-    height: 1.1em;
-    overflow: hidden;
-    vertical-align: baseline;
-  }
-  .hero-reel {
+  .sections {
     display: flex;
     flex-direction: column;
-    will-change: transform;
+    border-top: 1px solid var(--glass-border);
+    margin: 2rem 0;
   }
-  .reel-word {
-    display: block;
-    color: var(--accent);
-    height: 1.1em;
-    line-height: 1.1;
-  }
-  .reel-final { color: var(--accent-bright); }
-  .hero-question {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 400;
-    color: var(--text-secondary);
-    letter-spacing: 0.02em;
-    margin-bottom: 0;
-  }
-
-  /* ============================================================
-     Nav pills + external chips
-     ============================================================ */
-  .nav-section { padding: 2rem 0; }
-  .nav-cards { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
-  .nav-pill {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: rgba(51, 51, 51, 0.35);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
-    padding: 1.2rem 2rem;
-    border-radius: 50px;
+  .section-row {
+    display: grid;
+    grid-template-columns: 8rem 1fr auto;
+    align-items: baseline;
+    gap: 1.25rem;
+    padding: 1rem 0.25rem;
+    border-bottom: 1px solid var(--glass-border);
     text-decoration: none;
-    box-shadow: var(--glass-shadow), var(--glass-highlight);
-    transition: border-color 0.5s var(--ease-out-expo),
-      background 0.5s var(--ease-out-expo),
-      box-shadow 0.5s var(--ease-out-expo);
-    position: relative;
-    overflow: hidden;
-    will-change: transform;
-  }
-  .nav-pill::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(193, 17, 17, 0.08), transparent 60%);
-    opacity: 0;
-    transition: opacity 0.5s var(--ease-out-expo);
-    border-radius: inherit;
+    color: var(--text-primary);
+    transition: background var(--transition-fast),
+      color var(--transition-fast);
   }
   @media (hover: hover) {
-    .nav-pill:hover {
-      border-color: rgba(193, 17, 17, 0.25);
-      background: rgba(51, 51, 51, 0.5);
-      box-shadow: var(--glass-shadow-hover), var(--glass-highlight),
-        0 0 20px rgba(193, 17, 17, 0.1);
-    }
-    .nav-pill:hover::before { opacity: 1; }
-    .nav-pill:hover .pill-label { color: var(--accent); }
-    .nav-pill:hover .pill-arrow {
+    .section-row:hover {
+      background: var(--glass-bg);
       color: var(--accent);
-      transform: translateX(4px);
     }
-    .nav-pill:hover .pill-icon { color: var(--accent); }
+    .section-row:hover .section-arrow { color: var(--accent); }
   }
-  .pill-icon {
-    font-size: 1.2rem;
-    color: var(--text-muted);
-    transition: color 0.3s;
-    position: relative;
-    z-index: 1;
+  .section-name {
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
   }
-  .pill-label {
-    font-weight: 600;
-    font-size: 1.05rem;
-    color: var(--text-primary);
-    transition: color 0.3s;
-    position: relative;
-    z-index: 1;
+  .section-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
   }
-  .pill-arrow {
+  .section-arrow {
     color: var(--text-muted);
     font-size: 1.1rem;
-    transition: all 0.3s;
-    position: relative;
-    z-index: 1;
-    margin-left: 8px;
-  }
-
-  .links-section { padding: 3rem 0 2rem; text-align: center; }
-  .ext-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
-  .ext-chip {
-    display: inline-flex;
-    align-items: center;
-    font-family: var(--font-display);
-    font-size: 0.92rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-decoration: none;
-    background: rgba(51, 51, 51, 0.25);
-    border: 1px solid var(--glass-border);
-    padding: 12px 28px;
-    border-radius: 100px;
-    transition: border-color 0.4s var(--ease-out-expo),
-      color 0.4s var(--ease-out-expo),
-      background 0.4s var(--ease-out-expo);
-    will-change: transform;
-  }
-  @media (hover: hover) {
-    .ext-chip:hover {
-      color: var(--accent);
-      border-color: rgba(193, 17, 17, 0.2);
-      background: rgba(51, 51, 51, 0.4);
-    }
+    transition: color var(--transition-fast);
   }
 
   /* ============================================================
-     Featured highlight card + stats
+     External links — single inline row, plain text
      ============================================================ */
-  .highlight-section { padding: 5rem 0 2rem; position: relative; }
-  .highlight-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0.4;
-  }
-  .highlight-label { text-align: center; margin-bottom: 2rem; }
-  .highlight-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    perspective: 1200px;
-  }
-  .highlight-card {
-    background: linear-gradient(145deg, rgba(30, 30, 30, 0.6), rgba(20, 10, 10, 0.4));
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(193, 17, 17, 0.12);
-    border-radius: 24px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.3),
-      0 0 60px rgba(193, 17, 17, 0.04),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  }
-  .highlight-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 10%, rgba(193, 17, 17, 0.3) 50%, transparent 90%);
-  }
-  .highlight-main {
-    opacity: 0;
-    transform: translateY(80px) perspective(800px) rotateX(6deg) scale(0.96);
-    transition: opacity 1s var(--ease-out-expo),
-      transform 1s var(--ease-out-expo);
-  }
-  .highlight-main.in-view {
-    opacity: 1;
-    transform: translateY(0) perspective(800px) rotateX(0) scale(1);
-  }
-  .highlight-card-inner {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    min-height: 320px;
-  }
-  .highlight-media {
-    position: relative;
-    overflow: hidden;
-    background: rgba(20, 20, 20, 0.6);
-    min-height: 280px;
-  }
-  .highlight-photo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: none;
-  }
-  .highlight-photo[src]:not([src='']) { display: block; }
-  .highlight-photo[src]:not([src='']) + .highlight-photo-placeholder { display: none; }
-  .highlight-photo-placeholder {
-    position: absolute;
-    inset: 0;
+  .external {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: baseline;
     gap: 1rem;
-    color: var(--text-muted);
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    font-size: 0.9rem;
   }
-  .highlight-photo-placeholder svg { width: 48px; height: 48px; opacity: 0.3; }
-  .highlight-photo-placeholder span {
+  .external-label {
     font-family: var(--font-mono);
     font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.4;
-  }
-  .highlight-content {
-    padding: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .highlight-badge {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
-    background: var(--accent-soft);
-    padding: 5px 12px;
-    border-radius: 100px;
-    display: inline-block;
-    margin-bottom: 1.2rem;
-    width: fit-content;
-  }
-  .highlight-title {
-    font-family: var(--font-title);
-    font-size: 2rem;
-    font-weight: 400;
-    letter-spacing: 0.01em;
-    margin-bottom: 0.8rem;
-    color: var(--text-primary);
-  }
-  .highlight-desc {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    line-height: 1.7;
-    margin-bottom: 1.8rem;
-    max-width: 440px;
-  }
-  .highlight-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; }
-
-  .highlight-side {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.2rem;
-  }
-  .highlight-stat-card {
-    background: rgba(30, 30, 30, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 1.5rem;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-    transition: opacity 0.6s var(--ease-out-expo),
-      transform 0.6s var(--ease-out-expo);
-  }
-  .highlight-stat-card.in-view {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  #stat-1.in-view { transition-delay: 0.15s; }
-  #stat-2.in-view { transition-delay: 0.3s; }
-  #stat-3.in-view { transition-delay: 0.45s; }
-  .stat-num {
-    font-family: var(--font-title);
-    font-size: 1.8rem;
-    font-weight: 400;
-    color: var(--accent);
-    letter-spacing: 0.02em;
-  }
-  .stat-label {
-    font-size: 0.75rem;
+    letter-spacing: 0.1em;
     color: var(--text-muted);
-    margin-top: 0.3rem;
-    letter-spacing: 0.03em;
-    font-family: var(--font-mono);
-    text-transform: uppercase;
+  }
+  .external-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .external-list a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+  .external-list a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 
-  /* ============================================================
-     Mobile
-     ============================================================ */
-  @media (max-width: 768px) {
-    .highlight-card-inner { grid-template-columns: 1fr; }
-    .highlight-media { min-height: 200px; }
-    .highlight-side { grid-template-columns: 1fr; }
-    .highlight-stat-card { transform: translateY(20px) scale(0.95); }
-  }
   @media (max-width: 640px) {
-    .hero { padding: 4rem 0 2.5rem; }
-    .hero-title { font-size: 3rem; }
-    .nav-cards { flex-direction: column; align-items: center; }
-    .nav-pill { width: 100%; max-width: 340px; }
-    .ext-row { flex-direction: column; align-items: center; }
-    .highlight-title { font-size: 1.4rem; }
+    .section-row {
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      row-gap: 0.25rem;
+    }
+    .section-name { grid-column: 1; grid-row: 1; }
+    .section-desc { grid-column: 1; grid-row: 2; }
+    .section-arrow { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
   }
 </style>
-
-<script is:inline>
-  // Skip the home-page animations entirely for users who opted out of motion
-  // or are on a metered/slow connection. The reel falls back to its
-  // last-frame static state (the final "info" word at the bottom).
-  (function () {
-    const reduceMotion =
-      window.matchMedia &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const saveData =
-      (navigator.connection && navigator.connection.saveData) === true;
-    if (!(reduceMotion || saveData)) return;
-    const reel = document.getElementById('hero-reel');
-    if (!reel) return;
-    const words = reel.querySelectorAll('.reel-word');
-    if (!words.length) return;
-    // Snap straight to the final word without animating.
-    reel.style.transform = 'translateY(-' + (words.length - 1) * words[0].offsetHeight + 'px)';
-  })();
-
-  // Slot-machine reel: walks the word column with a cosine speed ramp
-  // (medium → fast → slow → stop) and bounces on the final word.
-  (function () {
-    const reduceMotion =
-      window.matchMedia &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const saveData =
-      (navigator.connection && navigator.connection.saveData) === true;
-    if (reduceMotion || saveData) return;
-
-    const reel = document.getElementById('hero-reel');
-    if (!reel) return;
-    const words = reel.querySelectorAll('.reel-word');
-    if (words.length === 0) return;
-    const wordH = words[0].offsetHeight;
-    const lastIdx = words.length - 1;
-
-    function getDelay(idx) {
-      const t = idx / lastIdx;
-      const curve = 0.5 + 0.5 * Math.cos(Math.PI * t); // ease-in-out
-      const minDelay = 50;
-      const maxDelay = 500;
-      return minDelay + curve * (maxDelay - minDelay);
-    }
-
-    function scrollToWord(idx) {
-      const offset = idx * wordH;
-      reel.style.transition =
-        'transform ' + Math.max(getDelay(idx) * 0.8, 80) + 'ms cubic-bezier(0.23, 1, 0.32, 1)';
-      reel.style.transform = 'translateY(-' + offset + 'px)';
-      if (idx < lastIdx) {
-        setTimeout(() => scrollToWord(idx + 1), getDelay(idx));
-      } else {
-        // Bounce: overshoot by 4px then settle.
-        setTimeout(() => {
-          reel.style.transition = 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)';
-          reel.style.transform = 'translateY(-' + (offset + 4) + 'px)';
-          setTimeout(() => {
-            reel.style.transition = 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)';
-            reel.style.transform = 'translateY(-' + offset + 'px)';
-          }, 200);
-        }, 100);
-      }
-    }
-
-    setTimeout(() => scrollToWord(1), 800);
-  })();
-
-  // Floating sine on nav pills, ext chips, and the explore label.
-  // Amplitude decays over 6s so the page settles, then keeps a small wave.
-  // Skipped entirely under prefers-reduced-motion / saveData.
-  (function () {
-    const reduceMotion =
-      window.matchMedia &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const saveData =
-      (navigator.connection && navigator.connection.saveData) === true;
-    if (reduceMotion || saveData) return;
-
-    const pills = document.querySelectorAll('#nav-cards .nav-pill');
-    const chips = document.querySelectorAll('#ext-row .ext-chip');
-    const exploreTag = document.getElementById('explore-tag');
-    const all = [...pills, ...chips];
-    if (exploreTag) all.push(exploreTag);
-    if (!all.length) return;
-
-    const startTime = performance.now();
-    const SETTLE_DURATION = 6000;
-    const MIN_AMP_RATIO = 0.08; // 0.4 / 5
-
-    function tick(time) {
-      const elapsed = time - startTime;
-      const decay = Math.max(MIN_AMP_RATIO, 1 - elapsed / SETTLE_DURATION);
-      const amplitude = 5 * decay;
-      all.forEach((el) => {
-        const phase = parseFloat(el.dataset.phase || '0');
-        const y = Math.sin(time * 0.0015 + phase) * amplitude;
-        el.style.transform = 'translateY(' + y.toFixed(2) + 'px)';
-      });
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  })();
-
-  // Highlight section reveal on scroll-in.
-  (function () {
-    const mainCard = document.getElementById('highlight-main');
-    const section = document.getElementById('highlight-section');
-    if (!mainCard || !section) return;
-    const statCards = document.querySelectorAll('.highlight-stat-card');
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            mainCard.classList.add('in-view');
-            statCards.forEach((c) => c.classList.add('in-view'));
-            io.unobserve(entry.target);
-          }
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -20% 0px' }
-    );
-    io.observe(section);
-  })();
-
-  // Scroll-driven background tint applied to the canvas backdrop. The aurora
-  // strokes themselves stay constant; only the page background colour shifts.
-  (function () {
-    const canvas = document.getElementById('bg-canvas');
-    if (!canvas) return;
-    function update() {
-      const scrollY = window.scrollY;
-      const docH = document.documentElement.scrollHeight - window.innerHeight;
-      const t = docH > 0 ? scrollY / docH : 0;
-      let r, g, b;
-      if (t < 0.33) {
-        const s = t / 0.33;
-        r = Math.round(s * 8);
-        g = Math.round(s * 12);
-        b = Math.round(s * 28);
-      } else if (t < 0.66) {
-        const s = (t - 0.33) / 0.33;
-        r = Math.round(8 + s * 22);
-        g = Math.round(12 - s * 8);
-        b = Math.round(28 - s * 18);
-      } else {
-        const s = (t - 0.66) / 0.34;
-        r = Math.round(30 - s * 18);
-        g = Math.round(4 + s * 8);
-        b = Math.round(10 - s * 4);
-      }
-      canvas.style.background = 'rgb(' + r + ',' + g + ',' + b + ')';
-    }
-    window.addEventListener('scroll', update, { passive: true });
-    update();
-  })();
-</script>
