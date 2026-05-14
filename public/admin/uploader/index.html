@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PNGU image uploader</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      /*
+       * Uploader is a standalone static page outside the Astro build, so it
+       * can't share MainLayout's tokens. We inline a minimal subset that
+       * matches the site's glass aesthetic.
+       */
+      :root {
+        --bg-primary: #000;
+        --text-primary: #fff;
+        --text-secondary: #a0a0a0;
+        --text-muted: #666;
+        --accent: #c11111;
+        --accent-soft: rgba(193, 17, 17, 0.12);
+        --glass-bg: rgba(51, 51, 51, 0.4);
+        --glass-bg-hover: rgba(51, 51, 51, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.07);
+        --glass-border-hover: rgba(255, 255, 255, 0.14);
+        --glass-radius: 20px;
+        --glass-radius-sm: 14px;
+        --font: 'Sora', system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { background: var(--bg-primary); }
+      body {
+        font-family: var(--font);
+        color: var(--text-primary);
+        line-height: 1.5;
+        min-height: 100vh;
+        padding: 2rem 1.25rem 4rem;
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 2rem 0 0.75rem;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      p { color: var(--text-secondary); margin-bottom: 0.75rem; font-size: 0.9rem; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      .panel {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--glass-radius);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .panel.alert {
+        border-color: rgba(193, 17, 17, 0.4);
+        background: var(--accent-soft);
+      }
+      .row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+      .row label { font-size: 0.85rem; color: var(--text-secondary); }
+
+      select, input[type="text"] {
+        background: rgba(0, 0, 0, 0.4);
+        color: var(--text-primary);
+        border: 1px solid var(--glass-border);
+        border-radius: 100px;
+        padding: 8px 14px;
+        font-family: var(--font);
+        font-size: 0.85rem;
+        outline: none;
+      }
+      select:focus, input[type="text"]:focus { border-color: var(--accent); }
+
+      .banner {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        padding: 0.6rem 1rem;
+        border: 1px dashed var(--glass-border);
+        border-radius: var(--glass-radius-sm);
+        margin-bottom: 1rem;
+      }
+      .banner code { color: var(--text-secondary); }
+
+      .drop-zone {
+        border: 2px dashed var(--glass-border);
+        border-radius: var(--glass-radius);
+        padding: 2rem 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+      }
+      .drop-zone:hover, .drop-zone.dragging {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .drop-zone p { margin: 0.25rem 0; }
+      .drop-zone .hint { color: var(--text-muted); font-size: 0.78rem; }
+      .drop-zone input[type="file"] { display: none; }
+
+      .files {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+      }
+      .file {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--glass-radius-sm);
+        padding: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+      .file img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        border-radius: 10px;
+        background: #111;
+      }
+      .file .name {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .file button {
+        background: rgba(193, 17, 17, 0.2);
+        color: var(--accent);
+        border: 1px solid rgba(193, 17, 17, 0.3);
+        border-radius: 100px;
+        padding: 4px 10px;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+      }
+      .file button:hover {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      #status {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 0.75rem;
+        white-space: pre-wrap;
+      }
+      #status.error { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <h1>PNGU image uploader</h1>
+    <p id="subtitle">Loading…</p>
+
+    <div id="auth-error" class="panel alert" hidden>
+      <h2>Not signed in</h2>
+      <p>
+        Open <a href="/admin/">/admin/</a>, log in via GitHub, then come back
+        to this tab and reload.
+      </p>
+      <p id="auth-debug" style="font-family: var(--font-mono); font-size: 0.7rem;"></p>
+    </div>
+
+    <div id="app" hidden>
+      <div class="panel">
+        <h2>Target</h2>
+        <div class="row">
+          <label>Slug</label>
+          <input
+            type="text"
+            id="slug-input"
+            placeholder="e.g. lynx"
+            pattern="[a-z0-9][a-z0-9-]{0,79}"
+          />
+          <label>Section</label>
+          <select id="target-select">
+            <option value="hero">Hero (single image)</option>
+            <option value="firstImpressions">firstImpressions</option>
+            <option value="price">price</option>
+            <option value="buildQuality">buildQuality</option>
+            <option value="ergonomics">ergonomics</option>
+            <option value="magSystem">magSystem</option>
+            <option value="performance">performance</option>
+            <option value="maintenance">maintenance</option>
+            <option value="failurePoints">failurePoints</option>
+            <option value="printingAssembly">printingAssembly</option>
+          </select>
+          <button id="load-btn" type="button">Load</button>
+        </div>
+      </div>
+
+      <div class="banner">
+        Files display in <strong>alphabetical order</strong>. Prefix filenames
+        with <code>01-</code>, <code>02-</code>, etc. to control the gallery
+        order on the public page.
+      </div>
+
+      <div class="panel">
+        <h2>Existing files</h2>
+        <div id="files" class="files"></div>
+        <p id="files-empty" style="color: var(--text-muted); font-size: 0.85rem;">
+          (load a slug + section above)
+        </p>
+      </div>
+
+      <div class="panel">
+        <h2>Upload new</h2>
+        <label class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" multiple
+                 accept="image/jpeg,image/png,image/webp" />
+          <p><strong>Drag &amp; drop</strong> or click to pick files.</p>
+          <p class="hint">
+            JPEG / PNG / WebP only. 10 MB max. Same filename twice = rejected
+            (no silent overwrites).
+          </p>
+        </label>
+        <div id="status"></div>
+      </div>
+    </div>
+
+    <script>
+      /* eslint-disable */
+      /**
+       * Standalone admin uploader. Reads the GitHub OAuth token that Decap
+       * CMS stashed in localStorage after the user logged in at /admin/,
+       * then talks to /api/admin/{list,upload,delete} on this same origin.
+       *
+       * Decap v3 persists redux state under key 'decap-cms' via
+       * redux-persist. Each reducer slice is itself a JSON string. We try
+       * that path first, then a legacy 'netlify-cms-user' fallback, then
+       * log all localStorage keys so the user can diagnose if neither
+       * matches their installed version.
+       *
+       * Token verification happens server-side via _auth.ts — this page
+       * only has to send `Authorization: token <value>` on every request.
+       */
+      (function () {
+        var subtitle = document.getElementById('subtitle');
+        var authError = document.getElementById('auth-error');
+        var authDebug = document.getElementById('auth-debug');
+        var app = document.getElementById('app');
+
+        var token = readToken();
+        if (!token) {
+          subtitle.textContent = '';
+          authError.hidden = false;
+          authDebug.textContent =
+            'localStorage keys found: ' +
+            JSON.stringify(Object.keys(localStorage));
+          console.warn(
+            '[uploader] No GitHub token found in localStorage. Keys present:',
+            Object.keys(localStorage),
+            '\nIf you are signed in to /admin/ and still see this, inspect ' +
+              'localStorage in DevTools and tell the maintainer which key ' +
+              'holds the token so the lookup can be tightened.'
+          );
+          return;
+        }
+        app.hidden = false;
+        subtitle.textContent = 'Signed in. Pick a slug + section below.';
+
+        // Prefill from query string if present.
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('slug')) {
+          document.getElementById('slug-input').value = params.get('slug');
+        }
+        if (params.get('target')) {
+          var sel = document.getElementById('target-select');
+          if (Array.from(sel.options).some(function (o) {
+            return o.value === params.get('target');
+          })) {
+            sel.value = params.get('target');
+          }
+        }
+        if (params.get('slug') && params.get('target')) refreshList();
+
+        document.getElementById('load-btn').addEventListener('click', refreshList);
+
+        // Drag-drop wiring
+        var drop = document.getElementById('drop-zone');
+        var fileInput = document.getElementById('file-input');
+        ['dragenter', 'dragover'].forEach(function (ev) {
+          drop.addEventListener(ev, function (e) {
+            e.preventDefault();
+            drop.classList.add('dragging');
+          });
+        });
+        ['dragleave', 'drop'].forEach(function (ev) {
+          drop.addEventListener(ev, function (e) {
+            e.preventDefault();
+            drop.classList.remove('dragging');
+          });
+        });
+        drop.addEventListener('drop', function (e) {
+          if (e.dataTransfer && e.dataTransfer.files) upload(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', function (e) {
+          if (e.target.files) upload(e.target.files);
+        });
+
+        function readToken() {
+          // Decap CMS v3 (current). redux-persist stores each slice as a
+          // JSON string keyed inside the outer JSON.
+          try {
+            var raw = localStorage.getItem('decap-cms');
+            if (raw) {
+              var root = JSON.parse(raw);
+              if (typeof root.auth === 'string') {
+                var auth = JSON.parse(root.auth);
+                if (auth && auth.user && auth.user.token) return auth.user.token;
+              } else if (root.auth && root.auth.user && root.auth.user.token) {
+                return root.auth.user.token;
+              }
+            }
+          } catch (e) {
+            console.warn('[uploader] decap-cms parse failed', e);
+          }
+
+          // Legacy Netlify CMS / earlier Decap shapes.
+          try {
+            var legacy = localStorage.getItem('netlify-cms-user');
+            if (legacy) {
+              var parsed = JSON.parse(legacy);
+              if (parsed && parsed.token) return parsed.token;
+            }
+          } catch (e) {
+            console.warn('[uploader] netlify-cms-user parse failed', e);
+          }
+
+          return null;
+        }
+
+        function readSlugTarget() {
+          return {
+            slug: document.getElementById('slug-input').value.trim(),
+            target: document.getElementById('target-select').value,
+          };
+        }
+
+        function authHeader() {
+          // GitHub's classic `token <pat>` prefix — _auth.ts also accepts Bearer.
+          return { Authorization: 'token ' + token };
+        }
+
+        function setStatus(msg, isError) {
+          var s = document.getElementById('status');
+          s.textContent = msg;
+          s.classList.toggle('error', !!isError);
+        }
+
+        async function refreshList() {
+          var st = readSlugTarget();
+          if (!st.slug) {
+            setStatus('Slug is required.', true);
+            return;
+          }
+          setStatus('Loading list…');
+          var url =
+            '/api/admin/list?slug=' +
+            encodeURIComponent(st.slug) +
+            '&target=' +
+            encodeURIComponent(st.target);
+          var res = await fetch(url, { headers: authHeader() });
+          if (!res.ok) {
+            setStatus('List failed: ' + res.status + ' ' + res.statusText, true);
+            return;
+          }
+          var json = await res.json();
+          renderFiles(json.files || []);
+          setStatus('Loaded ' + (json.files || []).length + ' file(s).');
+        }
+
+        function renderFiles(files) {
+          var grid = document.getElementById('files');
+          var empty = document.getElementById('files-empty');
+          grid.innerHTML = '';
+          if (files.length === 0) {
+            empty.hidden = false;
+            empty.textContent = '(none in this target yet)';
+            return;
+          }
+          empty.hidden = true;
+          files.forEach(function (f) {
+            var el = document.createElement('div');
+            el.className = 'file';
+            // Route the thumbnail through /cdn-cgi/image/ so we don't ship
+            // the full original to the admin's browser either.
+            var thumbUrl =
+              '/cdn-cgi/image/width=160,format=auto,quality=70/' + f.url;
+            el.innerHTML =
+              '<img src="' + thumbUrl + '" alt="" />' +
+              '<span class="name" title="' + f.filename + '">' +
+              f.filename +
+              '</span>' +
+              '<button type="button">Delete</button>';
+            el.querySelector('button').addEventListener('click', function () {
+              if (!confirm('Delete ' + f.filename + '?')) return;
+              deleteFile(f.filename);
+            });
+            grid.appendChild(el);
+          });
+        }
+
+        async function deleteFile(filename) {
+          var st = readSlugTarget();
+          setStatus('Deleting ' + filename + '…');
+          var res = await fetch('/api/admin/delete', {
+            method: 'POST',
+            headers: Object.assign(
+              { 'Content-Type': 'application/json' },
+              authHeader()
+            ),
+            body: JSON.stringify({
+              slug: st.slug,
+              target: st.target,
+              filename: filename,
+            }),
+          });
+          var json = await res.json().catch(function () { return {}; });
+          if (!res.ok || !json.ok) {
+            setStatus('Delete failed: ' + (json.error || res.statusText), true);
+            return;
+          }
+          setStatus('Deleted ' + filename + '.');
+          refreshList();
+        }
+
+        async function upload(fileList) {
+          var st = readSlugTarget();
+          if (!st.slug) {
+            setStatus('Slug is required.', true);
+            return;
+          }
+          var files = Array.from(fileList);
+          if (files.length === 0) return;
+          setStatus(
+            'Uploading ' + files.length + ' file(s) to ' + st.slug + '/' +
+              (st.target === 'hero' ? 'hero' : 'galleries/' + st.target) + '…'
+          );
+          var fd = new FormData();
+          fd.append('slug', st.slug);
+          fd.append('target', st.target);
+          files.forEach(function (f) { fd.append('files', f); });
+          var res = await fetch('/api/admin/upload', {
+            method: 'POST',
+            headers: authHeader(),
+            body: fd,
+          });
+          var json = await res.json().catch(function () { return {}; });
+          if (!res.ok || !json.ok) {
+            // Surface 409 messages verbatim so admins know to rename.
+            setStatus(
+              'Upload failed: ' + (json.error || res.statusText) +
+                ' (HTTP ' + res.status + ')',
+              true
+            );
+            return;
+          }
+          setStatus('Uploaded ' + json.uploaded.length + ' file(s).');
+          // Reset the picker so the same file can be picked again later.
+          fileInput.value = '';
+          refreshList();
+        }
+      })();
+    </script>
+  </body>
+</html>

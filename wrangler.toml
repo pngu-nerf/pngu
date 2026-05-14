@@ -1,0 +1,20 @@
+# Cloudflare Pages project config. Distinct from worker/wrangler.toml
+# (which configures the standalone pngu-auth Worker).
+#
+# Bindings declared here are surfaced as `env` to Pages Functions under
+# /functions/. The R2 binding is what /api/admin/{upload,list,delete} use.
+#
+# Schema reference: https://developers.cloudflare.com/pages/functions/wrangler-configuration/
+# Verify before relying — Pages wrangler config keys shift between releases.
+
+name = "pngu"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+# R2 bucket that holds blaster hero + gallery images (and the existing
+# /files and /brand assets). Pages Functions read/write via env.ASSETS_BUCKET.
+[[r2_buckets]]
+binding = "ASSETS_BUCKET"
+bucket_name = "pngu-assets"
+preview_bucket_name = "pngu-assets"
