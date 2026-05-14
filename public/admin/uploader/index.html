@@ -95,20 +95,36 @@
       .banner code { color: var(--text-secondary); }
 
       .drop-zone {
+        display: block;                     /* <label> is inline by default — fix layout */
+        width: 100%;
+        box-sizing: border-box;
         border: 2px dashed var(--glass-border);
         border-radius: var(--glass-radius);
-        padding: 2rem 1.5rem;
+        padding: 2.25rem 1.5rem;
         text-align: center;
         cursor: pointer;
+        background: rgba(0, 0, 0, 0.2);
         transition: border-color 0.2s, background 0.2s;
       }
       .drop-zone:hover, .drop-zone.dragging {
         border-color: var(--accent);
         background: var(--accent-soft);
       }
-      .drop-zone p { margin: 0.25rem 0; }
+      .drop-zone p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+      }
+      .drop-zone p + p { margin-top: 0.4rem; }
+      .drop-zone p strong { color: var(--text-primary); }
       .drop-zone .hint { color: var(--text-muted); font-size: 0.78rem; }
-      .drop-zone input[type="file"] { display: none; }
+      .drop-zone input[type="file"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+        width: 0;
+        height: 0;
+      }
 
       .files {
         display: grid;
@@ -195,10 +211,12 @@
           <label>Section</label>
           <!--
             Sections must match SECTION_KEYS in src/lib/blaster-paths.ts.
-            If you add or remove a section there, sync this list too.
+            'hero' and 'gallery' are top-level targets handled separately
+            by the Pages Functions (not in SECTION_KEYS).
           -->
           <select id="target-select">
             <option value="hero">Hero (single image)</option>
+            <option value="gallery">Gallery (general, page bottom)</option>
             <option value="price">price</option>
             <option value="buildQuality">buildQuality</option>
             <option value="ergonomics">ergonomics</option>

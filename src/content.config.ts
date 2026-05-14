@@ -33,9 +33,12 @@ const blasters = defineCollection({
     // Quick-stat infographic rendered as a grid of mini cards.
     stats: z
       .object({
-        blasterType: z.string().optional(),         // e.g. "Springer", "Flywheel", "Rev-trigger"
+        blasterType: z.string().optional(),       // e.g. "Springer", "Flywheel", "Rev-trigger"
         maxFps: z.number().optional(),
-        recommendedFpsRange: z.string().optional(), // e.g. "120-150" or "≤150"
+        // Numeric range so the page can draw a real bar graphic. Either
+        // end can be left blank if only one bound is known.
+        recommendedFpsMin: z.number().optional(),
+        recommendedFpsMax: z.number().optional(),
         kitPriceUSD: z.number().optional(),
         totalPriceUSD: z.number().optional(),
         shippingUSD: z.number().optional(),
@@ -43,11 +46,16 @@ const blasters = defineCollection({
         magSystem: z.string().optional(),
         braggingRights: z.string().optional(),
 
-        // Yes/no toggles → render as checked / crossed pills.
+        // Feature toggles → only render when true (see [slug] filter).
         lipoSafe: z.boolean().optional(),
         brushlessFpsDial: z.boolean().optional(),
+        // True when the user can adjust spring compression on the fly.
         springPrecompression: z.boolean().optional(),
+        // Picatinny rail vs. M-LOK are distinct mounting standards;
+        // some blasters have one, some both, some neither.
         picatinnyMount: z.boolean().optional(),
+        mlocMount: z.boolean().optional(),
+        slingPoints: z.boolean().optional(),
         gravityDropMags: z.boolean().optional(),
         catchIssues: z.boolean().optional(),
         a1Printable: z.boolean().optional(),

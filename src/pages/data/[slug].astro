@@ -26,6 +26,7 @@ import {
   BLASTER_PREFIX,
   heroPrefix,
   galleryPrefix,
+  mainGalleryPrefix,
   type SectionKey,
 } from '../../lib/blaster-paths';
 import { getR2Data, listR2Files } from '../../lib/r2';
@@ -58,18 +59,23 @@ export async function getStaticPaths() {
         }
       }
 
+      // 1 call: every file directly under <slug>/gallery/ — the general
+      // page-bottom gallery, separate from the per-section galleries.
+      const mainGalleryFiles = await listR2Files(mainGalleryPrefix(slug));
+
       return {
         params: { slug },
-        props: { blaster, heroFiles, galleries },
+        props: { blaster, heroFiles, galleries, mainGalleryFiles },
       };
     })
   );
 }
 
-const { blaster, heroFiles, galleries } = Astro.props as {
+const { blaster, heroFiles, galleries, mainGalleryFiles } = Astro.props as {
   blaster: Awaited<ReturnType<typeof getCollection<'blasters'>>>[number];
   heroFiles: string[];
   galleries: Galleries;
+  mainGalleryFiles: string[];
 };
 
 const data = blaster.data;
@@ -92,43 +98,82 @@ function galleryUrls(key: SectionKey): { filename: string; url: string }[] {
   }));
 }
 
-// Stat cards — only render the ones the admin actually filled out.
-// Numeric / short-string: hide if undefined or empty string.
-// Booleans: hide if false OR undefined (Decap's boolean widget always
-// emits a value, so "unfilled" and "explicitly off" both fall through).
-// Only `true` booleans surface as feature pills.
+// Stats are grouped into labelled panels for scannability. Each panel
+// only renders if at least one of its cards has a value.
+//
+// Filters:
+//   numeric / string cards → hide if undefined or empty string
+//   boolean pills          → hide if false OR undefined; only `true`
+//                            renders as a feature pill
 const stats = data.stats ?? {};
 
-const numericStats: Array<{ label: string; value: number | string | undefined; suffix?: string; prefix?: string }> = [
+type NumCard = { label: string; value: number | string | undefined; prefix?: string; suffix?: string };
+const visibleNum = (cards: NumCard[]) =>
+  cards.filter((c) => c.value !== undefined && c.value !== '');
+const visibleBool = (pills: Array<{ label: string; value: boolean | undefined }>) =>
+  pills.filter((p) => p.value === true);
+
+// ── At-a-glance: identity / spec ────────────────────────────────────
+const atAGlance = visibleNum([
   { label: 'Type', value: stats.blasterType },
-  { label: 'Max FPS', value: stats.maxFps, suffix: ' fps' },
-  { label: 'Recommended FPS', value: stats.recommendedFpsRange },
+  { label: 'Mag system', value: stats.magSystem },
+  { label: 'Battery', value: stats.battery },
+  { label: 'Bragging rights', value: stats.braggingRights },
+]);
+
+// ── FPS panel ───────────────────────────────────────────────────────
+const fpsMaxCard = stats.maxFps !== undefined
+  ? { label: 'Max', value: stats.maxFps, suffix: ' fps' } satisfies NumCard
+  : null;
+const fpsMin = stats.recommendedFpsMin;
+const fpsMax = stats.recommendedFpsMax;
+const hasFpsRange = fpsMin !== undefined || fpsMax !== undefined;
+const hasFpsPanel = fpsMaxCard !== null || hasFpsRange;
+
+// Range bar maths: scale against the wider of {recommendedMax, maxFps}
+// so the recommended band and the achieved max share an axis.
+const fpsAxisHigh = Math.max(
+  fpsMin ?? 0,
+  fpsMax ?? 0,
+  stats.maxFps ?? 0,
+  1
+);
+const fpsAxisLow = 0;
+const pct = (n: number) =>
+  Math.max(0, Math.min(100, ((n - fpsAxisLow) / (fpsAxisHigh - fpsAxisLow)) * 100));
+
+// ── Cost panel ──────────────────────────────────────────────────────
+const cost = visibleNum([
   { label: 'Kit', value: stats.kitPriceUSD, prefix: '$' },
   { label: 'Total', value: stats.totalPriceUSD, prefix: '$' },
   { label: 'Shipping', value: stats.shippingUSD, prefix: '$' },
-  { label: 'Battery', value: stats.battery },
-  { label: 'Mag system', value: stats.magSystem },
-  { label: 'Bragging rights', value: stats.braggingRights },
-];
-const numericVisible = numericStats.filter(
-  (s) => s.value !== undefined && s.value !== ''
-);
+]);
 
-const booleanStats: Array<{ label: string; value: boolean | undefined }> = [
+// ── Mounting panel ──────────────────────────────────────────────────
+const mounting = visibleBool([
+  { label: 'Picatinny', value: stats.picatinnyMount },
+  { label: 'M-LOK', value: stats.mlocMount },
+  { label: 'Sling points', value: stats.slingPoints },
+]);
+
+// ── Features (everything else, true-only) ───────────────────────────
+const features = visibleBool([
   { label: 'LiPo safe', value: stats.lipoSafe },
   { label: 'Brushless FPS dial', value: stats.brushlessFpsDial },
-  { label: 'Spring precomp', value: stats.springPrecompression },
-  { label: 'Picatinny / M-LOK', value: stats.picatinnyMount },
+  { label: 'Adjustable spring compression', value: stats.springPrecompression },
   { label: 'Gravity-drop mags', value: stats.gravityDropMags },
-  { label: 'Catch issues', value: stats.catchIssues },
   { label: 'A1-printable', value: stats.a1Printable },
   { label: 'Print: beginner-friendly', value: stats.beginnerFriendlyPrint },
   { label: 'Build: beginner-friendly', value: stats.beginnerFriendlyAssembly },
-];
-const booleanVisible = booleanStats.filter((b) => b.value === true);
+  { label: 'Catch issues', value: stats.catchIssues },
+]);
 
-// Hide the stats grid entirely if nothing would render in it.
-const hasAnyStat = numericVisible.length > 0 || booleanVisible.length > 0;
+const hasAnyStat =
+  atAGlance.length > 0 ||
+  hasFpsPanel ||
+  cost.length > 0 ||
+  mounting.length > 0 ||
+  features.length > 0;
 
 const verdictLabel: Record<NonNullable<typeof data.verdict>, string> = {
   skip: 'Skip',
@@ -149,6 +194,12 @@ const sectionsToRender = SECTION_KEYS.filter((key) => {
 // (Markdown is rendered server-side by passing through the content
 // pipeline. For simplicity we treat section body as preformatted-ish
 // markdown by parsing on render below.)
+
+// Page-bottom general gallery
+const mainGalleryItems = mainGalleryFiles.map((filename) => ({
+  filename,
+  url: `${R2_BASE_URL}/${mainGalleryPrefix(blaster.id)}${filename}`,
+}));
 
 // External-links grouping
 const linksByCategory = data.links.reduce(
@@ -186,21 +237,104 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
   </div>
 
   {hasAnyStat && (
-    <div class="stat-grid">
-      {numericVisible.map((s) => (
-        <div class="stat-card">
-          <span class="stat-label">{s.label}</span>
-          <span class="stat-value">
-            {s.prefix}{s.value}{s.suffix}
-          </span>
-        </div>
-      ))}
-      {booleanVisible.map((b) => (
-        <div class="stat-card stat-pill on">
-          <span class="stat-pill-icon">✓</span>
-          <span class="stat-pill-label">{b.label}</span>
-        </div>
-      ))}
+    <div class="stat-panels">
+      {atAGlance.length > 0 && (
+        <section class="stat-panel">
+          <h3 class="stat-panel-label">At a glance</h3>
+          <div class="stat-row">
+            {atAGlance.map((s) => (
+              <div class="stat-card">
+                <span class="stat-label">{s.label}</span>
+                <span class="stat-value">{s.prefix}{s.value}{s.suffix}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hasFpsPanel && (
+        <section class="stat-panel">
+          <h3 class="stat-panel-label">FPS</h3>
+          <div class="stat-row fps-row">
+            {fpsMaxCard && (
+              <div class="stat-card">
+                <span class="stat-label">{fpsMaxCard.label}</span>
+                <span class="stat-value">{fpsMaxCard.value}{fpsMaxCard.suffix}</span>
+              </div>
+            )}
+            {hasFpsRange && (
+              <div class="stat-card stat-card-wide fps-range-card">
+                <span class="stat-label">Recommended range</span>
+                <span class="stat-value fps-range-value">
+                  {fpsMin !== undefined ? fpsMin : '?'}
+                  {' – '}
+                  {fpsMax !== undefined ? fpsMax : '?'}
+                  <span class="fps-unit">fps</span>
+                </span>
+                <div class="fps-axis" role="img"
+                     aria-label={`Recommended ${fpsMin ?? '?'} to ${fpsMax ?? '?'} fps`}>
+                  {fpsMin !== undefined && fpsMax !== undefined && (
+                    <span
+                      class="fps-band"
+                      style={`left: ${pct(fpsMin)}%; right: ${100 - pct(fpsMax)}%;`}
+                    ></span>
+                  )}
+                  {stats.maxFps !== undefined && (
+                    <span class="fps-marker" style={`left: ${pct(stats.maxFps)}%;`}
+                          title={`Max FPS ${stats.maxFps}`}></span>
+                  )}
+                </div>
+                <div class="fps-axis-labels">
+                  <span>0</span>
+                  <span>{fpsAxisHigh} fps</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {cost.length > 0 && (
+        <section class="stat-panel">
+          <h3 class="stat-panel-label">Cost</h3>
+          <div class="stat-row">
+            {cost.map((s) => (
+              <div class="stat-card">
+                <span class="stat-label">{s.label}</span>
+                <span class="stat-value">{s.prefix}{s.value}{s.suffix}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {mounting.length > 0 && (
+        <section class="stat-panel">
+          <h3 class="stat-panel-label">Mounting</h3>
+          <div class="stat-row">
+            {mounting.map((b) => (
+              <div class="stat-card stat-pill on">
+                <span class="stat-pill-icon">✓</span>
+                <span class="stat-pill-label">{b.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {features.length > 0 && (
+        <section class="stat-panel">
+          <h3 class="stat-panel-label">Features</h3>
+          <div class="stat-row">
+            {features.map((b) => (
+              <div class="stat-card stat-pill on">
+                <span class="stat-pill-icon">✓</span>
+                <span class="stat-pill-label">{b.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )}
 
@@ -298,6 +432,32 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
       })}
     </section>
   )}
+
+  {mainGalleryItems.length > 0 && (
+    <section class="main-gallery">
+      <h2 class="block-heading">Gallery</h2>
+      <div class="gallery-grid">
+        {mainGalleryItems.map((img) => (
+          <details class="glass-dropdown gallery-item">
+            <summary>
+              <OptimizedImage
+                src={img.url}
+                size="tile"
+                alt={img.filename}
+                class="gallery-thumb"
+              />
+              <span class="gallery-name">{img.filename}</span>
+            </summary>
+            <div class="preview-wrap">
+              <div class="checkerboard">
+                <OptimizedImage src={img.url} size="hero" alt={img.filename} />
+              </div>
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
+  )}
 </MainLayout>
 
 <style>
@@ -329,12 +489,26 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
     margin-bottom: 1rem;
   }
 
-  /* ── Stat grid ──────────────────────────────────────────────────── */
-  .stat-grid {
+  /* ── Stat panels ────────────────────────────────────────────────── */
+  .stat-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .stat-panel { display: flex; flex-direction: column; gap: 0.5rem; }
+  .stat-panel-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin: 0;
+  }
+  .stat-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 0.75rem;
-    margin: 1.5rem 0 2rem;
+    gap: 0.6rem;
   }
   .stat-card {
     background: var(--glass-bg);
@@ -342,10 +516,14 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     border-radius: var(--glass-radius-sm);
-    padding: 0.9rem 1rem;
+    padding: 0.85rem 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+  }
+  .stat-card-wide { grid-column: span 2; }
+  @media (max-width: 600px) {
+    .stat-card-wide { grid-column: 1 / -1; }
   }
   .stat-label {
     font-family: var(--font-mono);
@@ -365,8 +543,8 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
     align-items: center;
     gap: 0.6rem;
     padding: 0.6rem 0.85rem;
+    border-color: rgba(193, 17, 17, 0.35);
   }
-  .stat-pill.on { border-color: rgba(193, 17, 17, 0.35); }
   .stat-pill-icon {
     font-family: var(--font-mono);
     font-size: 0.95rem;
@@ -378,6 +556,49 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
     font-size: 0.82rem;
     color: var(--text-secondary);
   }
+
+  /* ── FPS range graphic ──────────────────────────────────────────── */
+  .fps-row { align-items: stretch; }
+  .fps-range-value { display: flex; align-items: baseline; gap: 0.4rem; }
+  .fps-unit {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .fps-axis {
+    position: relative;
+    height: 8px;
+    margin: 0.6rem 0 0.25rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 100px;
+  }
+  .fps-band {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+    border-radius: 100px;
+    box-shadow: 0 0 12px rgba(193, 17, 17, 0.3);
+  }
+  .fps-marker {
+    position: absolute;
+    top: -4px;
+    width: 2px;
+    height: 16px;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+    transform: translateX(-1px);
+  }
+  .fps-axis-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  /* ── Main page-bottom gallery ───────────────────────────────────── */
+  .main-gallery { margin: 3rem 0; }
 
   /* ── Review sections + gallery ──────────────────────────────────── */
   .review-section {

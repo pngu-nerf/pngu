@@ -57,11 +57,18 @@ export function blasterRoot(slug: string): string {
 export function heroPrefix(slug: string): string {
   return `${blasterRoot(slug)}/hero/`;
 }
+/** General page-bottom gallery — distinct from the per-section galleries. */
+export function mainGalleryPrefix(slug: string): string {
+  return `${blasterRoot(slug)}/gallery/`;
+}
 export function galleryPrefix(slug: string, section: SectionKey): string {
   return `${blasterRoot(slug)}/galleries/${section}/`;
 }
 export function heroKey(slug: string, filename: string): string {
   return `${heroPrefix(slug)}${filename}`;
+}
+export function mainGalleryKey(slug: string, filename: string): string {
+  return `${mainGalleryPrefix(slug)}${filename}`;
 }
 export function galleryKey(slug: string, section: SectionKey, filename: string): string {
   return `${galleryPrefix(slug, section)}${filename}`;

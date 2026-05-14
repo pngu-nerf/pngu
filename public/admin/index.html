@@ -227,14 +227,24 @@
                       hint: 'Highest FPS observed across all darts.',
                     },
                     {
-                      label: 'Recommended FPS range',
-                      name: 'recommendedFpsRange',
-                      widget: 'string',
+                      label: 'Recommended FPS — min',
+                      name: 'recommendedFpsMin',
+                      widget: 'number',
                       required: false,
+                      value_type: 'int',
                       hint:
-                        'Field-rules FPS range you tune to, e.g. "120-150" ' +
-                        'or "≤150". Free text — match how your community ' +
-                        'writes it.',
+                        'Lower bound of the field-rules range you tune to. ' +
+                        'Leave blank if only an upper bound matters.',
+                    },
+                    {
+                      label: 'Recommended FPS — max',
+                      name: 'recommendedFpsMax',
+                      widget: 'number',
+                      required: false,
+                      value_type: 'int',
+                      hint:
+                        'Upper bound of the recommended range. Pair with ' +
+                        'min — the page draws a horizontal range bar.',
                     },
                     {
                       label: 'Kit price (USD)',
@@ -295,15 +305,30 @@
                       default: false,
                     },
                     {
-                      label: 'Spring precompression adjustable',
+                      label: 'Adjustable spring compression',
                       name: 'springPrecompression',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                      hint: 'Spring tension can be tuned without disassembly.',
+                    },
+                    {
+                      label: 'Picatinny mount',
+                      name: 'picatinnyMount',
                       widget: 'boolean',
                       required: false,
                       default: false,
                     },
                     {
-                      label: 'Picatinny / M-LOK mount',
-                      name: 'picatinnyMount',
+                      label: 'M-LOK mount',
+                      name: 'mlocMount',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                    {
+                      label: 'Sling points',
+                      name: 'slingPoints',
                       widget: 'boolean',
                       required: false,
                       default: false,

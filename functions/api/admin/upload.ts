@@ -12,6 +12,7 @@ import {
   isValidSection,
   galleryKey,
   heroKey,
+  mainGalleryKey,
   ALLOWED_MIME_TYPES,
   MAX_UPLOAD_BYTES,
   IMMUTABLE_CACHE_CONTROL,
@@ -39,7 +40,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   if (!isValidSlug(slug)) return jsonError(400, 'Invalid slug');
   const isHero = target === 'hero';
-  if (!isHero && !isValidSection(target)) return jsonError(400, 'Invalid target');
+  const isMainGallery = target === 'gallery';
+  if (!isHero && !isMainGallery && !isValidSection(target)) {
+    return jsonError(400, 'Invalid target');
+  }
   if (files.length === 0) return jsonError(400, 'No files supplied');
 
   const uploaded: Array<{ key: string; filename: string; size: number }> = [];
@@ -54,7 +58,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     const key = isHero
       ? heroKey(slug, f.name)
-      : galleryKey(slug, target as SectionKey, f.name);
+      : isMainGallery
+        ? mainGalleryKey(slug, f.name)
+        : galleryKey(slug, target as SectionKey, f.name);
 
     // Collision check — never silently overwrite. .head() is cheap.
     if (await env.ASSETS_BUCKET.head(key)) {

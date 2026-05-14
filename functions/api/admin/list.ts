@@ -11,6 +11,7 @@ import {
   isValidSection,
   heroPrefix,
   galleryPrefix,
+  mainGalleryPrefix,
   type SectionKey,
 } from '../../../src/lib/blaster-paths';
 import { R2_BASE_URL } from '../../../src/constants';
@@ -35,9 +36,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const prefix =
     target === 'hero'
       ? heroPrefix(slug)
-      : isValidSection(target)
-        ? galleryPrefix(slug, target as SectionKey)
-        : null;
+      : target === 'gallery'
+        ? mainGalleryPrefix(slug)
+        : isValidSection(target)
+          ? galleryPrefix(slug, target as SectionKey)
+          : null;
   if (prefix === null) {
     return Response.json({ ok: false, error: 'Invalid target' }, { status: 400 });
   }

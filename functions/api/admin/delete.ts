@@ -12,6 +12,7 @@ import {
   isValidSection,
   galleryKey,
   heroKey,
+  mainGalleryKey,
   type SectionKey,
 } from '../../../src/lib/blaster-paths';
 
@@ -37,13 +38,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return Response.json({ ok: false, error: 'Invalid filename' }, { status: 400 });
 
   const isHero = body.target === 'hero';
-  if (!isHero && !isValidSection(body.target)) {
+  const isMainGallery = body.target === 'gallery';
+  if (!isHero && !isMainGallery && !isValidSection(body.target)) {
     return Response.json({ ok: false, error: 'Invalid target' }, { status: 400 });
   }
 
   const key = isHero
     ? heroKey(body.slug, body.filename)
-    : galleryKey(body.slug, body.target as SectionKey, body.filename);
+    : isMainGallery
+      ? mainGalleryKey(body.slug, body.filename)
+      : galleryKey(body.slug, body.target as SectionKey, body.filename);
 
   // R2 delete is idempotent — success for a missing key is fine.
   await env.ASSETS_BUCKET.delete(key);
