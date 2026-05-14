@@ -78,11 +78,15 @@
             auth_endpoint: 'auth',
           },
           load_config_file: false,
-          // No media_folder declared on purpose. The only image-bearing
-          // widgets here are markdown bodies, and we disabled the inline
-          // image button on each so admins can't accidentally commit
-          // images to the repo. All blaster images live in R2 and are
+          // Decap requires media_folder at config root, even when no
+          // field uses it. Every markdown widget below has the inline
+          // image button removed (buttons[] + editor_components: []),
+          // so this path should never receive an upload in practice.
+          // If you ever see files appear here, audit the form before
+          // committing. All real blaster images live in R2 and are
           // managed at /admin/uploader/.
+          media_folder: 'public/_decap-do-not-use',
+          public_folder: '/_decap-do-not-use',
           collections: [
             {
               name: 'blasters',
