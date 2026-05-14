@@ -7,9 +7,11 @@ designer: Orion Blasters
 stats:
   magSystem: Talon
   beginnerFriendlyAssembly: false
+  recommendedFpsMin: 200
   maxFps: 300
   brushlessFpsDial: false
   lipoSafe: false
+  slingPoints: true
   picatinnyMount: true
   battery: ""
   recommendedFpsRange: 200-250
@@ -17,6 +19,7 @@ stats:
   springPrecompression: true
   kitPriceUSD: 75
   catchIssues: false
+  recommendedFpsMax: 250
   a1Printable: false
   gravityDropMags: true
   blasterType: Springer
