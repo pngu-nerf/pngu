@@ -40,6 +40,11 @@ const blasters = defineCollection({
         recommendedFpsMin: z.number().optional(),
         recommendedFpsMax: z.number().optional(),
         kitPriceUSD: z.number().optional(),
+        // Optional URL where the kit-price quote came from. Renders as a
+        // small "source ↗" link on the kit card. A "not affiliated"
+        // disclaimer appears under the Cost panel when any source URL
+        // is present.
+        kitPriceSourceUrl: z.string().url().optional(),
         totalPriceUSD: z.number().optional(),
         shippingUSD: z.number().optional(),
         battery: z.string().optional(),

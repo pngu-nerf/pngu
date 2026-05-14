@@ -255,6 +255,18 @@
                       hint: 'Hardware kit only, no printed parts.',
                     },
                     {
+                      label: 'Kit price source URL',
+                      name: 'kitPriceSourceUrl',
+                      widget: 'string',
+                      required: false,
+                      pattern: ['^https?://', 'Must start with http:// or https://'],
+                      hint:
+                        'Optional link to where you got the price (vendor ' +
+                        'page, etc.). The kit card becomes a "source ↗" ' +
+                        'link, and a "not affiliated" disclaimer appears ' +
+                        'below the Cost panel.',
+                    },
+                    {
                       label: 'Total price (USD)',
                       name: 'totalPriceUSD',
                       widget: 'number',

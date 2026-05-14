@@ -143,11 +143,16 @@ const pct = (n: number) =>
   Math.max(0, Math.min(100, ((n - fpsAxisLow) / (fpsAxisHigh - fpsAxisLow)) * 100));
 
 // ── Cost panel ──────────────────────────────────────────────────────
-const cost = visibleNum([
-  { label: 'Kit', value: stats.kitPriceUSD, prefix: '$' },
+type CostCard = NumCard & { sourceUrl?: string };
+const costCards: CostCard[] = [
+  { label: 'Kit', value: stats.kitPriceUSD, prefix: '$', sourceUrl: stats.kitPriceSourceUrl },
   { label: 'Total', value: stats.totalPriceUSD, prefix: '$' },
   { label: 'Shipping', value: stats.shippingUSD, prefix: '$' },
-]);
+];
+const cost = costCards.filter(
+  (c) => c.value !== undefined && c.value !== ''
+);
+const anyCostSource = cost.some((c) => Boolean(c.sourceUrl));
 
 // ── Mounting panel ──────────────────────────────────────────────────
 const mounting = visibleBool([
@@ -311,9 +316,25 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
               <div class="stat-card">
                 <span class="stat-label">{s.label}</span>
                 <span class="stat-value">{s.prefix}{s.value}{s.suffix}</span>
+                {s.sourceUrl && (
+                  <a
+                    href={s.sourceUrl}
+                    target="_blank"
+                    rel="noopener nofollow"
+                    class="stat-source"
+                  >
+                    source ↗
+                  </a>
+                )}
               </div>
             ))}
           </div>
+          {anyCostSource && (
+            <p class="cost-disclaimer">
+              PNGU is not affiliated with any linked vendor. Prices reflect
+              what was visible at the source at review time and may change.
+            </p>
+          )}
         </section>
       )}
 
@@ -628,9 +649,17 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
 
   /* ── Review sections + gallery ──────────────────────────────────── */
   .review-section {
-    margin: 2.5rem 0;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--glass-border);
+    margin: 1.5rem 0;
+    padding: 1.5rem 1.75rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--glass-radius);
+    box-shadow: var(--glass-shadow), var(--glass-highlight);
+  }
+  @media (max-width: 640px) {
+    .review-section { padding: 1.25rem 1.25rem; border-radius: var(--glass-radius-sm); }
   }
   .gallery-grid {
     display: grid;
@@ -761,6 +790,19 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
 
   /* ── External links ─────────────────────────────────────────────── */
   .links-section { margin: 3rem 0; }
+  /* Override the global .letter-header (faded A-Z anchors in /brand)
+     inside this section — the category names need to actually be
+     readable here. */
+  .links-section .letter-header {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+    margin: 1.5rem 0 0.5rem;
+    padding-left: 0;
+  }
   .link-group { margin-bottom: 1.25rem; }
   .link-list { list-style: none; padding: 0; margin: 0; }
   .link-list li { margin-bottom: 0.3rem; }
@@ -773,6 +815,26 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
   .link-row:hover { color: var(--accent); }
   .link-arrow { color: var(--text-muted); }
   .link-row:hover .link-arrow { color: var(--accent); }
+
+  /* ── Cost source link + disclaimer ──────────────────────────────── */
+  .stat-source {
+    margin-top: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: color var(--transition-fast);
+    width: fit-content;
+  }
+  .stat-source:hover { color: var(--accent); }
+  .cost-disclaimer {
+    margin: 0.75rem 0 0;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    font-style: italic;
+  }
 </style>
 
 <style is:global>
