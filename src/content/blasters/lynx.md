@@ -5,6 +5,7 @@ magSystem:
 title: Lynx
 designer: Orion Blasters
 stats:
+  kitPriceSourceUrl: https://outofdarts.com/products/orion-lynx-hardware-kit
   magSystem: Talon
   beginnerFriendlyAssembly: false
   recommendedFpsMin: 200
@@ -44,7 +45,7 @@ links:
   - category: vendor
     label: Out of Darts
     url: https://outofdarts.com/products/orion-lynx-hardware-kit
-  - category: other
+  - category: files
     url: https://orionblasters.com/files/lynx-files/
     label: Orion Blasters
 fpsSpread:
