@@ -122,13 +122,14 @@ const atAGlance = visibleNum([
 ]);
 
 // ── FPS panel ───────────────────────────────────────────────────────
-const fpsMaxCard = stats.maxFps !== undefined
-  ? { label: 'Max', value: stats.maxFps, suffix: ' fps' } satisfies NumCard
-  : null;
+// No standalone "Max FPS" card — the bar's right edge labels it as
+// "Max <n> fps" so the data is communicated once.
 const fpsMin = stats.recommendedFpsMin;
 const fpsMax = stats.recommendedFpsMax;
+const hasMaxFps = stats.maxFps !== undefined;
 const hasFpsRange = fpsMin !== undefined || fpsMax !== undefined;
-const hasFpsPanel = fpsMaxCard !== null || hasFpsRange;
+const canDrawBand = fpsMin !== undefined && fpsMax !== undefined;
+const hasFpsPanel = hasMaxFps || hasFpsRange;
 
 // Range bar maths: scale against the wider of {recommendedMax, maxFps}
 // so the recommended band and the achieved max share an axis.
@@ -270,40 +271,56 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
         <section class="stat-panel">
           <h3 class="stat-panel-label">FPS</h3>
           <div class="stat-row fps-row">
-            {fpsMaxCard && (
-              <div class="stat-card">
-                <span class="stat-label">{fpsMaxCard.label}</span>
-                <span class="stat-value">{fpsMaxCard.value}{fpsMaxCard.suffix}</span>
+            <div class="stat-card stat-card-wide fps-range-card">
+              {hasFpsRange ? (
+                <>
+                  <span class="stat-label">Recommended range</span>
+                  <span class="stat-value fps-range-value">
+                    {fpsMin !== undefined ? fpsMin : '?'}
+                    {' – '}
+                    {fpsMax !== undefined ? fpsMax : '?'}
+                    <span class="fps-unit">fps</span>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span class="stat-label">Achieved max</span>
+                  <span class="stat-value fps-range-value">
+                    {stats.maxFps}<span class="fps-unit">fps</span>
+                  </span>
+                </>
+              )}
+              <div
+                class="fps-axis"
+                role="img"
+                aria-label={
+                  hasFpsRange
+                    ? `Recommended ${fpsMin ?? '?'} to ${fpsMax ?? '?'} fps`
+                      + (hasMaxFps ? `, max ${stats.maxFps}` : '')
+                    : `Max ${stats.maxFps} fps`
+                }
+              >
+                {canDrawBand && (
+                  <span
+                    class="fps-band"
+                    style={`left: ${pct(fpsMin as number)}%; right: ${100 - pct(fpsMax as number)}%;`}
+                  ></span>
+                )}
+                {hasMaxFps && (
+                  <span
+                    class="fps-marker"
+                    style={`left: ${pct(stats.maxFps as number)}%;`}
+                    title={`Max ${stats.maxFps} fps`}
+                  ></span>
+                )}
               </div>
-            )}
-            {hasFpsRange && (
-              <div class="stat-card stat-card-wide fps-range-card">
-                <span class="stat-label">Recommended range</span>
-                <span class="stat-value fps-range-value">
-                  {fpsMin !== undefined ? fpsMin : '?'}
-                  {' – '}
-                  {fpsMax !== undefined ? fpsMax : '?'}
-                  <span class="fps-unit">fps</span>
+              <div class="fps-axis-labels">
+                <span>0</span>
+                <span>
+                  {hasMaxFps ? `Max ${stats.maxFps} fps` : `${fpsAxisHigh} fps`}
                 </span>
-                <div class="fps-axis" role="img"
-                     aria-label={`Recommended ${fpsMin ?? '?'} to ${fpsMax ?? '?'} fps`}>
-                  {fpsMin !== undefined && fpsMax !== undefined && (
-                    <span
-                      class="fps-band"
-                      style={`left: ${pct(fpsMin)}%; right: ${100 - pct(fpsMax)}%;`}
-                    ></span>
-                  )}
-                  {stats.maxFps !== undefined && (
-                    <span class="fps-marker" style={`left: ${pct(stats.maxFps)}%;`}
-                          title={`Max FPS ${stats.maxFps}`}></span>
-                  )}
-                </div>
-                <div class="fps-axis-labels">
-                  <span>0</span>
-                  <span>{fpsAxisHigh} fps</span>
-                </div>
               </div>
-            )}
+            </div>
           </div>
         </section>
       )}
