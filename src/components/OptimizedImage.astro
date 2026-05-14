@@ -1,0 +1,46 @@
+---
+/**
+ * OptimizedImage.astro — wrapper that routes every <img> through
+ * Cloudflare Image Transformations. We get auto WebP/AVIF, on-the-fly
+ * resize, and the 1-year immutable cache for free.
+ *
+ * `src` is the raw R2 URL (e.g. https://assets.pngu.info/.../foo.jpg).
+ * The transformed URL is /cdn-cgi/image/<params>/<src>.
+ *
+ * Image Transformations must be enabled at the zone level for the
+ * /cdn-cgi/image/ path to resolve. See the plan's pre-flight checklist.
+ */
+interface Props {
+  src: string;
+  size: 'thumb' | 'tile' | 'hero';
+  alt: string;
+  class?: string;
+}
+const { src, size, alt, class: className } = Astro.props;
+
+// Quality + width tuned to taste. Format=auto lets Cloudflare pick the
+// best codec per browser (AVIF / WebP / JPEG fallback).
+const PARAMS = {
+  thumb: 'width=160,format=auto,quality=70',
+  tile: 'width=400,format=auto,quality=75',
+  hero: 'width=1200,format=auto,quality=80',
+} as const;
+
+const cdn = (params: string): string => `/cdn-cgi/image/${params}/${src}`;
+
+// srcset only on the hero — thumb/tile are already small enough that 1x
+// is fine on retina; not worth doubling the request count.
+const srcset =
+  size === 'hero'
+    ? `${cdn('width=1200,format=auto,quality=80')} 1200w, ${cdn('width=2400,format=auto,quality=80')} 2400w`
+    : undefined;
+---
+<img
+  src={cdn(PARAMS[size])}
+  srcset={srcset}
+  sizes={size === 'hero' ? '(min-width: 980px) 1200px, 100vw' : undefined}
+  alt={alt}
+  loading="lazy"
+  decoding="async"
+  class={className}
+/>

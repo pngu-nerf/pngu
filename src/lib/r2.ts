@@ -82,6 +82,29 @@ export async function getR2Data(folderPrefix: string): Promise<R2Folder[]> {
 }
 
 /**
+ * Flat list of file names directly under `prefix`. Used at build time to
+ * auto-discover hero + gallery images per blaster (see /data/[slug]).
+ * Returns alphabetically-sorted filenames (no nesting, no folders). Empty
+ * array if credentials are missing or the prefix has no objects.
+ */
+export async function listR2Files(prefix: string): Promise<string[]> {
+  if (!accessKeyId || !secretAccessKey) return [];
+
+  try {
+    const response = await s3.send(
+      new ListObjectsV2Command({ Bucket: BUCKET_NAME, Prefix: prefix })
+    );
+    return (response.Contents ?? [])
+      .map((o) => o.Key?.slice(prefix.length) ?? '')
+      .filter((name) => name.length > 0 && !name.includes('/'))
+      .sort();
+  } catch (error) {
+    console.error(`[R2] listR2Files failed for "${prefix}":`, error);
+    return [];
+  }
+}
+
+/**
  * Fetch the text contents of `<baseUrl>/<folder>/<key>`, or `''` if it
  * doesn't exist / errors. Used for the optional per-project `description`
  * and `link` files under the public R2 mirror.
