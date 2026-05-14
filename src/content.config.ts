@@ -19,7 +19,11 @@ const blasters = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blasters' }),
   schema: z.object({
     title: z.string(),
-    tagline: z.string().optional(),
+
+    // Who designed the blaster (the human or studio behind the design,
+    // not the seller). Optional — community blasters sometimes don't
+    // have a single attributable designer.
+    designer: z.string().optional(),
 
     // Hero is auto-discovered from R2 under <slug>/hero/. Frontmatter
     // only needs this when multiple files exist there — most entries
@@ -29,7 +33,9 @@ const blasters = defineCollection({
     // Quick-stat infographic rendered as a grid of mini cards.
     stats: z
       .object({
+        blasterType: z.string().optional(),         // e.g. "Springer", "Flywheel", "Rev-trigger"
         maxFps: z.number().optional(),
+        recommendedFpsRange: z.string().optional(), // e.g. "120-150" or "≤150"
         kitPriceUSD: z.number().optional(),
         totalPriceUSD: z.number().optional(),
         shippingUSD: z.number().optional(),
@@ -50,29 +56,13 @@ const blasters = defineCollection({
       })
       .optional(),
 
-    // FPS readings across the dart types people actually use. Rendered
-    // as a small bar chart.
-    fpsSpread: z
-      .array(
-        z.object({
-          dartType: z.string(),
-          fps: z.number(),
-          note: z.string().optional(),
-        })
-      )
-      .optional()
-      .default([]),
-
     // Review sections — keys MUST match SECTION_KEYS in blaster-paths.ts.
     // Galleries are auto-discovered from R2 under
     // <BLASTER_PREFIX>/<slug>/galleries/<key>/ — no per-image entries in
     // frontmatter. Order images by prefixing filenames (01-, 02-, ...).
-    firstImpressions: section,
     price: section,
     buildQuality: section,
     ergonomics: section,
-    magSystem: section,
-    performance: section,
     maintenance: section,
     failurePoints: section,
     printingAssembly: section,

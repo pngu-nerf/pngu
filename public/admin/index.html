@@ -105,11 +105,13 @@
                   hint: 'Display name of the blaster.',
                 },
                 {
-                  label: 'Tagline',
-                  name: 'tagline',
+                  label: "Blaster designer's name",
+                  name: 'designer',
                   widget: 'string',
                   required: false,
-                  hint: 'One-line subtitle shown under the title.',
+                  hint:
+                    'Who designed the blaster (e.g. "FoamRanger", ' +
+                    '"Captain Slug"). Shown under the title.',
                 },
                 {
                   label: 'Hero filename',
@@ -133,12 +135,31 @@
                   hint: 'Hard data shown as a row of mini cards at the top.',
                   fields: [
                     {
+                      label: 'Blaster type',
+                      name: 'blasterType',
+                      widget: 'string',
+                      required: false,
+                      hint:
+                        'Short genus label, e.g. "Springer", "Flywheel", ' +
+                        '"Rev-trigger", "Manual".',
+                    },
+                    {
                       label: 'Max FPS',
                       name: 'maxFps',
                       widget: 'number',
                       required: false,
                       value_type: 'int',
                       hint: 'Highest FPS observed across all darts.',
+                    },
+                    {
+                      label: 'Recommended FPS range',
+                      name: 'recommendedFpsRange',
+                      widget: 'string',
+                      required: false,
+                      hint:
+                        'Field-rules FPS range you tune to, e.g. "120-150" ' +
+                        'or "≤150". Free text — match how your community ' +
+                        'writes it.',
                     },
                     {
                       label: 'Kit price (USD)',
@@ -251,47 +272,10 @@
                   ],
                 },
 
-                // ── FPS spread ────────────────────────────────────────
-                {
-                  label: 'FPS spread',
-                  name: 'fpsSpread',
-                  widget: 'list',
-                  collapsed: true,
-                  required: false,
-                  summary: '{{fields.dartType}} — {{fields.fps}} fps',
-                  hint:
-                    'One row per dart type you chronoed. Refer to the ' +
-                    'Chrono Guide Spreadsheet for dart names.',
-                  fields: [
-                    {
-                      label: 'Dart type',
-                      name: 'dartType',
-                      widget: 'string',
-                      hint: 'e.g. "Nitro", "Worker 1g", "sAbRe t DaRt".',
-                    },
-                    {
-                      label: 'FPS',
-                      name: 'fps',
-                      widget: 'number',
-                      value_type: 'int',
-                    },
-                    {
-                      label: 'Note',
-                      name: 'note',
-                      widget: 'string',
-                      required: false,
-                      hint: 'Optional context (e.g. "5-shot avg").',
-                    },
-                  ],
-                },
-
                 // ── Review sections (markdown body each) ──────────────
-                section('First impressions', 'firstImpressions'),
                 section('Price & value', 'price'),
                 section('Build quality', 'buildQuality'),
                 section('Ergonomics', 'ergonomics'),
-                section('Mag system', 'magSystem'),
-                section('Performance', 'performance'),
                 section('Maintenance & modularity', 'maintenance'),
                 section('Failure points & support', 'failurePoints'),
                 section('Printing & assembly', 'printingAssembly'),

@@ -14,13 +14,12 @@ export { BLASTER_PREFIX };
 
 // MUST stay in sync with the section fields on the `blasters` Zod schema
 // in src/content.config.ts. Adding a new section requires touching both.
+// The uploader's section <select> in public/admin/uploader/index.html
+// also hardcodes this list — keep it in sync there too.
 export const SECTION_KEYS = [
-  'firstImpressions',
   'price',
   'buildQuality',
   'ergonomics',
-  'magSystem',
-  'performance',
   'maintenance',
   'failurePoints',
   'printingAssembly',
@@ -29,12 +28,9 @@ export type SectionKey = (typeof SECTION_KEYS)[number];
 
 // Human-readable headings for each section. Keep in render order.
 export const SECTION_HEADINGS: Record<SectionKey, string> = {
-  firstImpressions: 'First Impressions',
   price: 'Price & Value',
   buildQuality: 'Build Quality',
   ergonomics: 'Ergonomics',
-  magSystem: 'Mag System',
-  performance: 'Performance',
   maintenance: 'Maintenance & Modularity',
   failurePoints: 'Failure Points & Support',
   printingAssembly: 'Printing & Assembly',

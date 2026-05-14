@@ -82,8 +82,8 @@ const verdictPill: Record<NonNullable<typeof blasters[number]['data']['verdict']
                   </span>
                 )}
               </div>
-              {blaster.data.tagline && (
-                <p class="tile-desc">{blaster.data.tagline}</p>
+              {blaster.data.designer && (
+                <p class="tile-desc">by {blaster.data.designer}</p>
               )}
               <span class="tile-arrow">View entry →</span>
             </div>

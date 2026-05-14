@@ -96,9 +96,13 @@ function galleryUrls(key: SectionKey): { filename: string; url: string }[] {
 const stats = data.stats ?? {};
 const hasAnyStat = Object.values(stats).some((v) => v !== undefined);
 
-// Numeric stat cards — rendered as <label> + <big value> + <unit>.
+// Numeric / short-string stat cards — rendered as <label> + <big value>
+// + optional unit. Order matches the row reading: identity first
+// (blaster type), then performance, then commercials, then meta.
 const numericStats: Array<{ label: string; value: number | string | undefined; suffix?: string; prefix?: string }> = [
+  { label: 'Type', value: stats.blasterType },
   { label: 'Max FPS', value: stats.maxFps, suffix: ' fps' },
+  { label: 'Recommended FPS', value: stats.recommendedFpsRange },
   { label: 'Kit', value: stats.kitPriceUSD, prefix: '$' },
   { label: 'Total', value: stats.totalPriceUSD, prefix: '$' },
   { label: 'Shipping', value: stats.shippingUSD, prefix: '$' },
@@ -119,8 +123,6 @@ const booleanStats: Array<{ label: string; value: boolean | undefined }> = [
   { label: 'Print: beginner-friendly', value: stats.beginnerFriendlyPrint },
   { label: 'Build: beginner-friendly', value: stats.beginnerFriendlyAssembly },
 ];
-
-const fpsMax = data.fpsSpread.reduce((m, r) => Math.max(m, r.fps), 0);
 
 const verdictLabel: Record<NonNullable<typeof data.verdict>, string> = {
   skip: 'Skip',
@@ -161,7 +163,7 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
 };
 ---
 
-<MainLayout title={data.title} description={data.tagline}>
+<MainLayout title={data.title} description={data.designer ? `Designed by ${data.designer}` : undefined}>
   <a href="/data" class="back-link">← All Blasters</a>
 
   {heroUrl && (
@@ -174,7 +176,7 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
   <div class="page-header">
     <div class="label-tag">blaster</div>
     <h1>{data.title}</h1>
-    {data.tagline && <p class="header-subtitle">{data.tagline}</p>}
+    {data.designer && <p class="header-subtitle">Designed by {data.designer}</p>}
   </div>
 
   {hasAnyStat && (
@@ -198,29 +200,6 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
           </div>
         ))}
     </div>
-  )}
-
-  {data.fpsSpread.length > 0 && (
-    <section class="glass-card fps-card">
-      <h2 class="block-heading">FPS spread</h2>
-      <table class="fps-table">
-        <tbody>
-          {data.fpsSpread.map((row) => (
-            <tr>
-              <td class="fps-dart">{row.dartType}</td>
-              <td class="fps-bar-cell">
-                <span
-                  class="fps-bar"
-                  style={`width: ${fpsMax > 0 ? Math.round((row.fps / fpsMax) * 100) : 0}%;`}
-                ></span>
-                <span class="fps-value">{row.fps} fps</span>
-                {row.note && <span class="fps-note">{row.note}</span>}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
   )}
 
   {sectionsToRender.map((key) => {
@@ -398,42 +377,6 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
   .stat-pill-label {
     font-size: 0.82rem;
     color: var(--text-secondary);
-  }
-
-  /* ── FPS table ──────────────────────────────────────────────────── */
-  .fps-card { margin: 2rem 0; }
-  .fps-table { width: 100%; border-collapse: collapse; }
-  .fps-table tr + tr td { border-top: 1px solid var(--glass-border); }
-  .fps-table td { padding: 0.5rem 0; vertical-align: middle; }
-  .fps-dart {
-    width: 30%;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-  }
-  .fps-bar-cell {
-    position: relative;
-    padding-left: 1rem !important;
-  }
-  .fps-bar {
-    display: inline-block;
-    height: 6px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-bright));
-    border-radius: 100px;
-    vertical-align: middle;
-    margin-right: 0.75rem;
-    min-width: 4px;
-  }
-  .fps-value {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--text-primary);
-  }
-  .fps-note {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    margin-left: 0.5rem;
   }
 
   /* ── Review sections + gallery ──────────────────────────────────── */

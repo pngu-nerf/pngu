@@ -193,14 +193,15 @@
             pattern="[a-z0-9][a-z0-9-]{0,79}"
           />
           <label>Section</label>
+          <!--
+            Sections must match SECTION_KEYS in src/lib/blaster-paths.ts.
+            If you add or remove a section there, sync this list too.
+          -->
           <select id="target-select">
             <option value="hero">Hero (single image)</option>
-            <option value="firstImpressions">firstImpressions</option>
             <option value="price">price</option>
             <option value="buildQuality">buildQuality</option>
             <option value="ergonomics">ergonomics</option>
-            <option value="magSystem">magSystem</option>
-            <option value="performance">performance</option>
             <option value="maintenance">maintenance</option>
             <option value="failurePoints">failurePoints</option>
             <option value="printingAssembly">printingAssembly</option>
