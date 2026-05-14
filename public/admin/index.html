@@ -447,6 +447,41 @@
                   hint: 'Optional cheeky one-liner at the bottom.',
                 },
 
+                // ── Remixes ──────────────────────────────────────────
+                {
+                  label: 'Remixes',
+                  name: 'remixes',
+                  widget: 'list',
+                  collapsed: true,
+                  required: false,
+                  summary: '{{fields.label}}',
+                  hint:
+                    'Remix variants of this blaster — each is a name + ' +
+                    'URL plus an optional one-line note. Rendered as its ' +
+                    'own section on the public page.',
+                  fields: [
+                    {
+                      label: 'Name',
+                      name: 'label',
+                      widget: 'string',
+                      hint: 'Display name of the remix.',
+                    },
+                    {
+                      label: 'URL',
+                      name: 'url',
+                      widget: 'string',
+                      pattern: ['^https?://', 'Must start with http:// or https://'],
+                    },
+                    {
+                      label: 'Note',
+                      name: 'note',
+                      widget: 'string',
+                      required: false,
+                      hint: 'Optional short description (e.g. "Stockless variant").',
+                    },
+                  ],
+                },
+
                 // ── External links ────────────────────────────────────
                 {
                   label: 'External links',
@@ -456,8 +491,8 @@
                   required: false,
                   summary: '{{fields.category}}: {{fields.label}}',
                   hint:
-                    'Vendor pages, remixes, support threads, community ' +
-                    'links. Rendered grouped by category.',
+                    'Vendor pages, file downloads, support threads, ' +
+                    'community links. Rendered grouped by category.',
                   fields: [
                     {
                       label: 'Category',
@@ -466,6 +501,7 @@
                       options: [
                         { label: 'Vendor', value: 'vendor' },
                         { label: 'Remix', value: 'remix' },
+                        { label: 'File downloads', value: 'files' },
                         { label: 'Support', value: 'support' },
                         { label: 'Community', value: 'community' },
                         { label: 'Printables', value: 'printables' },

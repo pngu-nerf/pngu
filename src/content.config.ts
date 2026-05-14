@@ -82,14 +82,31 @@ const blasters = defineCollection({
     finalWarnings: z.string().optional(),
     closingNote: z.string().optional(),
 
+    // Remixes — dedicated list of remix-variants of this blaster.
+    // Each is a name + URL (optional short note). Rendered as its own
+    // section above External Links; conceptually it spotlights the
+    // remix lineage, whereas a 'remix' entry in `links` (below) is for
+    // discussion threads / external pages about a remix.
+    remixes: z
+      .array(
+        z.object({
+          label: z.string(),
+          url: z.string().url(),
+          note: z.string().optional(),
+        })
+      )
+      .optional()
+      .default([]),
+
     // External links — vendors, remixes, support pages, community
-    // threads. Rendered grouped by category.
+    // threads, file downloads. Rendered grouped by category.
     links: z
       .array(
         z.object({
           category: z.enum([
             'vendor',
             'remix',
+            'files',
             'support',
             'community',
             'printables',

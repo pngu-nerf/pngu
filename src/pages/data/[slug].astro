@@ -209,9 +209,18 @@ const linksByCategory = data.links.reduce(
   },
   {} as Record<string, Array<{ category: string; label: string; url: string }>>
 );
-const categoryOrder = ['vendor', 'remix', 'support', 'community', 'printables', 'other'] as const;
+const categoryOrder = [
+  'vendor',
+  'files',
+  'remix',
+  'support',
+  'community',
+  'printables',
+  'other',
+] as const;
 const categoryHeading: Record<typeof categoryOrder[number], string> = {
   vendor: 'Vendors',
+  files: 'File downloads',
   remix: 'Remixes',
   support: 'Support',
   community: 'Community',
@@ -406,6 +415,23 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
         </p>
       )}
       {data.closingNote && <p class="verdict-closing">{data.closingNote}</p>}
+    </section>
+  )}
+
+  {data.remixes.length > 0 && (
+    <section class="remixes-section">
+      <h2 class="block-heading">Remixes</h2>
+      <ul class="remix-list">
+        {data.remixes.map((r) => (
+          <li class="remix-row">
+            <a href={r.url} target="_blank" rel="noopener" class="remix-link">
+              <span class="remix-name">{r.label}</span>
+              {r.note && <span class="remix-note">{r.note}</span>}
+              <span class="remix-arrow" aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </section>
   )}
 
@@ -692,6 +718,46 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
     color: var(--text-muted);
     font-size: 0.85rem;
   }
+
+  /* ── Remixes ────────────────────────────────────────────────────── */
+  .remixes-section { margin: 3rem 0; }
+  .remix-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+  .remix-link {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--glass-radius-sm);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+  }
+  .remix-link:hover {
+    border-color: rgba(193, 17, 17, 0.35);
+    background: var(--glass-bg-hover);
+  }
+  .remix-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .remix-note {
+    grid-column: 1;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+  .remix-arrow {
+    grid-row: 1;
+    grid-column: 2;
+    color: var(--text-muted);
+    font-size: 1rem;
+  }
+  .remix-link:hover .remix-arrow,
+  .remix-link:hover .remix-name { color: var(--accent); }
 
   /* ── External links ─────────────────────────────────────────────── */
   .links-section { margin: 3rem 0; }
