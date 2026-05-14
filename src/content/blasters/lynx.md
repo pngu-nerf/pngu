@@ -9,12 +9,14 @@ stats:
   lipoSafe: false
   picatinnyMount: true
   battery: ""
+  recommendedFpsRange: 200-250
   beginnerFriendlyPrint: false
   springPrecompression: true
   kitPriceUSD: 75
   catchIssues: false
   a1Printable: false
   gravityDropMags: true
+  blasterType: Springer
 fpsSpread:
   - fps: 300
     note: ""
