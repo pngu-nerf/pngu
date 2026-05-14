@@ -320,12 +320,26 @@
         });
 
         function readToken() {
-          // Decap CMS v3 (current). redux-persist stores each slice as a
-          // JSON string keyed inside the outer JSON.
+          // Decap CMS v3 stores auth at `decap-cms-user` as a flat JSON
+          // object like { backendName, login, name, email, token, ... }.
+          // (Confirmed by inspecting the live localStorage on this site.)
           try {
-            var raw = localStorage.getItem('decap-cms');
+            var raw = localStorage.getItem('decap-cms-user');
             if (raw) {
-              var root = JSON.parse(raw);
+              var parsed = JSON.parse(raw);
+              if (parsed && parsed.token) return parsed.token;
+            }
+          } catch (e) {
+            console.warn('[uploader] decap-cms-user parse failed', e);
+          }
+
+          // Fallback: older redux-persist shape under `decap-cms` (each
+          // reducer slice stringified) — keeping this for forward-compat
+          // in case a future Decap version moves the key again.
+          try {
+            var raw2 = localStorage.getItem('decap-cms');
+            if (raw2) {
+              var root = JSON.parse(raw2);
               if (typeof root.auth === 'string') {
                 var auth = JSON.parse(root.auth);
                 if (auth && auth.user && auth.user.token) return auth.user.token;
@@ -337,7 +351,7 @@
             console.warn('[uploader] decap-cms parse failed', e);
           }
 
-          // Legacy Netlify CMS / earlier Decap shapes.
+          // Legacy Netlify CMS name, kept as final fallback.
           try {
             var legacy = localStorage.getItem('netlify-cms-user');
             if (legacy) {

@@ -7,8 +7,83 @@
     <!-- Manual init lets us configure Decap inline below rather than via a
          /admin/config.yml file. -->
     <script>window.CMS_MANUAL_INIT = true;</script>
+    <style>
+      /* Floating uploader-shortcut banner — sits over Decap's UI in the
+         bottom-right corner. The link updates as you navigate between
+         entries: when you're editing /blasters/<slug>, the link points
+         straight at /admin/uploader/?slug=<slug>&target=hero. No React,
+         no Decap plugin — just a hashchange listener on Decap's
+         hash-routed URL. Removing this block reverts to no shortcut. */
+      .uploader-shortcut {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 2147483647;
+        background: rgba(20, 20, 20, 0.92);
+        color: #fff;
+        font-family: 'Sora', system-ui, sans-serif;
+        font-size: 0.82rem;
+        padding: 10px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        max-width: 340px;
+      }
+      .uploader-shortcut a {
+        color: #ff6b6b;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .uploader-shortcut a:hover { text-decoration: underline; }
+      .uploader-shortcut .hint {
+        display: block;
+        font-size: 0.7rem;
+        color: #999;
+        margin-top: 2px;
+      }
+    </style>
   </head>
   <body>
+    <div class="uploader-shortcut" id="uploader-shortcut">
+      <a id="uploader-shortcut-link" href="/admin/uploader/" target="_blank" rel="noopener">
+        Open image uploader ↗
+      </a>
+      <span class="hint" id="uploader-shortcut-hint">
+        Slug auto-fills when you're editing a blaster.
+      </span>
+    </div>
+    <script>
+      // Decap uses hash routing. When the admin opens an entry the URL
+      // becomes /admin/#/collections/blasters/entries/<slug>. Watch for
+      // hash changes and rewrite the shortcut link to pre-fill the slug.
+      (function () {
+        var link = document.getElementById('uploader-shortcut-link');
+        var hint = document.getElementById('uploader-shortcut-hint');
+        function update() {
+          var m = location.hash.match(
+            /^#\/collections\/blasters\/entries\/([^/?]+)/
+          );
+          if (m && m[1]) {
+            var slug = decodeURIComponent(m[1]);
+            link.href =
+              '/admin/uploader/?slug=' +
+              encodeURIComponent(slug) +
+              '&target=hero';
+            link.textContent = 'Upload images for ' + slug + ' ↗';
+            hint.textContent =
+              'Opens /admin/uploader/?slug=' + slug + '. Change target ' +
+              'in the uploader UI to pick a section.';
+          } else {
+            link.href = '/admin/uploader/';
+            link.textContent = 'Open image uploader ↗';
+            hint.textContent =
+              "Slug auto-fills when you're editing a blaster.";
+          }
+        }
+        window.addEventListener('hashchange', update);
+        update();
+      })();
+    </script>
     <!--
       Decap CMS is loaded from a CDN with an exact version pin. Bumping the
       version requires regenerating the SRI hash:
