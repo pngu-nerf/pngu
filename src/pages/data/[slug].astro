@@ -1,122 +1,559 @@
 ---
 /**
- * Blaster Data entry page — renders one `blasters` content entry with its
- * markdown body plus an aside listing any attached files.
+ * Blaster Data entry — review-style detail page driven by the new schema.
+ *
+ * Layout (top to bottom):
+ *   1. Hero image (auto-discovered from R2 <slug>/hero/)
+ *   2. Title + tagline
+ *   3. Quick-stat infographic grid (only cards with data)
+ *   4. FPS spread table (skipped if empty)
+ *   5. Nine review sections in fixed order; each renders only if it has a
+ *      body OR an auto-discovered gallery under <slug>/galleries/<key>/
+ *   6. Verdict block (only if verdict is set)
+ *   7. External links grouped by category
+ *
+ * Galleries are NOT listed in frontmatter — they're discovered at build
+ * time by listing R2. Order is alphabetical filename; prefix with 01-,
+ * 02-, etc. to control it.
  */
 import MainLayout from '../../layouts/MainLayout.astro';
-import { getCollection, render } from 'astro:content';
+import OptimizedImage from '../../components/OptimizedImage.astro';
+import { getCollection } from 'astro:content';
+import { marked } from 'marked';
+import {
+  SECTION_KEYS,
+  SECTION_HEADINGS,
+  BLASTER_PREFIX,
+  heroPrefix,
+  galleryPrefix,
+  type SectionKey,
+} from '../../lib/blaster-paths';
+import { getR2Data, listR2Files } from '../../lib/r2';
+import { R2_BASE_URL } from '../../constants';
+
+// Configure marked once. GitHub-flavoured Markdown + breaks so a single
+// newline in the editor becomes a <br>. Output is HTML we inject via
+// set:html into .markdown-content blocks below.
+marked.setOptions({ gfm: true, breaks: true });
+const renderMarkdown = (md: string | undefined): string =>
+  md ? (marked.parse(md.trim(), { async: false }) as string) : '';
+
+type Galleries = Partial<Record<SectionKey, string[]>>;
 
 export async function getStaticPaths() {
   const blasters = await getCollection('blasters');
-  return blasters.map((blaster) => ({
-    params: { slug: blaster.id },
-    props: { blaster },
+  return Promise.all(
+    blasters.map(async (blaster) => {
+      const slug = blaster.id;
+
+      // 1 call: every file directly under <slug>/hero/
+      const heroFiles = await listR2Files(heroPrefix(slug));
+
+      // 1 call: every file under <slug>/galleries/ grouped by section
+      const galleryFolders = await getR2Data(`${BLASTER_PREFIX}/${slug}/galleries/`);
+      const galleries: Galleries = {};
+      for (const folder of galleryFolders) {
+        if ((SECTION_KEYS as readonly string[]).includes(folder.folderName)) {
+          galleries[folder.folderName as SectionKey] = [...folder.files].sort();
+        }
+      }
+
+      return {
+        params: { slug },
+        props: { blaster, heroFiles, galleries },
+      };
+    })
+  );
+}
+
+const { blaster, heroFiles, galleries } = Astro.props as {
+  blaster: Awaited<ReturnType<typeof getCollection<'blasters'>>>[number];
+  heroFiles: string[];
+  galleries: Galleries;
+};
+
+const data = blaster.data;
+
+// Pick the hero: requested filename if it exists, else the first
+// alphabetical hero file, else undefined (no hero rendered).
+const heroFilename = heroFiles.includes(data.heroFilename)
+  ? data.heroFilename
+  : heroFiles[0];
+const heroUrl = heroFilename
+  ? `${R2_BASE_URL}/${heroPrefix(blaster.id)}${heroFilename}`
+  : undefined;
+
+// Build the URL list once per section so the template stays clean.
+function galleryUrls(key: SectionKey): { filename: string; url: string }[] {
+  const list = galleries[key] ?? [];
+  return list.map((filename) => ({
+    filename,
+    url: `${R2_BASE_URL}/${galleryPrefix(blaster.id, key)}${filename}`,
   }));
 }
 
-const { blaster } = Astro.props;
-const { Content } = await render(blaster);
+// Which stat cards have a real value?
+const stats = data.stats ?? {};
+const hasAnyStat = Object.values(stats).some((v) => v !== undefined);
+
+// Numeric stat cards — rendered as <label> + <big value> + <unit>.
+const numericStats: Array<{ label: string; value: number | string | undefined; suffix?: string; prefix?: string }> = [
+  { label: 'Max FPS', value: stats.maxFps, suffix: ' fps' },
+  { label: 'Kit', value: stats.kitPriceUSD, prefix: '$' },
+  { label: 'Total', value: stats.totalPriceUSD, prefix: '$' },
+  { label: 'Shipping', value: stats.shippingUSD, prefix: '$' },
+  { label: 'Battery', value: stats.battery },
+  { label: 'Mag system', value: stats.magSystem },
+  { label: 'Bragging rights', value: stats.braggingRights },
+];
+
+// Boolean toggles → check/cross pills.
+const booleanStats: Array<{ label: string; value: boolean | undefined }> = [
+  { label: 'LiPo safe', value: stats.lipoSafe },
+  { label: 'Brushless FPS dial', value: stats.brushlessFpsDial },
+  { label: 'Spring precomp', value: stats.springPrecompression },
+  { label: 'Picatinny / M-LOK', value: stats.picatinnyMount },
+  { label: 'Gravity-drop mags', value: stats.gravityDropMags },
+  { label: 'Catch issues', value: stats.catchIssues },
+  { label: 'A1-printable', value: stats.a1Printable },
+  { label: 'Print: beginner-friendly', value: stats.beginnerFriendlyPrint },
+  { label: 'Build: beginner-friendly', value: stats.beginnerFriendlyAssembly },
+];
+
+const fpsMax = data.fpsSpread.reduce((m, r) => Math.max(m, r.fps), 0);
+
+const verdictLabel: Record<NonNullable<typeof data.verdict>, string> = {
+  skip: 'Skip',
+  niche: 'If you need this niche',
+  upgrade: 'Worth the upgrade',
+};
+
+// Render the section only if it has body content OR a discovered gallery.
+const sectionsToRender = SECTION_KEYS.filter((key) => {
+  const body = (data[key] as { body?: string } | undefined)?.body?.trim();
+  const gallery = galleries[key] ?? [];
+  return Boolean(body) || gallery.length > 0;
+});
+
+// Re-render markdown bodies — Astro doesn't auto-render string fields,
+// only the entry's main body. We just inject as plain text/markdown
+// inside .markdown-content, which has the existing global styling.
+// (Markdown is rendered server-side by passing through the content
+// pipeline. For simplicity we treat section body as preformatted-ish
+// markdown by parsing on render below.)
+
+// External-links grouping
+const linksByCategory = data.links.reduce(
+  (acc, link) => {
+    (acc[link.category] ??= []).push(link);
+    return acc;
+  },
+  {} as Record<string, Array<{ category: string; label: string; url: string }>>
+);
+const categoryOrder = ['vendor', 'remix', 'support', 'community', 'printables', 'other'] as const;
+const categoryHeading: Record<typeof categoryOrder[number], string> = {
+  vendor: 'Vendors',
+  remix: 'Remixes',
+  support: 'Support',
+  community: 'Community',
+  printables: 'Printables',
+  other: 'Other',
+};
 ---
 
-<MainLayout title={blaster.data.title} description={blaster.data.description}>
+<MainLayout title={data.title} description={data.tagline}>
+  <a href="/data" class="back-link">← All Blasters</a>
+
+  {heroUrl && (
+    <div class="hero">
+      <OptimizedImage src={heroUrl} size="hero" alt={data.title} class="hero-img" />
+      <div class="hero-fade"></div>
+    </div>
+  )}
+
   <div class="page-header">
-    <a href="/data" class="back-link">← All Blasters</a>
     <div class="label-tag">blaster</div>
-    <h1>{blaster.data.title}</h1>
-    {blaster.data.description && (
-      <p class="header-subtitle">{blaster.data.description}</p>
-    )}
-    {blaster.data.coverImage && (
-      <img
-        src={blaster.data.coverImage}
-        alt={blaster.data.title}
-        class="cover-image"
-        loading="lazy"
-      />
-    )}
+    <h1>{data.title}</h1>
+    {data.tagline && <p class="header-subtitle">{data.tagline}</p>}
   </div>
 
-  <div class="entry-grid">
-    <article class="markdown-content">
-      <Content />
-    </article>
+  {hasAnyStat && (
+    <div class="stat-grid">
+      {numericStats
+        .filter((s) => s.value !== undefined && s.value !== '')
+        .map((s) => (
+          <div class="stat-card">
+            <span class="stat-label">{s.label}</span>
+            <span class="stat-value">
+              {s.prefix}{s.value}{s.suffix}
+            </span>
+          </div>
+        ))}
+      {booleanStats
+        .filter((b) => b.value !== undefined)
+        .map((b) => (
+          <div class:list={['stat-card', 'stat-pill', b.value ? 'on' : 'off']}>
+            <span class="stat-pill-icon">{b.value ? '✓' : '✕'}</span>
+            <span class="stat-pill-label">{b.label}</span>
+          </div>
+        ))}
+    </div>
+  )}
 
-    <aside class="glass-card attached-aside">
-      <h2>Attached Files</h2>
-      {blaster.data.attachedFiles && blaster.data.attachedFiles.length > 0 ? (
-        <ul class="attached-list">
-          {blaster.data.attachedFiles.map((file) => (
-            <li>
-              <a href={file.fileUrl} target="_blank" rel="noopener" class="attached-link">
-                📄 {file.fileName}
-              </a>
-            </li>
+  {data.fpsSpread.length > 0 && (
+    <section class="glass-card fps-card">
+      <h2 class="block-heading">FPS spread</h2>
+      <table class="fps-table">
+        <tbody>
+          {data.fpsSpread.map((row) => (
+            <tr>
+              <td class="fps-dart">{row.dartType}</td>
+              <td class="fps-bar-cell">
+                <span
+                  class="fps-bar"
+                  style={`width: ${fpsMax > 0 ? Math.round((row.fps / fpsMax) * 100) : 0}%;`}
+                ></span>
+                <span class="fps-value">{row.fps} fps</span>
+                {row.note && <span class="fps-note">{row.note}</span>}
+              </td>
+            </tr>
           ))}
-        </ul>
-      ) : (
-        <p class="attached-empty">No files attached.</p>
+        </tbody>
+      </table>
+    </section>
+  )}
+
+  {sectionsToRender.map((key) => {
+    const body = (data[key] as { body?: string } | undefined)?.body?.trim();
+    const items = galleryUrls(key);
+    return (
+      <section class="review-section">
+        <h2 class="block-heading">{SECTION_HEADINGS[key]}</h2>
+        {body && (
+          <div class="markdown-content">
+            {/* Section bodies are short markdown snippets. Render raw —
+                Astro's MD pipeline isn't easily invoked for arbitrary
+                strings, so we use set:html with the raw markdown. For
+                more involved bodies, prefer the entry's main body
+                field instead. */}
+            <Fragment set:html={renderMarkdown(body)} />
+          </div>
+        )}
+        {items.length > 0 && (
+          <div class="gallery-grid">
+            {items.map((img) => (
+              <details class="glass-dropdown gallery-item">
+                <summary>
+                  <OptimizedImage
+                    src={img.url}
+                    size="tile"
+                    alt={img.filename}
+                    class="gallery-thumb"
+                  />
+                  <span class="gallery-name">{img.filename}</span>
+                </summary>
+                <div class="preview-wrap">
+                  <div class="checkerboard">
+                    <OptimizedImage
+                      src={img.url}
+                      size="hero"
+                      alt={img.filename}
+                    />
+                  </div>
+                </div>
+              </details>
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  })}
+
+  {data.verdict && (
+    <section class:list={['verdict-block', `verdict-${data.verdict}`]}>
+      <div class="verdict-tag">Verdict</div>
+      <h2 class="verdict-heading">{verdictLabel[data.verdict]}</h2>
+      {data.finalHighlights && (
+        <div class="markdown-content verdict-block-body">
+          <h3>Highlights</h3>
+          <Fragment set:html={renderMarkdown(data.finalHighlights)} />
+        </div>
       )}
-    </aside>
-  </div>
+      {data.finalWarnings && (
+        <div class="markdown-content verdict-block-body">
+          <h3>Warnings</h3>
+          <Fragment set:html={renderMarkdown(data.finalWarnings)} />
+        </div>
+      )}
+      {data.verdict === 'niche' && data.betterAlternative && (
+        <p class="verdict-alt">
+          A blaster that fills this role better: <strong>{data.betterAlternative}</strong>
+        </p>
+      )}
+      {data.closingNote && <p class="verdict-closing">{data.closingNote}</p>}
+    </section>
+  )}
+
+  {data.links.length > 0 && (
+    <section class="links-section">
+      <h2 class="block-heading">External links</h2>
+      {categoryOrder.map((cat) => {
+        const items = linksByCategory[cat] ?? [];
+        if (items.length === 0) return null;
+        return (
+          <div class="link-group">
+            <div class="letter-header">{categoryHeading[cat]}</div>
+            <ul class="link-list">
+              {items.map((l) => (
+                <li>
+                  <a href={l.url} target="_blank" rel="noopener" class="link-row">
+                    {l.label} <span class="link-arrow" aria-hidden="true">↗</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </section>
+  )}
 </MainLayout>
 
 <style>
-  .cover-image {
-    width: 100%;
+  .hero {
+    position: relative;
+    margin: 0 -1.5rem 0;        /* slight bleed past page padding */
     border-radius: var(--glass-radius);
-    margin-top: 1rem;
+    overflow: hidden;
+    max-height: 480px;
+  }
+  .hero :global(.hero-img) {
+    width: 100%;
+    height: 100%;
+    max-height: 480px;
     object-fit: cover;
-    max-height: 400px;
+    display: block;
+  }
+  .hero-fade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.6) 100%);
+    pointer-events: none;
   }
 
-  .entry-grid {
+  .block-heading {
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Stat grid ──────────────────────────────────────────────────── */
+  .stat-grid {
     display: grid;
-    grid-template-columns: 1fr 300px;
-    gap: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--glass-radius-sm);
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+  .stat-value {
+    font-family: var(--font-title);
+    font-size: 1.4rem;
+    color: var(--text-primary);
+    line-height: 1.1;
+  }
+  .stat-pill {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.85rem;
+  }
+  .stat-pill.on { border-color: rgba(193, 17, 17, 0.35); }
+  .stat-pill.off { opacity: 0.7; }
+  .stat-pill-icon {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    width: 1.25rem;
+    text-align: center;
+  }
+  .stat-pill.on .stat-pill-icon { color: var(--accent); }
+  .stat-pill.off .stat-pill-icon { color: var(--text-muted); }
+  .stat-pill-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  /* ── FPS table ──────────────────────────────────────────────────── */
+  .fps-card { margin: 2rem 0; }
+  .fps-table { width: 100%; border-collapse: collapse; }
+  .fps-table tr + tr td { border-top: 1px solid var(--glass-border); }
+  .fps-table td { padding: 0.5rem 0; vertical-align: middle; }
+  .fps-dart {
+    width: 30%;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  .fps-bar-cell {
+    position: relative;
+    padding-left: 1rem !important;
+  }
+  .fps-bar {
+    display: inline-block;
+    height: 6px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+    border-radius: 100px;
+    vertical-align: middle;
+    margin-right: 0.75rem;
+    min-width: 4px;
+  }
+  .fps-value {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+  }
+  .fps-note {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-left: 0.5rem;
+  }
+
+  /* ── Review sections + gallery ──────────────────────────────────── */
+  .review-section {
+    margin: 2.5rem 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+  }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
     margin-top: 1rem;
   }
-  @media (max-width: 768px) {
-    .entry-grid { grid-template-columns: 1fr; }
+  .gallery-item :global(summary) {
+    padding: 0;
+    flex-direction: column;
+    gap: 0;
+  }
+  .gallery-item :global(.gallery-thumb) {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    border-radius: var(--glass-radius-sm) var(--glass-radius-sm) 0 0;
+  }
+  .gallery-name {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    padding: 0.5rem 0.75rem;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .attached-aside {
-    align-self: start;
-    position: sticky;
-    top: calc(var(--nav-height) + 2rem);
-    padding: 1.5rem;
+  /* ── Verdict block ──────────────────────────────────────────────── */
+  .verdict-block {
+    margin: 3rem 0;
+    padding: 2rem;
+    border-radius: var(--glass-radius);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
-  .attached-list { list-style: none; padding: 0; }
-  .attached-list li { margin-bottom: 0.75rem; }
-  .attached-link {
+  .verdict-block.verdict-skip { border-color: var(--glass-border); }
+  .verdict-block.verdict-niche {
+    border-color: rgba(193, 17, 17, 0.3);
+    background: linear-gradient(135deg, var(--accent-soft), var(--glass-bg));
+  }
+  .verdict-block.verdict-upgrade {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, var(--accent-soft), var(--glass-bg));
+    box-shadow: 0 0 40px rgba(193, 17, 17, 0.15);
+  }
+  .verdict-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
     color: var(--accent);
-    text-decoration: none;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: color var(--transition-fast);
+    margin-bottom: 0.5rem;
   }
-  .attached-link:hover { color: var(--accent-bright); }
-  .attached-empty {
+  .verdict-heading {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+  }
+  .verdict-block-body { margin-bottom: 1rem; }
+  .verdict-block-body h3 {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  .verdict-alt {
+    padding: 0.85rem 1rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--glass-radius-sm);
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+  }
+  .verdict-closing {
+    margin-top: 1rem;
+    font-style: italic;
     color: var(--text-muted);
     font-size: 0.85rem;
-    margin: 0;
   }
+
+  /* ── External links ─────────────────────────────────────────────── */
+  .links-section { margin: 3rem 0; }
+  .link-group { margin-bottom: 1.25rem; }
+  .link-list { list-style: none; padding: 0; margin: 0; }
+  .link-list li { margin-bottom: 0.3rem; }
+  .link-row {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.92rem;
+    transition: color var(--transition-fast);
+  }
+  .link-row:hover { color: var(--accent); }
+  .link-arrow { color: var(--text-muted); }
+  .link-row:hover .link-arrow { color: var(--accent); }
 </style>
 
 <style is:global>
-  /* Markdown body — only applied inside data entry pages. */
-  .markdown-content h2 { font-size: 1.75rem; margin: 2rem 0 1rem; }
-  .markdown-content h3 { font-size: 1.25rem; margin: 1.5rem 0 0.5rem; }
-  .markdown-content p { margin-bottom: 1rem; color: var(--text-secondary); line-height: 1.7; }
+  /* Markdown body styling — applied to .markdown-content used by each
+     review section. Same family used by the original /data/[slug]. */
+  .markdown-content h2 { font-size: 1.35rem; margin: 1.5rem 0 0.75rem; }
+  .markdown-content h3 { font-size: 1.1rem; margin: 1rem 0 0.5rem; }
+  .markdown-content p { margin-bottom: 0.85rem; color: var(--text-secondary); line-height: 1.7; }
   .markdown-content ul,
   .markdown-content ol { margin: 0 0 1rem 1.5rem; color: var(--text-secondary); }
-  .markdown-content li { margin-bottom: 0.5rem; }
-  .markdown-content img {
-    max-width: 100%;
-    border-radius: 8px;
-    margin: 1.5rem 0;
-  }
+  .markdown-content li { margin-bottom: 0.4rem; }
   .markdown-content a { color: var(--accent); }
   .markdown-content code {
     font-family: var(--font-mono);
@@ -125,4 +562,5 @@ const { Content } = await render(blaster);
     padding: 2px 6px;
     border-radius: 4px;
   }
+  .markdown-content strong { color: var(--text-primary); }
 </style>

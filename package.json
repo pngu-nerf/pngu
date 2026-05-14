@@ -15,7 +15,8 @@
     "@astrojs/mdx": "^4.0.0",
     "@aws-sdk/client-s3": "^3.658.0",
     "@fontsource-variable/jetbrains-mono": "^5.1.0",
-    "@fontsource-variable/sora": "^5.1.0"
+    "@fontsource-variable/sora": "^5.1.0",
+    "marked": "^14.1.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",

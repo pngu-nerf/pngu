@@ -1,23 +1,48 @@
 ---
 /**
- * Blaster Data index — lists entries from the `blasters` content collection
- * as project tiles, with client-side search by title.
- *
- * Content comes from `src/content/blasters/*.md(x)`. Today the collection is
- * empty (no entries committed yet); when entries are added, they show up here.
+ * Blaster Data index — lists entries from the `blasters` content
+ * collection. Each tile shows the hero thumbnail (auto-discovered from
+ * R2), title, tagline, and a verdict pill when set.
  */
 import MainLayout from '../../layouts/MainLayout.astro';
+import OptimizedImage from '../../components/OptimizedImage.astro';
 import { getCollection } from 'astro:content';
+import { heroPrefix } from '../../lib/blaster-paths';
+import { listR2Files } from '../../lib/r2';
+import { R2_BASE_URL } from '../../constants';
 
 const blasters = await getCollection('blasters');
 blasters.sort((a, b) => a.data.title.localeCompare(b.data.title));
+
+// One listR2Files call per entry to pick a hero thumbnail. Each call is
+// a single R2 ListObjectsV2 — cheap and parallel via Promise.all.
+const entries = await Promise.all(
+  blasters.map(async (b) => {
+    const heroFiles = await listR2Files(heroPrefix(b.id));
+    const heroFilename = heroFiles.includes(b.data.heroFilename)
+      ? b.data.heroFilename
+      : heroFiles[0];
+    return {
+      blaster: b,
+      heroUrl: heroFilename
+        ? `${R2_BASE_URL}/${heroPrefix(b.id)}${heroFilename}`
+        : undefined,
+    };
+  })
+);
+
+const verdictPill: Record<NonNullable<typeof blasters[number]['data']['verdict']>, { label: string; cls: string }> = {
+  skip: { label: 'Skip', cls: 'verdict-skip' },
+  niche: { label: 'Niche', cls: 'verdict-niche' },
+  upgrade: { label: 'Upgrade', cls: 'verdict-upgrade' },
+};
 ---
 
 <MainLayout title="Blaster Data">
   <div class="page-header">
     <div class="label-tag">blaster data</div>
     <h1>Blaster Data</h1>
-    <p class="header-subtitle">Documentation & Specifications</p>
+    <p class="header-subtitle">Reviews, specs, and build notes.</p>
     <div class="header-nav">
       <a href="/" class="btn-glass">← Back Home</a>
     </div>
@@ -28,25 +53,40 @@ blasters.sort((a, b) => a.data.title.localeCompare(b.data.title));
   </div>
 
   <div id="results-container">
-    {blasters.length === 0 ? (
+    {entries.length === 0 ? (
       <p class="empty-state">
         No blasters added yet. Add entries under <code>src/content/blasters/</code>.
       </p>
     ) : (
       <div class="project-grid">
-        {blasters.map((blaster) => (
+        {entries.map(({ blaster, heroUrl }) => (
           <a
             href={`/data/${blaster.id}`}
-            class="project-tile"
+            class="project-tile blaster-tile"
             data-title={blaster.data.title.toLowerCase()}
           >
-            <div class="tile-top">
-              <span class="tile-title">{blaster.data.title}</span>
-            </div>
-            {blaster.data.description && (
-              <p class="tile-desc">{blaster.data.description}</p>
+            {heroUrl && (
+              <OptimizedImage
+                src={heroUrl}
+                size="tile"
+                alt={blaster.data.title}
+                class="tile-hero"
+              />
             )}
-            <span class="tile-arrow">View entry →</span>
+            <div class="tile-body">
+              <div class="tile-top">
+                <span class="tile-title">{blaster.data.title}</span>
+                {blaster.data.verdict && (
+                  <span class:list={['verdict-pill', verdictPill[blaster.data.verdict].cls]}>
+                    {verdictPill[blaster.data.verdict].label}
+                  </span>
+                )}
+              </div>
+              {blaster.data.tagline && (
+                <p class="tile-desc">{blaster.data.tagline}</p>
+              )}
+              <span class="tile-arrow">View entry →</span>
+            </div>
           </a>
         ))}
       </div>
@@ -71,11 +111,47 @@ blasters.sort((a, b) => a.data.title.localeCompare(b.data.title));
     border-radius: 4px;
     color: var(--text-secondary);
   }
+
+  /* Override .project-tile's default padding so the hero thumbnail bleeds
+     to the tile edges. Padding moves to .tile-body. */
+  .blaster-tile { padding: 0; overflow: hidden; }
+  .blaster-tile :global(.tile-hero) {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+  }
+  .tile-body { padding: 1.25rem 1.5rem 1.5rem; }
+
+  /* Verdict pill at the top-right of the tile */
+  .verdict-pill {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 100px;
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+  }
+  .verdict-pill.verdict-niche {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: rgba(193, 17, 17, 0.25);
+  }
+  .verdict-pill.verdict-upgrade {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .verdict-pill.verdict-skip {
+    color: var(--text-muted);
+  }
 </style>
 
 <script is:inline>
-  // Client-side filter on title. There are no letter groups on this page,
-  // so we just hide individual tiles.
+  // Client-side filter on title. There are no letter groups on this
+  // page, so we just hide individual tiles.
   (function () {
     const input = document.getElementById('data-search');
     if (!input) return;

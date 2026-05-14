@@ -10,16 +10,13 @@
   </head>
   <body>
     <!--
-      Decap CMS is loaded from a CDN with an exact version pin. Replace the
-      `integrity` attribute below with the real SRI hash for this version:
+      Decap CMS is loaded from a CDN with an exact version pin. Bumping the
+      version requires regenerating the SRI hash:
 
           curl -s https://unpkg.com/decap-cms@3.5.0/dist/decap-cms.js \
             | openssl dgst -sha384 -binary \
             | openssl base64 -A \
             | sed 's/^/sha384-/'
-
-      Then paste the result into the integrity= attribute. Bumping the version
-      number requires regenerating the hash.
     -->
     <script
       src="https://unpkg.com/decap-cms@3.5.0/dist/decap-cms.js"
@@ -27,6 +24,49 @@
       crossorigin="anonymous"
     ></script>
     <script>
+      /**
+       * Images do NOT go in the repo. Hero + per-section galleries are
+       * managed at /admin/uploader/?slug=<slug>&target=<hero|section> and
+       * stored in R2. The Decap form below has no image widgets — only
+       * text fields, numbers, booleans, and a markdown body per section.
+       */
+      // Section keys must stay in sync with SECTION_KEYS in
+      // src/lib/blaster-paths.ts and the schema in src/content.config.ts.
+      var section = function (label, name) {
+        return {
+          label: label,
+          name: name,
+          widget: 'object',
+          collapsed: true,
+          required: false,
+          hint:
+            'Upload images for this section at /admin/uploader/?slug=<entry-slug>&target=' +
+            name,
+          fields: [
+            {
+              label: 'Body',
+              name: 'body',
+              widget: 'markdown',
+              required: false,
+              // No inline image embedding — images live in R2 only.
+              buttons: [
+                'bold',
+                'italic',
+                'code',
+                'link',
+                'heading-one',
+                'heading-two',
+                'heading-three',
+                'quote',
+                'bulleted-list',
+                'numbered-list',
+              ],
+              editor_components: [],
+            },
+          ],
+        };
+      };
+
       CMS.init({
         config: {
           backend: {
@@ -38,18 +78,321 @@
             auth_endpoint: 'auth',
           },
           load_config_file: false,
-          media_folder: 'public/images/blasters',
-          public_folder: '/images/blasters',
+          // No media_folder declared on purpose. The only image-bearing
+          // widgets here are markdown bodies, and we disabled the inline
+          // image button on each so admins can't accidentally commit
+          // images to the repo. All blaster images live in R2 and are
+          // managed at /admin/uploader/.
           collections: [
             {
               name: 'blasters',
               label: 'Blaster Data',
+              label_singular: 'Blaster',
               folder: 'src/content/blasters',
               create: true,
+              slug: '{{slug}}',
+              summary:
+                '{{title}}{{#if tagline}} — {{tagline}}{{/if}}',
               fields: [
-                { label: 'Title', name: 'title', widget: 'string' },
-                { label: 'Description', name: 'description', widget: 'text' },
-                { label: 'Body', name: 'body', widget: 'markdown' },
+                {
+                  label: 'Title',
+                  name: 'title',
+                  widget: 'string',
+                  hint: 'Display name of the blaster.',
+                },
+                {
+                  label: 'Tagline',
+                  name: 'tagline',
+                  widget: 'string',
+                  required: false,
+                  hint: 'One-line subtitle shown under the title.',
+                },
+                {
+                  label: 'Hero filename',
+                  name: 'heroFilename',
+                  widget: 'string',
+                  required: false,
+                  default: 'hero.jpg',
+                  hint:
+                    'Filename of the hero image inside R2 at <slug>/hero/. ' +
+                    'Upload first at /admin/uploader/?slug=<slug>&target=hero. ' +
+                    'Leave as hero.jpg unless multiple hero candidates exist.',
+                },
+
+                // ── Quick-stat infographic ────────────────────────────
+                {
+                  label: 'Quick Stats',
+                  name: 'stats',
+                  widget: 'object',
+                  collapsed: true,
+                  required: false,
+                  hint: 'Hard data shown as a row of mini cards at the top.',
+                  fields: [
+                    {
+                      label: 'Max FPS',
+                      name: 'maxFps',
+                      widget: 'number',
+                      required: false,
+                      value_type: 'int',
+                      hint: 'Highest FPS observed across all darts.',
+                    },
+                    {
+                      label: 'Kit price (USD)',
+                      name: 'kitPriceUSD',
+                      widget: 'number',
+                      required: false,
+                      value_type: 'float',
+                      hint: 'Hardware kit only, no printed parts.',
+                    },
+                    {
+                      label: 'Total price (USD)',
+                      name: 'totalPriceUSD',
+                      widget: 'number',
+                      required: false,
+                      value_type: 'float',
+                      hint: 'Hardware kit + printed parts + everything to build.',
+                    },
+                    {
+                      label: 'Shipping (USD)',
+                      name: 'shippingUSD',
+                      widget: 'number',
+                      required: false,
+                      value_type: 'float',
+                    },
+                    {
+                      label: 'Battery',
+                      name: 'battery',
+                      widget: 'string',
+                      required: false,
+                      hint: 'Short label, e.g. "2S 250mAh" or "AA × 4".',
+                    },
+                    {
+                      label: 'Mag system',
+                      name: 'magSystem',
+                      widget: 'string',
+                      required: false,
+                      hint: 'Short label, e.g. "Talon" or "Hopper-fed".',
+                    },
+                    {
+                      label: 'Bragging rights',
+                      name: 'braggingRights',
+                      widget: 'string',
+                      required: false,
+                      hint: 'One-line standout fact, e.g. "Lightest in class".',
+                    },
+                    {
+                      label: 'LiPo safe to overvolt?',
+                      name: 'lipoSafe',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                    {
+                      label: 'Brushless FPS dial',
+                      name: 'brushlessFpsDial',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                    {
+                      label: 'Spring precompression adjustable',
+                      name: 'springPrecompression',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                    {
+                      label: 'Picatinny / M-LOK mount',
+                      name: 'picatinnyMount',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                    {
+                      label: 'Mags gravity-drop',
+                      name: 'gravityDropMags',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                    {
+                      label: 'Has catch issues',
+                      name: 'catchIssues',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                    {
+                      label: 'A1-printable',
+                      name: 'a1Printable',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                      hint: 'Fits on a Bambu A1 build plate without splitting.',
+                    },
+                    {
+                      label: 'Beginner-friendly to print',
+                      name: 'beginnerFriendlyPrint',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                    {
+                      label: 'Beginner-friendly to assemble',
+                      name: 'beginnerFriendlyAssembly',
+                      widget: 'boolean',
+                      required: false,
+                      default: false,
+                    },
+                  ],
+                },
+
+                // ── FPS spread ────────────────────────────────────────
+                {
+                  label: 'FPS spread',
+                  name: 'fpsSpread',
+                  widget: 'list',
+                  collapsed: true,
+                  required: false,
+                  summary: '{{fields.dartType}} — {{fields.fps}} fps',
+                  hint:
+                    'One row per dart type you chronoed. Refer to the ' +
+                    'Chrono Guide Spreadsheet for dart names.',
+                  fields: [
+                    {
+                      label: 'Dart type',
+                      name: 'dartType',
+                      widget: 'string',
+                      hint: 'e.g. "Nitro", "Worker 1g", "sAbRe t DaRt".',
+                    },
+                    {
+                      label: 'FPS',
+                      name: 'fps',
+                      widget: 'number',
+                      value_type: 'int',
+                    },
+                    {
+                      label: 'Note',
+                      name: 'note',
+                      widget: 'string',
+                      required: false,
+                      hint: 'Optional context (e.g. "5-shot avg").',
+                    },
+                  ],
+                },
+
+                // ── Review sections (markdown body each) ──────────────
+                section('First impressions', 'firstImpressions'),
+                section('Price & value', 'price'),
+                section('Build quality', 'buildQuality'),
+                section('Ergonomics', 'ergonomics'),
+                section('Mag system', 'magSystem'),
+                section('Performance', 'performance'),
+                section('Maintenance & modularity', 'maintenance'),
+                section('Failure points & support', 'failurePoints'),
+                section('Printing & assembly', 'printingAssembly'),
+
+                // ── Conclusion / verdict block ────────────────────────
+                {
+                  label: 'Verdict',
+                  name: 'verdict',
+                  widget: 'select',
+                  required: false,
+                  options: [
+                    { label: 'Hell naw (skip)', value: 'skip' },
+                    {
+                      label:
+                        "If you don't have a blaster for that niche yet",
+                      value: 'niche',
+                    },
+                    {
+                      label: 'Yes, even if you have one — worth the upgrade',
+                      value: 'upgrade',
+                    },
+                  ],
+                  hint: 'Drives the verdict-block colour at the bottom.',
+                },
+                {
+                  label: 'Better alternative',
+                  name: 'betterAlternative',
+                  widget: 'string',
+                  required: false,
+                  hint:
+                    'Only fill if verdict is "niche". Name the blaster that ' +
+                    'already fills the role better, e.g. "Lynx".',
+                },
+                {
+                  label: 'Final highlights',
+                  name: 'finalHighlights',
+                  widget: 'markdown',
+                  required: false,
+                  buttons: [
+                    'bold',
+                    'italic',
+                    'code',
+                    'link',
+                    'bulleted-list',
+                  ],
+                  editor_components: [],
+                  hint: 'What this blaster does better than every other.',
+                },
+                {
+                  label: 'Final warnings',
+                  name: 'finalWarnings',
+                  widget: 'markdown',
+                  required: false,
+                  buttons: [
+                    'bold',
+                    'italic',
+                    'code',
+                    'link',
+                    'bulleted-list',
+                  ],
+                  editor_components: [],
+                  hint: 'Issues a buyer should know about before clicking buy.',
+                },
+                {
+                  label: 'Closing note',
+                  name: 'closingNote',
+                  widget: 'string',
+                  required: false,
+                  hint: 'Optional cheeky one-liner at the bottom.',
+                },
+
+                // ── External links ────────────────────────────────────
+                {
+                  label: 'External links',
+                  name: 'links',
+                  widget: 'list',
+                  collapsed: true,
+                  required: false,
+                  summary: '{{fields.category}}: {{fields.label}}',
+                  hint:
+                    'Vendor pages, remixes, support threads, community ' +
+                    'links. Rendered grouped by category.',
+                  fields: [
+                    {
+                      label: 'Category',
+                      name: 'category',
+                      widget: 'select',
+                      options: [
+                        { label: 'Vendor', value: 'vendor' },
+                        { label: 'Remix', value: 'remix' },
+                        { label: 'Support', value: 'support' },
+                        { label: 'Community', value: 'community' },
+                        { label: 'Printables', value: 'printables' },
+                        { label: 'Other', value: 'other' },
+                      ],
+                    },
+                    { label: 'Label', name: 'label', widget: 'string' },
+                    {
+                      label: 'URL',
+                      name: 'url',
+                      widget: 'string',
+                      pattern: ['^https?://', 'Must start with http:// or https://'],
+                    },
+                  ],
+                },
               ],
             },
           ],
