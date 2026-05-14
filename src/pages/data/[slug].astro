@@ -92,13 +92,13 @@ function galleryUrls(key: SectionKey): { filename: string; url: string }[] {
   }));
 }
 
-// Which stat cards have a real value?
+// Stat cards — only render the ones the admin actually filled out.
+// Numeric / short-string: hide if undefined or empty string.
+// Booleans: hide if false OR undefined (Decap's boolean widget always
+// emits a value, so "unfilled" and "explicitly off" both fall through).
+// Only `true` booleans surface as feature pills.
 const stats = data.stats ?? {};
-const hasAnyStat = Object.values(stats).some((v) => v !== undefined);
 
-// Numeric / short-string stat cards — rendered as <label> + <big value>
-// + optional unit. Order matches the row reading: identity first
-// (blaster type), then performance, then commercials, then meta.
 const numericStats: Array<{ label: string; value: number | string | undefined; suffix?: string; prefix?: string }> = [
   { label: 'Type', value: stats.blasterType },
   { label: 'Max FPS', value: stats.maxFps, suffix: ' fps' },
@@ -110,8 +110,10 @@ const numericStats: Array<{ label: string; value: number | string | undefined; s
   { label: 'Mag system', value: stats.magSystem },
   { label: 'Bragging rights', value: stats.braggingRights },
 ];
+const numericVisible = numericStats.filter(
+  (s) => s.value !== undefined && s.value !== ''
+);
 
-// Boolean toggles → check/cross pills.
 const booleanStats: Array<{ label: string; value: boolean | undefined }> = [
   { label: 'LiPo safe', value: stats.lipoSafe },
   { label: 'Brushless FPS dial', value: stats.brushlessFpsDial },
@@ -123,6 +125,10 @@ const booleanStats: Array<{ label: string; value: boolean | undefined }> = [
   { label: 'Print: beginner-friendly', value: stats.beginnerFriendlyPrint },
   { label: 'Build: beginner-friendly', value: stats.beginnerFriendlyAssembly },
 ];
+const booleanVisible = booleanStats.filter((b) => b.value === true);
+
+// Hide the stats grid entirely if nothing would render in it.
+const hasAnyStat = numericVisible.length > 0 || booleanVisible.length > 0;
 
 const verdictLabel: Record<NonNullable<typeof data.verdict>, string> = {
   skip: 'Skip',
@@ -181,24 +187,20 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
 
   {hasAnyStat && (
     <div class="stat-grid">
-      {numericStats
-        .filter((s) => s.value !== undefined && s.value !== '')
-        .map((s) => (
-          <div class="stat-card">
-            <span class="stat-label">{s.label}</span>
-            <span class="stat-value">
-              {s.prefix}{s.value}{s.suffix}
-            </span>
-          </div>
-        ))}
-      {booleanStats
-        .filter((b) => b.value !== undefined)
-        .map((b) => (
-          <div class:list={['stat-card', 'stat-pill', b.value ? 'on' : 'off']}>
-            <span class="stat-pill-icon">{b.value ? '✓' : '✕'}</span>
-            <span class="stat-pill-label">{b.label}</span>
-          </div>
-        ))}
+      {numericVisible.map((s) => (
+        <div class="stat-card">
+          <span class="stat-label">{s.label}</span>
+          <span class="stat-value">
+            {s.prefix}{s.value}{s.suffix}
+          </span>
+        </div>
+      ))}
+      {booleanVisible.map((b) => (
+        <div class="stat-card stat-pill on">
+          <span class="stat-pill-icon">✓</span>
+          <span class="stat-pill-label">{b.label}</span>
+        </div>
+      ))}
     </div>
   )}
 
@@ -365,15 +367,13 @@ const categoryHeading: Record<typeof categoryOrder[number], string> = {
     padding: 0.6rem 0.85rem;
   }
   .stat-pill.on { border-color: rgba(193, 17, 17, 0.35); }
-  .stat-pill.off { opacity: 0.7; }
   .stat-pill-icon {
     font-family: var(--font-mono);
     font-size: 0.95rem;
     width: 1.25rem;
     text-align: center;
+    color: var(--accent);
   }
-  .stat-pill.on .stat-pill-icon { color: var(--accent); }
-  .stat-pill.off .stat-pill-icon { color: var(--text-muted); }
   .stat-pill-label {
     font-size: 0.82rem;
     color: var(--text-secondary);
