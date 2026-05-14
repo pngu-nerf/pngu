@@ -1,6 +1,9 @@
 ---
-title: Lynx
 heroFilename: hero.jpeg
+magSystem:
+  body: ""
+title: Lynx
+designer: Orion Blasters
 stats:
   magSystem: Talon
   beginnerFriendlyAssembly: false
@@ -17,10 +20,6 @@ stats:
   a1Printable: false
   gravityDropMags: true
   blasterType: Springer
-fpsSpread:
-  - fps: 300
-    note: ""
-    dartType: nitro
 buildQuality:
   body: |-
     The trigger + sear are known to break under high stress\
@@ -32,12 +31,21 @@ ergonomics:
     Non-adjustable grip
 
     Non-adjustable stock
-magSystem:
-  body: ""
 maintenance:
   body: >-
     One takedown pin at the front allows for the removal of the spring and
     plunger for maintenance and repairs.\
 
     Two thumb screws hold in the barrel.
+links:
+  - category: vendor
+    label: Out of Darts
+    url: https://outofdarts.com/products/orion-lynx-hardware-kit
+  - category: other
+    url: https://orionblasters.com/files/lynx-files/
+    label: Orion Blasters
+fpsSpread:
+  - fps: 300
+    note: ""
+    dartType: nitro
 ---
