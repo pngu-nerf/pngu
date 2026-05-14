@@ -1,6 +1,6 @@
 ---
 title: Lynx
-heroFilename: hero.jpg
+heroFilename: hero.webp
 stats:
   magSystem: Talon
   beginnerFriendlyAssembly: false
